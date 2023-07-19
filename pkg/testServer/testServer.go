@@ -2,36 +2,26 @@ package testserver
 
 import (
 	"fmt"
-	basePlatform "somas_base_platform/pkg/infra/server"
+	baseServer "somas_base_platform/pkg/infra/server"
 )
 
 type MyServer struct {
-	basePlatform *basePlatform.BaseServer
-	name         string
-	numFloors    int
+	// embed struct for composition
+	baseServer.BaseServer
+	// keep second reference to superclass for unimplemented methods
+	baseServer *baseServer.BaseServer
+	name       string
+	numFloors  int
 }
 
 func New() MyServer {
 	return MyServer{
-		basePlatform: &basePlatform.BaseServer{},
-		name:         "My Server",
-		numFloors:    20,
+		baseServer: &baseServer.BaseServer{},
+		numFloors:  20,
 	}
 }
 
 func (ms *MyServer) Init() {
-	// ms.name = "My Server"
-	// ms.numFloors = 50
-	ms.basePlatform.Init()
+	ms.name = "My Server"
 	fmt.Printf("Name field added as: %s \n", ms.name)
-	fmt.Println(ms.basePlatform.Agents)
 }
-
-// func (ms *MyServer) Start() {
-// 	ms.Init()
-// 	ms.RunGameLoop()
-// }
-
-// func RunGameLoop() {
-
-// }
