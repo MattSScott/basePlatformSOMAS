@@ -10,10 +10,6 @@ type BaseAgent struct {
 	name string
 }
 
-func (ba *BaseAgent) InitAgent() {
-	ba.name = "Base"
-	ba.id = uuid.New()
-}
 
 
 func (ba *BaseAgent) GetID() uuid.UUID {

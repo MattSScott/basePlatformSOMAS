@@ -13,19 +13,18 @@
 package main
 
 import (
-	// "fmt"
 	agent1 "somas_base_platform/pkg/agents/AgentTypes/agent1"
 	agent2 "somas_base_platform/pkg/agents/AgentTypes/agent2"
 	baseAgent "somas_base_platform/pkg/agents/BaseAgent"
-	// "strconv"
+	
 )
 
 func main() {
 
-	var Agents []baseAgent.BaseAgentInterface = make([]baseAgent.BaseAgentInterface, 3)
-	Agents[0] = agent1.GetAgent()
-	Agents[1] = agent1.GetAgent()
-	Agents[2] = agent2.GetAgent()
+	var Agents []baseAgent.Agent = make([]baseAgent.Agent, 3)
+	Agents[0] = agent1.GetAgent("A1")
+	Agents[1] = agent1.GetAgent("A1")
+	Agents[2] = agent2.GetAgent("A2")
 
 	for _, ag := range Agents {
 		ag.Activity()

@@ -1,7 +1,7 @@
 package baseagent
 
-type BaseAgentInterface interface {
+type Agent interface {
 	Activity()	
 	UpdateAgent()
-	InitAgent()
+	
 }
