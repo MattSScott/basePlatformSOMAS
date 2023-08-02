@@ -14,11 +14,8 @@ func (a2 *Agent2) Activity() {
 	a2.BaseAgent.Activity()
 }
 
-func GetAgent(name string) *Agent2 {
-	ag := &Agent2{
-		baseagent.GetAgent(),
+func GetAgent() *Agent2 {
+	return &Agent2{
+		baseagent.NewAgent("A2"),
 	}
-	ag.SetName(name)
-
-	return ag
 }

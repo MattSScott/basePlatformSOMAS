@@ -8,25 +8,19 @@ import (
 type Agent1 struct {
 	*baseAgent.BaseAgent
 	age int
-	
 }
-
-
 
 func (a1 *Agent1) Activity() {
 	fmt.Println("Agent1's Activity")
 	fmt.Printf("age: %d\n", a1.age)
 	a1.BaseAgent.Activity()
-	
+
 }
 
-func GetAgent(name string) *Agent1 { 
+func GetAgent() *Agent1 {
 	return &Agent1{
-		BaseAgent: baseAgent.NewAgent(name),
-		age:       0, 
+		BaseAgent: baseAgent.NewAgent("A1"),
+		age:       0,
 	}
 
-	
 }
-
-

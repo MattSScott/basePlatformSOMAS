@@ -2,6 +2,7 @@ package baseagent
 
 import (
 	"fmt"
+
 	"github.com/google/uuid"
 )
 
@@ -9,8 +10,6 @@ type BaseAgent struct {
 	id   uuid.UUID
 	name string
 }
-
-
 
 func (ba *BaseAgent) GetID() uuid.UUID {
 	return ba.id
