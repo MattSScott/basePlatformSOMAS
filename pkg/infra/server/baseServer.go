@@ -1,12 +1,10 @@
 package infra
 
 import (
-	"strconv"
 	"fmt"
-	baseAgent "somas_base_platform/pkg/agents/BaseAgent"
 	agent1 "somas_base_platform/pkg/agents/AgentTypes/agent1"
- 	agent2 "somas_base_platform/pkg/agents/AgentTypes/agent2"
-	
+	agent2 "somas_base_platform/pkg/agents/AgentTypes/agent2"
+	baseAgent "somas_base_platform/pkg/agents/BaseAgent"
 )
 
 type BaseServer struct {
@@ -15,19 +13,11 @@ type BaseServer struct {
 	Agents    []baseAgent.Agent
 }
 
-
 func (bs *BaseServer) Init() {
 	fmt.Println("Server Init")
-	bs.NumAgents = 5
-	bs.NumTurns = 4
-	bs.Agents = make([]baseAgent.Agent, bs.NumAgents)
-	for i := 0; i < bs.NumAgents; i++ {
-		//converts the iteration to string
-		name := strconv.Itoa(i)
-		//creates new Agent
-		bs.Agents[i] = baseAgent.NewAgent(name)
-
-	}
+	initialisedAgents := bs.initAgents()
+	bs.Agents = initialisedAgents
+	bs.NumAgents = len(initialisedAgents)
 }
 
 func (bs *BaseServer) RunGameLoop(loopnum int) {
@@ -37,7 +27,7 @@ func (bs *BaseServer) RunGameLoop(loopnum int) {
 		fmt.Printf("agent %d  \n", index)
 		fmt.Printf("_____________________________________________ \n")
 		agent.UpdateAgent()
-
+		agent.Activity()
 		//TO DO: add the function for stages
 
 	}
@@ -53,9 +43,7 @@ func (bs *BaseServer) Start() {
 	}
 
 }
-//type AgentGenerator func() baseAgent.BaseAgent //* causes different error
-//type AgentGenerator func() *agent2.Agent2
-//type AgentGenerator func() *baseAgent.Agent
+
 type AgentGenerator func() baseAgent.Agent
 
 type AgentGeneratorCountPair struct {
@@ -63,13 +51,13 @@ type AgentGeneratorCountPair struct {
 	count     int
 }
 
-func initAgents() []baseAgent.BaseAgent {
+func (bs *BaseServer) initAgents() []baseAgent.Agent {
 	m := make([]AgentGeneratorCountPair, 6)
 	m[0] = AgentGeneratorCountPair{baseAgent.GetAgent, 4}
 	m[1] = AgentGeneratorCountPair{agent2.GetAgent, 3}
 	m[2] = AgentGeneratorCountPair{agent1.GetAgent, 2}
 
-	agents := make([]baseAgent.BaseAgent, getNumAgents(m))
+	agents := make([]baseAgent.Agent, getNumAgents(m))
 	agentCount := 0
 
 	for _, pair := range m {

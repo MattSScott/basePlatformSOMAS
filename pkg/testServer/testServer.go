@@ -6,17 +6,17 @@ import (
 )
 
 type MyServer struct {
-	// embed struct for composition
-	baseServer.BaseServer
+	// // embed struct for composition
+	// baseServer.BaseServer
 	// keep second reference to superclass for unimplemented methods
-	baseServer *baseServer.BaseServer
-	name       string
-	numFloors  int
+	*baseServer.BaseServer
+	name      string
+	numFloors int
 }
 
 func New() MyServer {
 	return MyServer{
-		baseServer: &baseServer.BaseServer{},
+		BaseServer: &baseServer.BaseServer{},
 		numFloors:  20,
 	}
 }
@@ -24,4 +24,5 @@ func New() MyServer {
 func (ms *MyServer) Init() {
 	ms.name = "My Server"
 	fmt.Printf("Name field added as: %s \n", ms.name)
+	ms.BaseServer.Init()
 }

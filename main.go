@@ -7,7 +7,7 @@ import (
 func main() {
 	ts := testserver.New()
 	ts.Init()
-	ts.Start()
+	ts.RunGameLoop(1)
 }
 
 // package main

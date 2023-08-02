@@ -25,7 +25,7 @@ func (ba *BaseAgent) SetName(name string) {
 }
 
 func (ba *BaseAgent) UpdateAgent() {
-	fmt.Println("UdateBaseAgent")
+	fmt.Println("Updating BaseAgent...")
 }
 
 func (ba *BaseAgent) Activity() {
@@ -41,7 +41,7 @@ func NewAgent(name string) *BaseAgent {
 	}
 }
 
-func GetAgent() *BaseAgent {
+func GetAgent() Agent {
 	return &BaseAgent{
 		id:   uuid.New(),
 		name: "null",
