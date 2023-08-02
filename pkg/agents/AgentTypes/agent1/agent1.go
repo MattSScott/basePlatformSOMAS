@@ -17,6 +17,13 @@ func (a1 *Agent1) Activity() {
 
 }
 
+// func GetAgent() *Agent1 {
+// 	return &Agent1{
+// 		BaseAgent: baseAgent.NewAgent("A1"),
+// 		age:       0,
+// 	}
+
+// }
 func GetAgent() *Agent1 {
 	return &Agent1{
 		BaseAgent: baseAgent.NewAgent("A1"),

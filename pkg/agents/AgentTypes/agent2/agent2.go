@@ -2,11 +2,11 @@ package agent2
 
 import (
 	"fmt"
-	baseagent "somas_base_platform/pkg/agents/BaseAgent"
+	baseAgent "somas_base_platform/pkg/agents/BaseAgent"
 )
 
 type Agent2 struct {
-	*baseagent.BaseAgent
+	*baseAgent.BaseAgent
 }
 
 func (a2 *Agent2) Activity() {
@@ -16,6 +16,6 @@ func (a2 *Agent2) Activity() {
 
 func GetAgent() *Agent2 {
 	return &Agent2{
-		baseagent.NewAgent("A2"),
+		baseAgent.NewAgent("A2"),
 	}
 }
