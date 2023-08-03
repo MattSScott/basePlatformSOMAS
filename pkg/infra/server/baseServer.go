@@ -2,8 +2,7 @@ package infra
 
 import (
 	"fmt"
-	//agent1 "somas_base_platform/pkg/agents/AgentTypes/agent1"
-	//agent2 "somas_base_platform/pkg/agents/AgentTypes/agent2"
+
 	baseAgent "somas_base_platform/pkg/agents/BaseAgent"
 )
 
@@ -13,15 +12,7 @@ type BaseServer struct {
 	Agents    []baseAgent.Agent
 }
 
-func (bs *BaseServer) Init(m []AgentGeneratorCountPair) {
-	fmt.Println("Server Init")
-	initialisedAgents := bs.initAgents(m)
-	bs.Agents = initialisedAgents
-	bs.NumAgents = len(initialisedAgents)
-}
-
-func (bs *BaseServer) RunGameLoop(loopnum int) {
-	fmt.Printf("Game Loop %d Running \n", loopnum)
+func (bs *BaseServer) RunGameLoop() {
 	fmt.Printf("%d agents initialised: \n", bs.NumAgents)
 	for index, agent := range bs.Agents {
 		fmt.Printf("agent %d  \n", index)
@@ -34,12 +25,15 @@ func (bs *BaseServer) RunGameLoop(loopnum int) {
 
 }
 
-func (bs *BaseServer) Start(m []AgentGeneratorCountPair) {
-	bs.Init(m)
+func (bs *BaseServer) Init() {
+	fmt.Println("Server initialised")
+}
+
+func (bs *BaseServer) Start() {
 	//LOOPS
 	for i := 0; i < bs.NumTurns; i++ {
-		fmt.Printf("Loop: %d \n", i)
-		bs.RunGameLoop(i)
+		fmt.Printf("Game Loop %d Running \n", i)
+		bs.RunGameLoop()
 	}
 
 }
@@ -58,8 +52,7 @@ func MakeAgentGeneratorCountPair(generatorFunction AgentGenerator, count int) Ag
 	}
 }
 
-func (bs *BaseServer) initAgents(m []AgentGeneratorCountPair) []baseAgent.Agent {
-
+func (bs *BaseServer) initialiseAgents(m []AgentGeneratorCountPair) {
 
 	agents := make([]baseAgent.Agent, getNumAgents(m))
 	agentCount := 0
@@ -71,7 +64,8 @@ func (bs *BaseServer) initAgents(m []AgentGeneratorCountPair) []baseAgent.Agent 
 		}
 	}
 
-	return agents
+	bs.Agents = agents
+	bs.NumAgents = len(agents)
 }
 
 func getNumAgents(pairs []AgentGeneratorCountPair) int {
@@ -83,4 +77,11 @@ func getNumAgents(pairs []AgentGeneratorCountPair) int {
 	}
 
 	return numAgents
+}
+
+func CreateServer(mapper []AgentGeneratorCountPair) *BaseServer {
+	// generate the server and return it
+	serv := &BaseServer{}
+	serv.initialiseAgents(mapper)
+	return serv
 }

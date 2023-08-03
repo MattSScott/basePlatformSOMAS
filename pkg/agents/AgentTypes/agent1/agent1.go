@@ -21,13 +21,6 @@ func (a1 *Agent1) UpdateAgent() {
 	fmt.Println("Updating Agent1...")
 }
 
-// func GetAgent() *Agent1 {
-// 	return &Agent1{
-// 		BaseAgent: baseAgent.NewAgent("A1"),
-// 		age:       0,
-// 	}
-
-// }
 func GetAgent() baseAgent.Agent {
 	return &Agent1{
 		BaseAgent: baseAgent.NewAgent("A1"),
