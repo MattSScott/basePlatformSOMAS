@@ -2,11 +2,15 @@ package agent2
 
 import (
 	"fmt"
-	baseagent "somas_base_platform/pkg/agents/BaseAgent"
+	baseAgent "somas_base_platform/pkg/agents/BaseAgent"
 )
 
 type Agent2 struct {
-	*baseagent.BaseAgent
+	*baseAgent.BaseAgent
+}
+
+func (a2 *Agent2) UpdateAgent() {
+	fmt.Println("Updating Agent2...")
 }
 
 func (a2 *Agent2) Activity() {
@@ -14,8 +18,8 @@ func (a2 *Agent2) Activity() {
 	a2.BaseAgent.Activity()
 }
 
-func GetAgent() *Agent2 {
+func GetAgent() baseAgent.Agent {
 	return &Agent2{
-		baseagent.NewAgent("A2"),
+		baseAgent.NewAgent("A2"),
 	}
 }

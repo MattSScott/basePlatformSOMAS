@@ -2,14 +2,40 @@ package infra
 
 import (
 	"fmt"
+
 	baseAgent "somas_base_platform/pkg/agents/BaseAgent"
-	"strconv"
 )
 
 type BaseServer struct {
 	NumAgents int
 	NumTurns  int
 	Agents    []baseAgent.Agent
+}
+
+func (bs *BaseServer) RunGameLoop() {
+	fmt.Printf("%d agents initialised: \n", bs.NumAgents)
+	for index, agent := range bs.Agents {
+		fmt.Printf("agent %d  \n", index)
+		fmt.Printf("_____________________________________________ \n")
+		agent.UpdateAgent()
+		agent.Activity()
+		//TO DO: add the function for stages
+
+	}
+
+}
+
+func (bs *BaseServer) Init() {
+	fmt.Println("Server initialised")
+}
+
+func (bs *BaseServer) Start() {
+	//LOOPS
+	for i := 0; i < bs.NumTurns; i++ {
+		fmt.Printf("Game Loop %d Running \n", i)
+		bs.RunGameLoop()
+	}
+
 }
 
 type AgentGenerator func() baseAgent.Agent
@@ -19,40 +45,43 @@ type AgentGeneratorCountPair struct {
 	count     int
 }
 
-func (bs *BaseServer) Init() {
-	fmt.Println("Server Init")
-	bs.NumAgents = 5
-	bs.NumTurns = 4
-	bs.Agents = make([]baseAgent.Agent, bs.NumAgents)
-	for i := 0; i < bs.NumAgents; i++ {
-		//converts the iteration to string
-		name := strconv.Itoa(i)
-		//creates new Agent
-		bs.Agents[i] = baseAgent.NewAgent(name)
-
+func MakeAgentGeneratorCountPair(generatorFunction AgentGenerator, count int) AgentGeneratorCountPair {
+	return AgentGeneratorCountPair{
+		generator: generatorFunction,
+		count:     count,
 	}
 }
 
-func (bs *BaseServer) RunGameLoop(loopnum int) {
-	fmt.Printf("Game Loop %d Running \n", loopnum)
-	fmt.Printf("%d agents initialised: \n", bs.NumAgents)
-	for index, agent := range bs.Agents {
-		fmt.Printf("agent %d  \n", index)
-		fmt.Printf("_____________________________________________ \n")
-		agent.UpdateAgent()
+func (bs *BaseServer) initialiseAgents(m []AgentGeneratorCountPair) {
 
-		//TO DO: add the function for stages
+	agents := make([]baseAgent.Agent, getNumAgents(m))
+	agentCount := 0
 
+	for _, pair := range m {
+		for i := 0; i < pair.count; i++ {
+			agents[agentCount] = pair.generator()
+			agentCount++
+		}
 	}
 
+	bs.Agents = agents
+	bs.NumAgents = len(agents)
 }
 
-func (bs *BaseServer) Start() {
-	bs.Init()
-	//LOOPS
-	for i := 0; i < bs.NumTurns; i++ {
-		fmt.Printf("Loop: %d \n", i)
-		bs.RunGameLoop(i)
+func getNumAgents(pairs []AgentGeneratorCountPair) int {
+
+	numAgents := 0
+
+	for _, pair := range pairs {
+		numAgents += pair.count
 	}
 
+	return numAgents
+}
+
+func CreateServer(mapper []AgentGeneratorCountPair) *BaseServer {
+	// generate the server and return it
+	serv := &BaseServer{}
+	serv.initialiseAgents(mapper)
+	return serv
 }
