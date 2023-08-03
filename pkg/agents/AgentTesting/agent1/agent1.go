@@ -24,6 +24,10 @@ func (a1 *Agent1) UpdateAgent() {
 	a1.age++
 }
 
+func (a1 *Agent1) GetAge() int {
+	return a1.age
+}
+
 func GetAgent() baseAgent.Agent {
 	return &Agent1{
 		AgentUser: baseUserAgent.GetAgent("A1"),

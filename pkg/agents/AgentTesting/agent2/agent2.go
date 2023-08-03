@@ -21,6 +21,10 @@ func setGender() string {
 
 }
 
+func (a2 *Agent2) GetGender() string {
+	return a2.gender
+}
+
 func (a1 *Agent2) Activity() {
 	fmt.Println("Agent1's Activity")
 	fmt.Printf("gender: %s\n", a1.gender)

@@ -28,6 +28,10 @@ func GetAgent(name string) *AgentUser {
 
 }
 
+func (u *AgentUser) GetName() string {
+	return u.name
+}
+
 func GetAgentDefault() baseAgent.Agent {
 	return &AgentUser{
 		BaseAgent: baseAgent.NewAgent(),
