@@ -14,8 +14,8 @@ func main() {
 	m[0] = infra.MakeAgentGeneratorCountPair(baseAgent.GetAgent, 4)
 	m[1] = infra.MakeAgentGeneratorCountPair(agent2.GetAgent, 3)
 	m[2] = infra.MakeAgentGeneratorCountPair(agent1.GetAgent, 2)
-
-	ts := testserver.New(m)
+	floors:=3
+	ts := testserver.New(m, floors)
 	ts.Init()
 	ts.RunGameLoop()
 }
