@@ -1,11 +1,11 @@
 package main
 
 import (
-	"somas_base_platform/pkg/agents/AgentTypes/agent1"
-	"somas_base_platform/pkg/agents/AgentTypes/agent2"
-	baseAgent "somas_base_platform/pkg/agents/BaseAgent"
-	infra "somas_base_platform/pkg/infra/server"
-	testserver "somas_base_platform/pkg/testServer"
+	"basePlatformSOMAS/pkg/agents/AgentTypes/agent1"
+	"basePlatformSOMAS/pkg/agents/AgentTypes/agent2"
+	baseAgent "basePlatformSOMAS/pkg/agents/BaseAgent"
+	infra "basePlatformSOMAS/pkg/infra/server"
+	testserver "basePlatformSOMAS/pkg/testServer"
 )
 
 func main() {

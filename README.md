@@ -1,2 +1,3 @@
-# SOMAS_Base_Platform
+# basePlatformSOMAS
+
 Base platform for ICL SOMAS course

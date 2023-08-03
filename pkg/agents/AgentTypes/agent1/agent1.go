@@ -1,8 +1,8 @@
 package agent1
 
 import (
+	baseAgent "basePlatformSOMAS/pkg/agents/BaseAgent"
 	"fmt"
-	baseAgent "somas_base_platform/pkg/agents/BaseAgent"
 )
 
 type Agent1 struct {

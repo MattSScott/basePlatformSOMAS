@@ -1,4 +1,4 @@
-module somas_base_platform
+module basePlatformSOMAS
 
 go 1.18
 

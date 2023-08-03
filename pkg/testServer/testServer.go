@@ -1,7 +1,7 @@
 package testserver
 
 import (
-	baseServer "somas_base_platform/pkg/infra/server"
+	baseServer "basePlatformSOMAS/pkg/infra/server"
 )
 
 type MyServer struct {
