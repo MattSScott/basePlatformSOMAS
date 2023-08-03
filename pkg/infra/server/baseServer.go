@@ -2,8 +2,8 @@ package infra
 
 import (
 	"fmt"
-	agent1 "somas_base_platform/pkg/agents/AgentTypes/agent1"
-	agent2 "somas_base_platform/pkg/agents/AgentTypes/agent2"
+	//agent1 "somas_base_platform/pkg/agents/AgentTypes/agent1"
+	//agent2 "somas_base_platform/pkg/agents/AgentTypes/agent2"
 	baseAgent "somas_base_platform/pkg/agents/BaseAgent"
 )
 
@@ -13,9 +13,9 @@ type BaseServer struct {
 	Agents    []baseAgent.Agent
 }
 
-func (bs *BaseServer) Init() {
+func (bs *BaseServer) Init(m []AgentGeneratorCountPair) {
 	fmt.Println("Server Init")
-	initialisedAgents := bs.initAgents()
+	initialisedAgents := bs.initAgents(m)
 	bs.Agents = initialisedAgents
 	bs.NumAgents = len(initialisedAgents)
 }
@@ -34,8 +34,8 @@ func (bs *BaseServer) RunGameLoop(loopnum int) {
 
 }
 
-func (bs *BaseServer) Start() {
-	bs.Init()
+func (bs *BaseServer) Start(m []AgentGeneratorCountPair) {
+	bs.Init(m)
 	//LOOPS
 	for i := 0; i < bs.NumTurns; i++ {
 		fmt.Printf("Loop: %d \n", i)
@@ -51,11 +51,15 @@ type AgentGeneratorCountPair struct {
 	count     int
 }
 
-func (bs *BaseServer) initAgents() []baseAgent.Agent {
-	m := make([]AgentGeneratorCountPair, 6)
-	m[0] = AgentGeneratorCountPair{baseAgent.GetAgent, 4}
-	m[1] = AgentGeneratorCountPair{agent2.GetAgent, 3}
-	m[2] = AgentGeneratorCountPair{agent1.GetAgent, 2}
+func MakeAgentGeneratorCountPair(generatorFunction AgentGenerator, count int) AgentGeneratorCountPair {
+	return AgentGeneratorCountPair{
+		generator: generatorFunction,
+		count:     count,
+	}
+}
+
+func (bs *BaseServer) initAgents(m []AgentGeneratorCountPair) []baseAgent.Agent {
+
 
 	agents := make([]baseAgent.Agent, getNumAgents(m))
 	agentCount := 0
