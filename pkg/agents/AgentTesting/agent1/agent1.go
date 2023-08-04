@@ -13,6 +13,7 @@ type Agent1 struct {
 }
 
 func (a1 *Agent1) Activity() {
+	
 	fmt.Println("Agent1's Activity")
 	fmt.Printf("age: %d\n", a1.age)
 	a1.AgentUser.Activity()
