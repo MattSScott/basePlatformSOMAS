@@ -5,6 +5,12 @@ import (
 	"fmt"
 )
 
+type AgentUserInterface interface {
+	baseAgent.Agent
+	Activity1()
+	Activity2()
+}
+
 type AgentUser struct {
 	*baseAgent.BaseAgent
 	name string
@@ -13,8 +19,8 @@ type AgentUser struct {
 
 //add func for
 
-func (a *AgentUser) Activity() {
-	fmt.Println("Agent's Activity")
+func (a *AgentUser) Activity1() {
+	fmt.Println("Agent's Activity1")
 
 	fmt.Printf("name: %s\n", a.name)
 	a.BaseAgent.Activity()
@@ -22,11 +28,20 @@ func (a *AgentUser) Activity() {
 
 }
 
+func (a *AgentUser) Activity2() {
+	fmt.Println("Agent's Activity2")
+
+	// fmt.Printf("name: %s\n", a.name)
+	// a.BaseAgent.Activity()
+	// a.SetFood()
+
+}
+
 func GetAgent(name string) *AgentUser {
 	return &AgentUser{
 		BaseAgent: baseAgent.NewAgent(),
 		name:      name,
-		food: 0,
+		food:      0,
 	}
 
 }
@@ -46,6 +61,6 @@ func GetAgentDefault() baseAgent.Agent {
 	return &AgentUser{
 		BaseAgent: baseAgent.NewAgent(),
 		name:      "BaseUser",
-		food: 0,
+		food:      0,
 	}
 }

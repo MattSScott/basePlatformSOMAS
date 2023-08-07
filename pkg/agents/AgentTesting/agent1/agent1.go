@@ -2,7 +2,6 @@ package agent1
 
 import (
 	baseUserAgent "basePlatformSOMAS/pkg/agents/AgentTesting/baseuseragent"
-	baseAgent "basePlatformSOMAS/pkg/agents/BaseAgent"
 
 	"fmt"
 )
@@ -13,7 +12,7 @@ type Agent1 struct {
 }
 
 func (a1 *Agent1) Activity() {
-	
+
 	fmt.Println("Agent1's Activity")
 	fmt.Printf("age: %d\n", a1.age)
 	a1.AgentUser.Activity()
@@ -29,7 +28,7 @@ func (a1 *Agent1) GetAge() int {
 	return a1.age
 }
 
-func GetAgent() baseAgent.Agent {
+func GetAgent() baseUserAgent.AgentUserInterface {
 	return &Agent1{
 		AgentUser: baseUserAgent.GetAgent("A1"),
 		age:       0,

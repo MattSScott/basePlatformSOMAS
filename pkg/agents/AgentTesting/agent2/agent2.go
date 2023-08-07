@@ -2,7 +2,6 @@ package agent2
 
 import (
 	baseUserAgent "basePlatformSOMAS/pkg/agents/AgentTesting/baseuseragent"
-	baseAgent "basePlatformSOMAS/pkg/agents/BaseAgent"
 	"math/rand"
 
 	"fmt"
@@ -11,7 +10,7 @@ import (
 type Agent2 struct {
 	*baseUserAgent.AgentUser
 	gender string
-	sleep int
+	sleep  int
 }
 
 func setGender() string {
@@ -33,7 +32,7 @@ func (a1 *Agent2) Activity() {
 	fmt.Println("Agent1's Activity")
 	fmt.Printf("gender: %s\n", a1.gender)
 	a1.BaseAgent.Activity()
-	a1.sleep-=10
+	a1.sleep -= 10
 
 }
 
@@ -41,11 +40,11 @@ func (a1 *Agent2) UpdateAgent() {
 	fmt.Println("Updating Agent1...")
 }
 
-func GetAgent() baseAgent.Agent {
+func GetAgent() baseUserAgent.AgentUserInterface {
 	return &Agent2{
 		AgentUser: baseUserAgent.GetAgent("A2"),
 		gender:    setGender(),
-		sleep:		100,
+		sleep:     100,
 	}
 
 }
