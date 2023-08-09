@@ -1,23 +1,23 @@
 package serverTesting
 
 import (
-	//agent1 "basePlatformSOMAS/pkg/agents/AgentTesting/agent1"
-	//agent2 "basePlatformSOMAS/pkg/agents/AgentTesting/agent2"
-	//baseUserAgent "basePlatformSOMAS/pkg/agents/AgentTesting/baseuseragent"
+	"basePlatformSOMAS/pkg/agents/AgentTesting/agent1"
+	"basePlatformSOMAS/pkg/agents/AgentTesting/agent2"
+	baseUserAgent "basePlatformSOMAS/pkg/agents/AgentTesting/baseuseragent"
 	baseAgent "basePlatformSOMAS/pkg/agents/BaseAgent"
 	infra "basePlatformSOMAS/pkg/infra/server"
-	//testserver "basePlatformSOMAS/pkg/testServer"
-	"github.com/google/uuid"
+	testserver "basePlatformSOMAS/pkg/testServer"
+
 	"testing"
+
+	"github.com/google/uuid"
 )
 
-
-func TestMakeServerBase(t *testing.T) {
+func TestBaseServer(t *testing.T) {
 	m := make([]infra.AgentGeneratorCountPair[baseAgent.Agent], 1)
 	m[0] = infra.MakeAgentGeneratorCountPair(baseAgent.GetAgent, 4)
 
 	serv := infra.CreateServer[baseAgent.Agent](m, 5)
-	
 
 	for _, agent := range serv.Agents {
 
@@ -25,20 +25,30 @@ func TestMakeServerBase(t *testing.T) {
 			t.Error("Error creating agent")
 
 		}
-		
+
 	}
 	serv.RunGameLoop()
 	serv.Start()
 
 }
 
-// func TestmakeServerTest() {
+func TestInheritedServer(t *testing.T) {
 
-// 	m := make([]infra.AgentGeneratorCountPair[baseUserAgent.AgentUserInterface], 2)
-// 	m[0] = infra.MakeAgentGeneratorCountPair[baseUserAgent.AgentUserInterface](agent2.GetAgent, 3)
-// 	m[1] = infra.MakeAgentGeneratorCountPair[baseUserAgent.AgentUserInterface](agent1.GetAgent, 2)
-// 	floors := 3
-// 	ts := testserver.New(m, floors)
-// 	ts.RunGameLoop()
-// 	ts.Start()
-// }
+	m := make([]infra.AgentGeneratorCountPair[baseUserAgent.AgentUserInterface], 2)
+	m[0] = infra.MakeAgentGeneratorCountPair[baseUserAgent.AgentUserInterface](agent2.GetAgent, 3)
+	m[1] = infra.MakeAgentGeneratorCountPair[baseUserAgent.AgentUserInterface](agent1.GetAgent, 2)
+
+	floors := 3
+	ts := testserver.New(m, floors)
+
+	if len(ts.Agents) != 5 {
+		t.Error("Agents not properly instantiated")
+	}
+
+	if ts.GetName() != "TestServer" {
+		t.Error("Server name not properly instantiated")
+	}
+
+	ts.RunGameLoop()
+	ts.Start()
+}

@@ -10,11 +10,15 @@ type MyServer struct {
 	name string
 }
 
-func New(mapper []baseServer.AgentGeneratorCountPair[baseUserAgent.AgentUserInterface], numFloors int) baseServer.Server {
+func New(mapper []baseServer.AgentGeneratorCountPair[baseUserAgent.AgentUserInterface], numFloors int) *MyServer {
 	return &MyServer{
 		BaseServer: baseServer.CreateServer[baseUserAgent.AgentUserInterface](mapper, numFloors),
-		name:       "Test Server",
+		name:       "TestServer",
 	}
+}
+
+func (s *MyServer) GetName() string {
+	return s.name
 }
 
 func (s *MyServer) RunGameLoop() {
