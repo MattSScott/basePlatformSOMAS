@@ -34,3 +34,5 @@ func GetAgent() baseUserAgent.AgentUserInterface {
 		age:       0,
 	}
 }
+
+func HandleMsg()

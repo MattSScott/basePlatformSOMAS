@@ -8,6 +8,9 @@ import (
 
 type BaseAgent struct {
 	id uuid.UUID
+	msg string
+	receivers []BaseAgent
+	network []BaseAgent
 }
 
 func (ba *BaseAgent) GetID() uuid.UUID {
@@ -42,4 +45,28 @@ func GetAgent() Agent {
 	return &BaseAgent{
 		id: uuid.New(),
 	}
+}
+
+func (ba *BaseAgent) GetMsg() string {
+	return ba.msg
+}
+
+func (ba *BaseAgent) SetMsg(s string) {
+	ba.msg = s
+}
+
+func (ba *BaseAgent) GetNet() []BaseAgent {
+	return ba.network
+}
+
+func (ba *BaseAgent) SetNet(a []BaseAgent ) {
+	ba.network = a 
+}
+
+func (ba *BaseAgent) GetRcv() []BaseAgent {
+	return ba.receivers
+}
+
+func (ba *BaseAgent) SetRcv(a []BaseAgent) {
+	ba.receivers = a
 }
