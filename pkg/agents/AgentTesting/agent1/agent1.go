@@ -2,9 +2,10 @@ package agent1
 
 import (
 	baseUserAgent "basePlatformSOMAS/pkg/agents/AgentTesting/baseuseragent"
-	messaging "basePlatformSOMAS/pkg/messaging" 
-
+	baseAgent "basePlatformSOMAS/pkg/agents/BaseAgent"
+	messaging "basePlatformSOMAS/pkg/messaging"
 	"fmt"
+	"strings"
 )
 
 type Agent1 struct {
@@ -36,18 +37,18 @@ func GetAgent() baseUserAgent.AgentUserInterface {
 	}
 }
 
+func (a1 *Agent1) GetMessage() messaging.Message {
+	return messaging.Message{}
+}
 
+func (a1 *Agent1) HandleMessage(msg messaging.Message) messaging.Message {
+	content := strings.ToLower(msg.GetContent())
+	recip := []baseAgent.Agent{msg.GetSender()}
 
-func (a1 *Agent1) HandleMsg[T baseUserAgent.AgentUserInterface](letter messaging.LetterI[baseUserAgent.AgentUserInterface]){
-	msg := letter.GetMsg()
-	if msg == "Hello"{
-		a1.SetMsg("world!")
-		
-		s:=letter.GetSnd()
-		snd:= [1]T{s}
-
-		a1.SetRcv(snd)
+	if content == "hello" {
+		reply := messaging.CreateMessage(a1, "world", recip)
+		return reply
 	}
 
-
+	return messaging.CreateMessage(a1, "sorry, I didn't quite get that", recip)
 }
