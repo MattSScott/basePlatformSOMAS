@@ -2,6 +2,7 @@ package agent1
 
 import (
 	baseUserAgent "basePlatformSOMAS/pkg/agents/AgentTesting/baseuseragent"
+	messaging "basePlatformSOMAS/pkg/messaging" 
 
 	"fmt"
 )
@@ -35,4 +36,18 @@ func GetAgent() baseUserAgent.AgentUserInterface {
 	}
 }
 
-func HandleMsg()
+
+
+func (a1 *Agent1) HandleMsg[T baseUserAgent.AgentUserInterface](letter messaging.LetterI[baseUserAgent.AgentUserInterface]){
+	msg := letter.GetMsg()
+	if msg == "Hello"{
+		a1.SetMsg("world!")
+		
+		s:=letter.GetSnd()
+		snd:= [1]T{s}
+
+		a1.SetRcv(snd)
+	}
+
+
+}
