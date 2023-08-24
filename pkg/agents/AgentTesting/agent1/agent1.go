@@ -1,8 +1,8 @@
 package agent1
 
 import (
-	baseUserAgent "basePlatformSOMAS/pkg/agents/AgentTesting/baseuseragent"
-	messaging "basePlatformSOMAS/pkg/messaging"
+	baseUserAgent "github.com/MattSScott/basePlatformSOMAS/pkg/agents/AgentTesting/baseuseragent"
+	messaging "github.com/MattSScott/basePlatformSOMAS/pkg/messaging"
 	"fmt"
 	"strings"
 )

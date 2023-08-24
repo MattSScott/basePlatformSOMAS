@@ -1,8 +1,8 @@
 package agentTesting
 
 import (
-	agent1 "basePlatformSOMAS/pkg/agents/AgentTesting/agent1"
-	agent2 "basePlatformSOMAS/pkg/agents/AgentTesting/agent2"
+	agent1 "github.com/MattSScott/basePlatformSOMAS/pkg/agents/AgentTesting/agent1"
+	agent2 "github.com/MattSScott/basePlatformSOMAS/pkg/agents/AgentTesting/agent2"
 	"testing"
 )
 

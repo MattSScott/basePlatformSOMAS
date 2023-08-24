@@ -1,7 +1,7 @@
 package agent2
 
 import (
-	baseUserAgent "basePlatformSOMAS/pkg/agents/AgentTesting/baseuseragent"
+	baseUserAgent "github.com/MattSScott/basePlatformSOMAS/pkg/agents/AgentTesting/baseuseragent"
 	"math/rand"
 
 	"fmt"

@@ -1,7 +1,7 @@
 package message
 
 import (
-	baseAgent "basePlatformSOMAS/pkg/agents/BaseAgent"
+	baseAgent "github.com/MattSScott/basePlatformSOMAS/pkg/agents/BaseAgent"
 )
 
 type Message[T baseAgent.Agent] struct {

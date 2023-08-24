@@ -1,12 +1,12 @@
 package serverTesting
 
 import (
-	"basePlatformSOMAS/pkg/agents/AgentTesting/agent1"
-	"basePlatformSOMAS/pkg/agents/AgentTesting/agent2"
-	baseUserAgent "basePlatformSOMAS/pkg/agents/AgentTesting/baseuseragent"
-	baseAgent "basePlatformSOMAS/pkg/agents/BaseAgent"
-	infra "basePlatformSOMAS/pkg/infra/server"
-	testserver "basePlatformSOMAS/pkg/testServer"
+	"github.com/MattSScott/basePlatformSOMAS/pkg/agents/AgentTesting/agent1"
+	"github.com/MattSScott/basePlatformSOMAS/pkg/agents/AgentTesting/agent2"
+	baseUserAgent "github.com/MattSScott/basePlatformSOMAS/pkg/agents/AgentTesting/baseuseragent"
+	baseAgent "github.com/MattSScott/basePlatformSOMAS/pkg/agents/BaseAgent"
+	infra "github.com/MattSScott/basePlatformSOMAS/pkg/infra/server"
+	testserver "github.com/MattSScott/basePlatformSOMAS/pkg/testServer"
 
 	"testing"
 
