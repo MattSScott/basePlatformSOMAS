@@ -1,17 +1,15 @@
 package baseUserAgent
 
 import (
-	baseAgent "github.com/MattSScott/basePlatformSOMAS/pkg/agents/BaseAgent"
-	message "github.com/MattSScott/basePlatformSOMAS/pkg/messaging"
 	"fmt"
+
+	baseAgent "github.com/MattSScott/basePlatformSOMAS/pkg/agents/BaseAgent"
 )
 
 type AgentUserInterface interface {
 	baseAgent.Agent
 	Activity1()
 	Activity2()
-	GetMessage() message.Message[AgentUserInterface]
-	HandleMessage(message.Message[AgentUserInterface]) message.Message[AgentUserInterface]
 }
 
 type AgentUser struct {
@@ -38,13 +36,6 @@ func (a *AgentUser) Activity2() {
 	// a.BaseAgent.Activity()
 	// a.SetFood()
 
-}
-
-func (a *AgentUser) GetMessage() message.Message[AgentUserInterface] {
-	return message.Message[AgentUserInterface]{}
-}
-func (a *AgentUser) HandleMessage(m message.Message[AgentUserInterface]) message.Message[AgentUserInterface] {
-	return message.Message[AgentUserInterface]{}
 }
 
 func GetAgent(name string) *AgentUser {

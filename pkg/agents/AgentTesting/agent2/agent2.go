@@ -1,8 +1,10 @@
 package agent2
 
 import (
-	baseUserAgent "github.com/MattSScott/basePlatformSOMAS/pkg/agents/AgentTesting/baseuseragent"
 	"math/rand"
+
+	baseUserAgent "github.com/MattSScott/basePlatformSOMAS/pkg/agents/AgentTesting/baseuseragent"
+	message "github.com/MattSScott/basePlatformSOMAS/pkg/messaging"
 
 	"fmt"
 )
@@ -47,4 +49,14 @@ func GetAgent() baseUserAgent.AgentUserInterface {
 		sleep:     100,
 	}
 
+}
+
+func (a2 *Agent2) GetMessage() message.Message {
+	return message.CreateMessage(a2, "wello", a2.GetNetworkForMessaging())
+}
+
+func (a2 *Agent2) HandleMessage(msg message.Message) {
+	if msg.GetContent() == "hello" {
+		fmt.Println("world")
+	}
 }

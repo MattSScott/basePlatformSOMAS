@@ -1,10 +1,11 @@
 package agent1
 
 import (
-	baseUserAgent "github.com/MattSScott/basePlatformSOMAS/pkg/agents/AgentTesting/baseuseragent"
-	messaging "github.com/MattSScott/basePlatformSOMAS/pkg/messaging"
 	"fmt"
 	"strings"
+
+	baseUserAgent "github.com/MattSScott/basePlatformSOMAS/pkg/agents/AgentTesting/baseuseragent"
+	messaging "github.com/MattSScott/basePlatformSOMAS/pkg/messaging"
 )
 
 type Agent1 struct {
@@ -36,25 +37,15 @@ func GetAgent() baseUserAgent.AgentUserInterface {
 	}
 }
 
-func (a1 *Agent1) GetMessage() messaging.Message[baseUserAgent.AgentUserInterface] {
-	return messaging.Message[baseUserAgent.AgentUserInterface]{}
+func (a1 *Agent1) GetMessage() messaging.Message {
+	return messaging.CreateMessage(a1, "hello", a1.GetNetworkForMessaging())
 }
 
-func (a1 *Agent1) HandleMessage(msg messaging.Message[baseUserAgent.AgentUserInterface]) messaging.Message[baseUserAgent.AgentUserInterface] {
+func (a1 *Agent1) HandleMessage(msg messaging.Message) {
 	content := strings.ToLower(msg.GetContent())
-	recip := []baseUserAgent.AgentUserInterface{msg.GetSender()}
 
-	// TODO: very sloppy handling.
-	// We should have the function just return content, so that the server can package it into a messaging object
-	var sender baseUserAgent.AgentUserInterface = a1
-
-	// using generics, we can now gain access to the methods from the interface
-	msg.GetSender().Activity1()
-
-	if content == "hello" {
-		reply := messaging.CreateMessage(sender, "world", recip)
-		return reply
+	if content == "wello" {
+		fmt.Println("horld")
 	}
 
-	return messaging.CreateMessage(sender, "sorry, I didn't quite get that", recip)
 }

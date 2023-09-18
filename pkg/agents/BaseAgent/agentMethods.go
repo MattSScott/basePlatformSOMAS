@@ -1,12 +1,12 @@
 package baseagent
 
 import (
-	"github.com/google/uuid"
 	message "github.com/MattSScott/basePlatformSOMAS/pkg/messaging"
+	"github.com/google/uuid"
 )
 
 type Agent interface {
-	message.Agent
+	message.Messaging
 	Activity()
 	UpdateAgent()
 	GetID() uuid.UUID

@@ -1,52 +1,30 @@
 package message
 
-import (
-	//baseAgent "github.com/MattSScott/basePlatformSOMAS/pkg/agents/BaseAgent"
-)
+//baseAgent "github.com/MattSScott/basePlatformSOMAS/pkg/agents/BaseAgent"
 
-type Message[T Agent] struct {
-	sender     T
+type Message struct {
+	sender     Messaging
 	content    string
-	recipients []T
-}
-type Agent interface {
-	GetMessage() Message[Agent]
-	HandleMessage(Message[Agent]) Message[Agent]
-	
+	recipients []Messaging
 }
 
-
-
-func CreateMessage[T Agent](sender T, content string, recipients []T) Message[T] {
-	return Message[T]{
+// create read-only message instance
+func CreateMessage(sender Messaging, content string, recipients []Messaging) Message {
+	return Message{
 		sender:     sender,
 		content:    content,
 		recipients: recipients,
 	}
 }
-// func CreateMessageI[T baseAgent.Agent](sender T, content string, recipients []T) Messaging[T] {
-// 	return &Message[T]{
-// 		sender:     sender,
-// 		content:    content,
-// 		recipients: recipients,
-// 	}
-// }
 
-
-func (m *Message[T]) GetSender() T {
+func (m *Message) GetSender() Messaging {
 	return m.sender
 }
 
-
-
-func (m *Message[T]) GetContent() string {
+func (m *Message) GetContent() string {
 	return m.content
 }
 
-
-
-func (m *Message[T]) GetRecipients() []T {
+func (m *Message) GetRecipients() []Messaging {
 	return m.recipients
 }
-
-

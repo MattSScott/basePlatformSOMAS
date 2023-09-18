@@ -2,29 +2,19 @@ package baseagent
 
 import (
 	"fmt"
+
 	message "github.com/MattSScott/basePlatformSOMAS/pkg/messaging"
 	"github.com/google/uuid"
 )
 
 type BaseAgent struct {
-	id uuid.UUID
-	msg string
-	receivers []BaseAgent
+	id      uuid.UUID
 	network []BaseAgent
 }
 
 func (ba *BaseAgent) GetID() uuid.UUID {
 	return ba.id
 }
-
-// func (ba *BaseAgent) GetName() string {
-// 	return ba.name
-// }
-
-// func (ba *BaseAgent) SetName(name string) {
-
-// 	ba.name = name
-// }
 
 func (ba *BaseAgent) UpdateAgent() {
 	fmt.Println("Updating BaseAgent...")
@@ -47,33 +37,25 @@ func GetAgent() Agent {
 	}
 }
 
-func (ba *BaseAgent) GetMsg() string {
-	return ba.msg
-}
-
-func (ba *BaseAgent) SetMsg(s string) {
-	ba.msg = s
-}
-
-func (ba *BaseAgent) GetNet() []BaseAgent {
+func (ba *BaseAgent) GetNetwork() []BaseAgent {
 	return ba.network
 }
 
-func (ba *BaseAgent) SetNet(a []BaseAgent ) {
-	ba.network = a 
+func (ba *BaseAgent) GetNetworkForMessaging() []message.Messaging {
+	messengerArray := make([]message.Messaging, len(ba.network))
+	for i := range ba.network {
+		messengerArray[i] = &ba.network[i]
+	}
+	return messengerArray
 }
 
-func (ba *BaseAgent) GetRcv() []BaseAgent {
-	return ba.receivers
+func (ba *BaseAgent) SetNetwork(newNetwork []BaseAgent) {
+	ba.network = newNetwork
 }
 
-func (ba *BaseAgent) SetRcv(a []BaseAgent) {
-	ba.receivers = a
+func (ba *BaseAgent) GetMessage() message.Message {
+	return message.CreateMessage(ba, "", ba.GetNetworkForMessaging())
 }
-
-func (a *BaseAgent) GetMessage() message.Message[Agent] {
-	return message.Message[Agent]{}
-}
-func (a *BaseAgent) HandleMessage(m message.Message[Agent]) message.Message[Agent] {
-	return message.Message[Agent]{}
+func (a *BaseAgent) HandleMessage(m message.Message) {
+	fmt.Println("message received in baseAgent")
 }
