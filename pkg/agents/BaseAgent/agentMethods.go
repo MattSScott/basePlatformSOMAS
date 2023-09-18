@@ -5,8 +5,8 @@ import (
 	"github.com/google/uuid"
 )
 
-type Agent interface {
-	message.Messaging
+type IAgent interface {
+	message.IAgentMessaging
 	Activity()
 	UpdateAgent()
 	GetID() uuid.UUID

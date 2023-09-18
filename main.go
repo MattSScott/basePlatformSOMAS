@@ -1,13 +1,14 @@
 package main
 
 import (
+	"fmt"
+
 	agent1 "github.com/MattSScott/basePlatformSOMAS/pkg/agents/AgentTesting/agent1"
 	agent2 "github.com/MattSScott/basePlatformSOMAS/pkg/agents/AgentTesting/agent2"
 	baseUserAgent "github.com/MattSScott/basePlatformSOMAS/pkg/agents/AgentTesting/baseuseragent"
 	baseAgent "github.com/MattSScott/basePlatformSOMAS/pkg/agents/BaseAgent"
 	infra "github.com/MattSScott/basePlatformSOMAS/pkg/infra/server"
 	testserver "github.com/MattSScott/basePlatformSOMAS/pkg/testServer"
-	"fmt"
 )
 
 func main() {
@@ -25,10 +26,10 @@ func main() {
 }
 
 func makeServerBase() {
-	m := make([]infra.AgentGeneratorCountPair[baseAgent.Agent], 1)
+	m := make([]infra.AgentGeneratorCountPair[baseAgent.IAgent], 1)
 	m[0] = infra.MakeAgentGeneratorCountPair(baseAgent.GetAgent, 4)
 
-	serv := infra.CreateServer[baseAgent.Agent](m, 5)
+	serv := infra.CreateServer[baseAgent.IAgent](m, 5)
 
 	serv.RunGameLoop()
 	serv.Start()

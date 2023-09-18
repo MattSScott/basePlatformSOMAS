@@ -7,7 +7,7 @@ import (
 )
 
 type AgentUserInterface interface {
-	baseAgent.Agent
+	baseAgent.IAgent
 	Activity1()
 	Activity2()
 }
@@ -58,7 +58,7 @@ func (u *AgentUser) SetFood() {
 	u.food++
 }
 
-func GetAgentDefault() baseAgent.Agent {
+func GetAgentDefault() baseAgent.IAgent {
 	return &AgentUser{
 		BaseAgent: baseAgent.NewAgent(),
 		name:      "BaseUser",

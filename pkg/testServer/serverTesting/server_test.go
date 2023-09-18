@@ -14,10 +14,10 @@ import (
 )
 
 func TestBaseServer(t *testing.T) {
-	m := make([]infra.AgentGeneratorCountPair[baseAgent.Agent], 1)
+	m := make([]infra.AgentGeneratorCountPair[baseAgent.IAgent], 1)
 	m[0] = infra.MakeAgentGeneratorCountPair(baseAgent.GetAgent, 4)
 
-	serv := infra.CreateServer[baseAgent.Agent](m, 5)
+	serv := infra.CreateServer[baseAgent.IAgent](m, 5)
 
 	for _, agent := range serv.Agents {
 

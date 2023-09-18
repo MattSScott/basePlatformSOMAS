@@ -6,7 +6,7 @@ import (
 	baseAgent "github.com/MattSScott/basePlatformSOMAS/pkg/agents/BaseAgent"
 )
 
-type BaseServer[T baseAgent.Agent] struct {
+type BaseServer[T baseAgent.IAgent] struct {
 	NumAgents int
 	NumTurns  int
 	Agents    []T
@@ -34,14 +34,14 @@ func (bs *BaseServer[T]) Start() {
 
 }
 
-type AgentGenerator[T baseAgent.Agent] func() T
+type AgentGenerator[T baseAgent.IAgent] func() T
 
-type AgentGeneratorCountPair[T baseAgent.Agent] struct {
+type AgentGeneratorCountPair[T baseAgent.IAgent] struct {
 	generator AgentGenerator[T]
 	count     int
 }
 
-func MakeAgentGeneratorCountPair[T baseAgent.Agent](generatorFunction AgentGenerator[T], count int) AgentGeneratorCountPair[T] {
+func MakeAgentGeneratorCountPair[T baseAgent.IAgent](generatorFunction AgentGenerator[T], count int) AgentGeneratorCountPair[T] {
 	return AgentGeneratorCountPair[T]{
 		generator: generatorFunction,
 		count:     count,
@@ -64,7 +64,7 @@ func (bs *BaseServer[T]) initialiseAgents(m []AgentGeneratorCountPair[T]) {
 	bs.NumAgents = len(agents)
 }
 
-func getNumAgents[T baseAgent.Agent](pairs []AgentGeneratorCountPair[T]) int {
+func getNumAgents[T baseAgent.IAgent](pairs []AgentGeneratorCountPair[T]) int {
 
 	numAgents := 0
 
@@ -75,7 +75,7 @@ func getNumAgents[T baseAgent.Agent](pairs []AgentGeneratorCountPair[T]) int {
 	return numAgents
 }
 
-func CreateServer[T baseAgent.Agent](mapper []AgentGeneratorCountPair[T], numTurns int) *BaseServer[T] {
+func CreateServer[T baseAgent.IAgent](mapper []AgentGeneratorCountPair[T], numTurns int) *BaseServer[T] {
 	// generate the server and return it
 	serv := &BaseServer[T]{
 		NumTurns: numTurns,

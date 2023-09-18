@@ -3,13 +3,13 @@ package message
 //baseAgent "github.com/MattSScott/basePlatformSOMAS/pkg/agents/BaseAgent"
 
 type Message struct {
-	sender     Messaging
+	sender     IAgentMessaging
 	content    string
-	recipients []Messaging
+	recipients []IAgentMessaging
 }
 
 // create read-only message instance
-func CreateMessage(sender Messaging, content string, recipients []Messaging) Message {
+func CreateMessage(sender IAgentMessaging, content string, recipients []IAgentMessaging) Message {
 	return Message{
 		sender:     sender,
 		content:    content,
@@ -17,7 +17,7 @@ func CreateMessage(sender Messaging, content string, recipients []Messaging) Mes
 	}
 }
 
-func (m *Message) GetSender() Messaging {
+func (m *Message) GetSender() IAgentMessaging {
 	return m.sender
 }
 
@@ -25,6 +25,6 @@ func (m *Message) GetContent() string {
 	return m.content
 }
 
-func (m *Message) GetRecipients() []Messaging {
+func (m *Message) GetRecipients() []IAgentMessaging {
 	return m.recipients
 }

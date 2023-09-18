@@ -31,7 +31,7 @@ func NewAgent() *BaseAgent {
 	}
 }
 
-func GetAgent() Agent {
+func GetAgent() IAgent {
 	return &BaseAgent{
 		id: uuid.New(),
 	}
@@ -41,8 +41,8 @@ func (ba *BaseAgent) GetNetwork() []BaseAgent {
 	return ba.network
 }
 
-func (ba *BaseAgent) GetNetworkForMessaging() []message.Messaging {
-	messengerArray := make([]message.Messaging, len(ba.network))
+func (ba *BaseAgent) GetNetworkForMessaging() []message.IAgentMessaging {
+	messengerArray := make([]message.IAgentMessaging, len(ba.network))
 	for i := range ba.network {
 		messengerArray[i] = &ba.network[i]
 	}
