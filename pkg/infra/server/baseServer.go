@@ -3,7 +3,7 @@ package infra
 import (
 	"fmt"
 
-	baseAgent "basePlatformSOMAS/pkg/agents/BaseAgent"
+	baseAgent "github.com/MattSScott/basePlatformSOMAS/pkg/agents/BaseAgent"
 )
 
 type BaseServer[T baseAgent.Agent] struct {

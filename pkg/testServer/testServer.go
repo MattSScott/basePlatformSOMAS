@@ -1,8 +1,8 @@
 package testserver
 
 import (
-	baseUserAgent "basePlatformSOMAS/pkg/agents/AgentTesting/baseuseragent"
-	baseServer "basePlatformSOMAS/pkg/infra/server"
+	baseUserAgent "github.com/MattSScott/basePlatformSOMAS/pkg/agents/AgentTesting/baseuseragent"
+	baseServer "github.com/MattSScott/basePlatformSOMAS/pkg/infra/server"
 )
 
 type MyServer struct {

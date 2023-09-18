@@ -1,8 +1,9 @@
 package baseUserAgent
 
 import (
-	baseAgent "basePlatformSOMAS/pkg/agents/BaseAgent"
 	"fmt"
+
+	baseAgent "github.com/MattSScott/basePlatformSOMAS/pkg/agents/BaseAgent"
 )
 
 type AgentUserInterface interface {

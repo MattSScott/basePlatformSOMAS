@@ -1,9 +1,11 @@
 package agent1
 
 import (
-	baseUserAgent "basePlatformSOMAS/pkg/agents/AgentTesting/baseuseragent"
-
 	"fmt"
+	"strings"
+
+	baseUserAgent "github.com/MattSScott/basePlatformSOMAS/pkg/agents/AgentTesting/baseuseragent"
+	messaging "github.com/MattSScott/basePlatformSOMAS/pkg/messaging"
 )
 
 type Agent1 struct {
@@ -33,4 +35,17 @@ func GetAgent() baseUserAgent.AgentUserInterface {
 		AgentUser: baseUserAgent.GetAgent("A1"),
 		age:       0,
 	}
+}
+
+func (a1 *Agent1) GetMessage() messaging.Message {
+	return messaging.CreateMessage(a1, "hello", a1.GetNetworkForMessaging())
+}
+
+func (a1 *Agent1) HandleMessage(msg messaging.Message) {
+	content := strings.ToLower(msg.GetContent())
+
+	if content == "wello" {
+		fmt.Println("horld")
+	}
+
 }
