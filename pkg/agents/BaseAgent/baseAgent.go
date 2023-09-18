@@ -2,7 +2,7 @@ package baseagent
 
 import (
 	"fmt"
-
+	message "github.com/MattSScott/basePlatformSOMAS/pkg/messaging"
 	"github.com/google/uuid"
 )
 
@@ -69,4 +69,11 @@ func (ba *BaseAgent) GetRcv() []BaseAgent {
 
 func (ba *BaseAgent) SetRcv(a []BaseAgent) {
 	ba.receivers = a
+}
+
+func (a *BaseAgent) GetMessage() message.Message[Agent] {
+	return message.Message[Agent]{}
+}
+func (a *BaseAgent) HandleMessage(m message.Message[Agent]) message.Message[Agent] {
+	return message.Message[Agent]{}
 }

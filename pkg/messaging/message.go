@@ -1,16 +1,23 @@
 package message
 
 import (
-	baseAgent "github.com/MattSScott/basePlatformSOMAS/pkg/agents/BaseAgent"
+	//baseAgent "github.com/MattSScott/basePlatformSOMAS/pkg/agents/BaseAgent"
 )
 
-type Message[T baseAgent.Agent] struct {
+type Message[T Agent] struct {
 	sender     T
 	content    string
 	recipients []T
 }
+type Agent interface {
+	GetMessage() Message[Agent]
+	HandleMessage(Message[Agent]) Message[Agent]
+	
+}
 
-func CreateMessage[T baseAgent.Agent](sender T, content string, recipients []T) Message[T] {
+
+
+func CreateMessage[T Agent](sender T, content string, recipients []T) Message[T] {
 	return Message[T]{
 		sender:     sender,
 		content:    content,
