@@ -54,7 +54,7 @@ func (bs *BaseServer[T]) RunMessagingSession() {
 		for _, msg := range allMessages {
 			recipients := msg.GetRecipients()
 			for _, recip := range recipients {
-				msg.Accept(recip)
+				msg.Accept(recip.(T))
 			}
 		}
 	}

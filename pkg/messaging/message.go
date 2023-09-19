@@ -5,38 +5,38 @@ package message
 // base interface structure used for message passing - can be composed for more complex message structures
 
 // new message types extend this
-type IMessage interface {
-	GetSender() IAgentMessenger
-	GetRecipients() []IAgentMessenger
-	Accept(IAgentMessenger)
+type IMessage[T any] interface {
+	GetSender() T
+	GetRecipients() []T
+	Accept(T)
 }
 
-type BaseMessage struct {
-	sender     IAgentMessenger
-	recipients []IAgentMessenger
+type BaseMessage[T IAgentMessenger[T]] struct {
+	sender     T
+	recipients []T
 }
 
 // create read-only message instance
-func CreateMessage(sender IAgentMessenger, recipients []IAgentMessenger) BaseMessage {
-	return BaseMessage{
+func CreateMessage[T IAgentMessenger[T]](sender T, recipients []T) BaseMessage[T] {
+	return BaseMessage[T]{
 		sender:     sender,
 		recipients: recipients,
 	}
 }
 
-func CreateNullMessageWithSender(sender IAgentMessenger) BaseMessage {
-	return BaseMessage{
-		sender: sender,
-	}
-}
+// func CreateNullMessageWithSender(sender IAgentMessenger) BaseMessage {
+// 	return BaseMessage{
+// 		sender: sender,
+// 	}
+// }
 
-func (bm BaseMessage) GetSender() IAgentMessenger {
+func (bm BaseMessage[T]) GetSender() T {
 	return bm.sender
 }
 
-func (bm BaseMessage) GetRecipients() []IAgentMessenger {
+func (bm BaseMessage[T]) GetRecipients() []T {
 	return bm.recipients
 }
 
-func (bm BaseMessage) Accept(agent IAgentMessenger) {
+func (bm BaseMessage[T]) Accept(agent T) {
 }
