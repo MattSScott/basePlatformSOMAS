@@ -7,7 +7,7 @@ import (
 )
 
 type IAgent interface {
-	message.IAgentMessaging
+	message.IAgentMessenger[IAgent]
 	Activity()
 	UpdateAgent()
 	GetID() uuid.UUID

@@ -2,45 +2,41 @@ package message
 
 // import baseagent "github.com/MattSScott/basePlatformSOMAS/pkg/agents/BaseAgent"
 
-type IMessage interface {
-	GetSender() IAgentMessaging
-	GetRecipients() []IAgentMessaging
-	HowToHandleMessage(agent IAgentMessaging)
+// base interface structure used for message passing - can be composed for more complex message structures
+
+// new message types extend this
+type IMessage[T any] interface {
+	GetSender() T
+	GetRecipients() []T
+	Accept(T)
 }
 
-type BaseMessage struct {
-	sender IAgentMessaging
-	// content    string
-	recipients []IAgentMessaging
+type BaseMessage[T IAgentMessenger[T]] struct {
+	sender     T
+	recipients []T
 }
 
 // create read-only message instance
-func CreateMessage(sender IAgentMessaging, recipients []IAgentMessaging) BaseMessage {
-	return BaseMessage{
-		sender: sender,
-		// content:    content,
+func CreateMessage[T IAgentMessenger[T]](sender T, recipients []T) BaseMessage[T] {
+	return BaseMessage[T]{
+		sender:     sender,
 		recipients: recipients,
 	}
 }
 
-func CreateNullMessageWithSender(sender IAgentMessaging) BaseMessage {
-	return BaseMessage{
-		sender: sender,
-	}
-}
+// func CreateNullMessageWithSender(sender IAgentMessenger) BaseMessage {
+// 	return BaseMessage{
+// 		sender: sender,
+// 	}
+// }
 
-func (bm BaseMessage) GetSender() IAgentMessaging {
+func (bm BaseMessage[T]) GetSender() T {
 	return bm.sender
 }
 
-// func (bm *BaseMessage) GetContent() string {
-// 	return bm.content
-// }
-
-func (bm BaseMessage) GetRecipients() []IAgentMessaging {
+func (bm BaseMessage[T]) GetRecipients() []T {
 	return bm.recipients
 }
 
-func (bm BaseMessage) HowToHandleMessage(agent IAgentMessaging) {
-	agent.HandleMessage(bm)
+func (bm BaseMessage[T]) Accept(agent T) {
 }
