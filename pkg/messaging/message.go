@@ -2,10 +2,10 @@ package message
 
 // import baseagent "github.com/MattSScott/basePlatformSOMAS/pkg/agents/BaseAgent"
 
-type IMessage interface {
-	GetSender() IAgentMessaging
-	GetRecipients() []IAgentMessaging
-	HowToHandleMessage(agent IAgentMessaging)
+type IMessage[T IAgentMessaging] interface {
+	GetSender() T
+	GetRecipients() []T
+	HowToHandleMessage(agent T)
 }
 
 type BaseMessage struct {

@@ -28,7 +28,7 @@ func (cm ComplexMessage) GetAdditionalInformation() string {
 	return cm.additionalInformation
 }
 
-func (ca *ComplexAgent) GetMessage() message.IMessage {
+func (ca *ComplexAgent) GetMessage() message.IMessage[IComplexAgent] {
 	return CreateComplexMessage(ca, "additionalInfo")
 }
 
@@ -44,7 +44,7 @@ func (cm ComplexMessage) HowToHandleMessage(agent IComplexAgent) {
 
 	// var ca IComplexAgent = agent
 
-	agent.HandleMessage(cm)
+	agent.HandleComplexMessage(cm)
 
 }
 
