@@ -71,8 +71,7 @@ func (ea *ExtendedAgent) HandleMessage2(msg Message2) {
 	ea.agentField += msg.messageField2
 }
 func (ea *ExtendedAgent) GetNullMessage(recips []IExtendedAgent) NullMessage {
-	var sender IExtendedAgent = ea
-	return NullMessage{message.CreateMessage(sender, recips)}
+	return NullMessage{message.CreateMessage[IExtendedAgent](ea, recips)}
 }
 
 func (ea *ExtendedAgent) HandleNullMessage(msg NullMessage) {
