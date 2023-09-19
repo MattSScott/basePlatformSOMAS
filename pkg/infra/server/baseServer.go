@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	baseAgent "github.com/MattSScott/basePlatformSOMAS/pkg/agents/BaseAgent"
+	message "github.com/MattSScott/basePlatformSOMAS/pkg/messaging"
 )
 
 type BaseServer[T baseAgent.IAgent] struct {
@@ -46,6 +47,25 @@ func MakeAgentGeneratorCountPair[T baseAgent.IAgent](generatorFunction AgentGene
 		generator: generatorFunction,
 		count:     count,
 	}
+}
+
+func (bs *BaseServer[T]) runMessagingSession() {
+
+}
+
+func (bs *BaseServer[T]) distributeMessages(message message.IMessage, recipients []T) {
+	for _, recip := range recipients {
+		message.HowToHandleMessage(recip)
+	}
+}
+
+func (bs *BaseServer[T]) MessagingSession(agents []T) {
+
+	for _, agent := range agents {
+		messageFromAgent := agent.GetMessage()
+		bs.distributeMessages(messageFromAgent, messageFromAgent.GetRecipients())
+	}
+
 }
 
 func (bs *BaseServer[T]) initialiseAgents(m []AgentGeneratorCountPair[T]) {

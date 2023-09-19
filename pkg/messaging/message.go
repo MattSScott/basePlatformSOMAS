@@ -1,30 +1,46 @@
 package message
 
-//baseAgent "github.com/MattSScott/basePlatformSOMAS/pkg/agents/BaseAgent"
+// import baseagent "github.com/MattSScott/basePlatformSOMAS/pkg/agents/BaseAgent"
 
-type Message struct {
-	sender     IAgentMessaging
-	content    string
+type IMessage interface {
+	GetSender() IAgentMessaging
+	GetRecipients() []IAgentMessaging
+	HowToHandleMessage(agent IAgentMessaging)
+}
+
+type BaseMessage struct {
+	sender IAgentMessaging
+	// content    string
 	recipients []IAgentMessaging
 }
 
 // create read-only message instance
-func CreateMessage(sender IAgentMessaging, content string, recipients []IAgentMessaging) Message {
-	return Message{
-		sender:     sender,
-		content:    content,
+func CreateMessage(sender IAgentMessaging, recipients []IAgentMessaging) BaseMessage {
+	return BaseMessage{
+		sender: sender,
+		// content:    content,
 		recipients: recipients,
 	}
 }
 
-func (m *Message) GetSender() IAgentMessaging {
-	return m.sender
+func CreateNullMessageWithSender(sender IAgentMessaging) BaseMessage {
+	return BaseMessage{
+		sender: sender,
+	}
 }
 
-func (m *Message) GetContent() string {
-	return m.content
+func (bm BaseMessage) GetSender() IAgentMessaging {
+	return bm.sender
 }
 
-func (m *Message) GetRecipients() []IAgentMessaging {
-	return m.recipients
+// func (bm *BaseMessage) GetContent() string {
+// 	return bm.content
+// }
+
+func (bm BaseMessage) GetRecipients() []IAgentMessaging {
+	return bm.recipients
+}
+
+func (bm BaseMessage) HowToHandleMessage(agent IAgentMessaging) {
+	agent.HandleMessage(bm)
 }

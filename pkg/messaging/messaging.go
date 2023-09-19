@@ -1,11 +1,7 @@
 package message
 
-import "github.com/google/uuid"
-
-//import baseagent "github.com/MattSScott/basePlatformSOMAS/pkg/agents/BaseAgent"
-
+// base interface structure used for message passing - can be composed for more complex message structures
 type IAgentMessaging interface {
-	GetID() uuid.UUID
-	GetMessage() Message
-	HandleMessage(Message)
+	GetMessage() IMessage
+	HandleMessage(IMessage)
 }

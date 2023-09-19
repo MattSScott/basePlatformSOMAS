@@ -53,9 +53,10 @@ func (ba *BaseAgent) SetNetwork(newNetwork []BaseAgent) {
 	ba.network = newNetwork
 }
 
-func (ba *BaseAgent) GetMessage() message.Message {
-	return message.CreateMessage(ba, "", ba.GetNetworkForMessaging())
+func (ba *BaseAgent) GetMessage() message.IMessage {
+	return message.CreateMessage(ba, ba.GetNetworkForMessaging())
 }
-func (a *BaseAgent) HandleMessage(m message.Message) {
+
+func (a *BaseAgent) HandleMessage(m message.IMessage) {
 	fmt.Println("message received in baseAgent")
 }
