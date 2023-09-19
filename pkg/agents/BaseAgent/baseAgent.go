@@ -37,12 +37,16 @@ func GetAgent() IAgent {
 	}
 }
 
+func (ba *BaseAgent) GetAllMessages() []message.IMessage {
+	return []message.IMessage{}
+}
+
 func (ba *BaseAgent) GetNetwork() []BaseAgent {
 	return ba.network
 }
 
-func (ba *BaseAgent) GetNetworkForMessaging() []message.IAgentMessaging {
-	messengerArray := make([]message.IAgentMessaging, len(ba.network))
+func (ba *BaseAgent) GetNetworkForMessaging() []message.IAgentMessenger {
+	messengerArray := make([]message.IAgentMessenger, len(ba.network))
 	for i := range ba.network {
 		messengerArray[i] = &ba.network[i]
 	}

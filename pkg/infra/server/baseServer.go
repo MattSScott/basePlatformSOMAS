@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	baseAgent "github.com/MattSScott/basePlatformSOMAS/pkg/agents/BaseAgent"
-	message "github.com/MattSScott/basePlatformSOMAS/pkg/messaging"
 )
 
 type BaseServer[T baseAgent.IAgent] struct {
@@ -49,24 +48,36 @@ func MakeAgentGeneratorCountPair[T baseAgent.IAgent](generatorFunction AgentGene
 	}
 }
 
-func (bs *BaseServer[T]) runMessagingSession() {
-
-}
-
-func (bs *BaseServer[T]) distributeMessages(message message.IMessage, recipients []T) {
-	for _, recip := range recipients {
-		message.HowToHandleMessage(recip)
+func (bs *BaseServer[T]) RunMessagingSession() {
+	for _, agent := range bs.Agents {
+		allMessages := agent.GetAllMessages()
+		for _, msg := range allMessages {
+			recipients := msg.GetRecipients()
+			for _, recip := range recipients {
+				msg.Accept(recip)
+			}
+		}
 	}
 }
 
-func (bs *BaseServer[T]) MessagingSession(agents []T) {
+// func (bs *BaseServer[T]) runMessagingSession() {
 
-	for _, agent := range agents {
-		messageFromAgent := agent.GetMessage()
-		bs.distributeMessages(messageFromAgent, messageFromAgent.GetRecipients())
-	}
+// }
 
-}
+// func (bs *BaseServer[T]) distributeMessages(message message.IMessage, recipients []T) {
+// 	for _, recip := range recipients {
+// 		message.HowToHandleMessage(recip)
+// 	}
+// }
+
+// func (bs *BaseServer[T]) MessagingSession(agents []T) {
+
+// 	for _, agent := range agents {
+// 		messageFromAgent := agent.GetMessage()
+// 		bs.distributeMessages(messageFromAgent, messageFromAgent.GetRecipients())
+// 	}
+
+// }
 
 func (bs *BaseServer[T]) initialiseAgents(m []AgentGeneratorCountPair[T]) {
 
