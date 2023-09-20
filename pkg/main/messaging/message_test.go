@@ -35,15 +35,15 @@ type ExtendedAgent struct {
 	agentField int
 }
 
-func (m1 Message1) Accept(agent IExtendedAgent) {
+func (m1 Message1) InvokeMessageHandler(agent IExtendedAgent) {
 	agent.HandleMessage1(m1)
 }
 
-func (m2 Message2) Accept(agent IExtendedAgent) {
+func (m2 Message2) InvokeMessageHandler(agent IExtendedAgent) {
 	agent.HandleMessage2(m2)
 }
 
-func (nm NullMessage) Accept(agent IExtendedAgent) {
+func (nm NullMessage) InvokeMessageHandler(agent IExtendedAgent) {
 	agent.HandleNullMessage(nm)
 }
 
@@ -91,10 +91,10 @@ func TestMessageCanBeExtended(t *testing.T) {
 	agent2 := &ExtendedAgent{agentField: 0}
 
 	msgFromA1 := agent1.GetMessage1()
-	msgFromA1.Accept(agent2)
+	msgFromA1.InvokeMessageHandler(agent2)
 
 	msgFromA2 := agent2.GetMessage2()
-	msgFromA2.Accept(agent1)
+	msgFromA2.InvokeMessageHandler(agent1)
 
 	if agent1.agentField != 10 {
 		t.Error("Message 2 not properly handled")
@@ -114,7 +114,7 @@ func TestMessageSender(t *testing.T) {
 	nullMsg := a1.GetNullMessage([]IExtendedAgent{a2, a3})
 
 	for _, recip := range nullMsg.GetRecipients() {
-		nullMsg.Accept(recip)
+		nullMsg.InvokeMessageHandler(recip)
 	}
 
 	if a1.GetAgentField() != a2.GetAgentField() || a3.GetAgentField() != a1.GetAgentField() {

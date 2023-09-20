@@ -18,5 +18,5 @@ func main() {
 	iterations := 1
 	ts := testserver.New(m, iterations)
 
-	ts.RunGameLoop()
+	ts.Start()
 }
