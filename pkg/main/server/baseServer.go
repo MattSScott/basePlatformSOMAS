@@ -1,12 +1,12 @@
-package infra
+package server
 
 import (
 	"fmt"
 
-	baseAgent "github.com/MattSScott/basePlatformSOMAS/pkg/agents/BaseAgent"
+	baseagent "github.com/MattSScott/basePlatformSOMAS/pkg/main/BaseAgent"
 )
 
-type BaseServer[T baseAgent.Agent] struct {
+type BaseServer[T baseagent.IAgent[T]] struct {
 	NumAgents int
 	NumTurns  int
 	Agents    []T
@@ -34,17 +34,29 @@ func (bs *BaseServer[T]) Start() {
 
 }
 
-type AgentGenerator[T baseAgent.Agent] func() T
+type AgentGenerator[T baseagent.IAgent[T]] func() T
 
-type AgentGeneratorCountPair[T baseAgent.Agent] struct {
+type AgentGeneratorCountPair[T baseagent.IAgent[T]] struct {
 	generator AgentGenerator[T]
 	count     int
 }
 
-func MakeAgentGeneratorCountPair[T baseAgent.Agent](generatorFunction AgentGenerator[T], count int) AgentGeneratorCountPair[T] {
+func MakeAgentGeneratorCountPair[T baseagent.IAgent[T]](generatorFunction AgentGenerator[T], count int) AgentGeneratorCountPair[T] {
 	return AgentGeneratorCountPair[T]{
 		generator: generatorFunction,
 		count:     count,
+	}
+}
+
+func (bs *BaseServer[T]) RunMessagingSession() {
+	for _, agent := range bs.Agents {
+		allMessages := agent.GetAllMessages(bs.Agents)
+		for _, msg := range allMessages {
+			recipients := msg.GetRecipients()
+			for _, recip := range recipients {
+				msg.Accept(recip)
+			}
+		}
 	}
 }
 
@@ -64,7 +76,7 @@ func (bs *BaseServer[T]) initialiseAgents(m []AgentGeneratorCountPair[T]) {
 	bs.NumAgents = len(agents)
 }
 
-func getNumAgents[T baseAgent.Agent](pairs []AgentGeneratorCountPair[T]) int {
+func getNumAgents[T baseagent.IAgent[T]](pairs []AgentGeneratorCountPair[T]) int {
 
 	numAgents := 0
 
@@ -75,7 +87,7 @@ func getNumAgents[T baseAgent.Agent](pairs []AgentGeneratorCountPair[T]) int {
 	return numAgents
 }
 
-func CreateServer[T baseAgent.Agent](mapper []AgentGeneratorCountPair[T], numTurns int) *BaseServer[T] {
+func CreateServer[T baseagent.IAgent[T]](mapper []AgentGeneratorCountPair[T], numTurns int) *BaseServer[T] {
 	// generate the server and return it
 	serv := &BaseServer[T]{
 		NumTurns: numTurns,
