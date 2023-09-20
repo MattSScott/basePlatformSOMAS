@@ -20,12 +20,15 @@ func (ha *HelloAgent) GetAllMessages(availableAgents []baseExtendedAgent.IExtend
 }
 
 func (ha *HelloAgent) CreateGreetingMessage(recips []baseExtendedAgent.IExtendedAgent) baseExtendedAgent.GreetingMessage {
+	msgText := fmt.Sprintf("%s said: '%s'", ha.GetID(), ha.GetPhrase())
+	fmt.Println(msgText)
 	return baseExtendedAgent.CreateGreetingMessage(ha, recips, ha.GetPhrase())
 }
 
 func (ha *HelloAgent) HandleGreetingMessage(msg baseExtendedAgent.GreetingMessage) {
 	if msg.GetGreeting() == "wello" {
-		fmt.Println(ha.GetID(), " responded: 'horld'")
+		respText := fmt.Sprintf("%s responded: 'horld'", ha.GetID())
+		fmt.Println(respText)
 	}
 }
 
