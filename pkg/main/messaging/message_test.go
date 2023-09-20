@@ -1,35 +1,37 @@
-package message_test
+package messaging_test
 
 import (
 	"testing"
 
-	message "github.com/MattSScott/basePlatformSOMAS/pkg/messaging"
+	baseagent "github.com/MattSScott/basePlatformSOMAS/pkg/main/BaseAgent"
+	"github.com/MattSScott/basePlatformSOMAS/pkg/main/messaging"
 )
 
 type Message1 struct {
-	message.BaseMessage[IExtendedAgent]
+	messaging.BaseMessage[IExtendedAgent]
 	messageField1 int
 }
 
 type Message2 struct {
-	message.BaseMessage[IExtendedAgent]
+	messaging.BaseMessage[IExtendedAgent]
 	messageField2 int
 }
 
 type NullMessage struct {
-	message.BaseMessage[IExtendedAgent]
+	messaging.BaseMessage[IExtendedAgent]
 }
 
 type IExtendedAgent interface {
-	message.IAgentMessenger[IExtendedAgent]
+	baseagent.IAgent[IExtendedAgent]
 	GetAgentField() int
-	GetAllMessages() []message.IMessage[IExtendedAgent]
+	GetAllMessages([]IExtendedAgent) []messaging.IMessage[IExtendedAgent]
 	HandleMessage1(msg Message1)
 	HandleMessage2(msg Message2)
 	HandleNullMessage(msg NullMessage)
 }
 
 type ExtendedAgent struct {
+	baseagent.BaseAgent[IExtendedAgent]
 	agentField int
 }
 
@@ -51,7 +53,7 @@ func (ea *ExtendedAgent) GetAgentField() int {
 
 func (ea *ExtendedAgent) GetMessage1() Message1 {
 	return Message1{
-		message.BaseMessage[IExtendedAgent]{},
+		messaging.BaseMessage[IExtendedAgent]{},
 		5,
 	}
 }
@@ -62,7 +64,7 @@ func (ea *ExtendedAgent) HandleMessage1(msg Message1) {
 
 func (ea *ExtendedAgent) GetMessage2() Message2 {
 	return Message2{
-		message.BaseMessage[IExtendedAgent]{},
+		messaging.BaseMessage[IExtendedAgent]{},
 		10,
 	}
 }
@@ -71,7 +73,7 @@ func (ea *ExtendedAgent) HandleMessage2(msg Message2) {
 	ea.agentField += msg.messageField2
 }
 func (ea *ExtendedAgent) GetNullMessage(recips []IExtendedAgent) NullMessage {
-	return NullMessage{message.CreateMessage[IExtendedAgent](ea, recips)}
+	return NullMessage{messaging.CreateMessage[IExtendedAgent](ea, recips)}
 }
 
 func (ea *ExtendedAgent) HandleNullMessage(msg NullMessage) {
@@ -79,10 +81,10 @@ func (ea *ExtendedAgent) HandleNullMessage(msg NullMessage) {
 	ea.agentField = sender.GetAgentField()
 }
 
-func (ea *ExtendedAgent) GetAllMessages() []message.IMessage[IExtendedAgent] {
+func (ea *ExtendedAgent) GetAllMessages([]IExtendedAgent) []messaging.IMessage[IExtendedAgent] {
 	msg1 := ea.GetMessage1()
 	msg2 := ea.GetMessage2()
-	return []message.IMessage[IExtendedAgent]{msg1, msg2}
+	return []messaging.IMessage[IExtendedAgent]{msg1, msg2}
 }
 func TestMessageCanBeExtended(t *testing.T) {
 	agent1 := &ExtendedAgent{agentField: 0}

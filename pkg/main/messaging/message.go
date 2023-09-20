@@ -1,4 +1,4 @@
-package message
+package messaging
 
 // import baseagent "github.com/MattSScott/basePlatformSOMAS/pkg/agents/BaseAgent"
 

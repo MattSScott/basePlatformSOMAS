@@ -1,6 +1,6 @@
-package message
+package messaging
 
 // // base interface structure used for message passing - can be composed for more complex message structures
 type IAgentMessenger[T any] interface {
-	GetAllMessages() []IMessage[T]
+	GetAllMessages([]T) []IMessage[T]
 }

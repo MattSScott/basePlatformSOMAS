@@ -1,12 +1,12 @@
-package infra
+package server
 
 import (
 	"fmt"
 
-	baseAgent "github.com/MattSScott/basePlatformSOMAS/pkg/agents/BaseAgent"
+	baseagent "github.com/MattSScott/basePlatformSOMAS/pkg/main/BaseAgent"
 )
 
-type BaseServer[T baseAgent.IAgent] struct {
+type BaseServer[T baseagent.IAgent[T]] struct {
 	NumAgents int
 	NumTurns  int
 	Agents    []T
@@ -34,14 +34,14 @@ func (bs *BaseServer[T]) Start() {
 
 }
 
-type AgentGenerator[T baseAgent.IAgent] func() T
+type AgentGenerator[T baseagent.IAgent[T]] func() T
 
-type AgentGeneratorCountPair[T baseAgent.IAgent] struct {
+type AgentGeneratorCountPair[T baseagent.IAgent[T]] struct {
 	generator AgentGenerator[T]
 	count     int
 }
 
-func MakeAgentGeneratorCountPair[T baseAgent.IAgent](generatorFunction AgentGenerator[T], count int) AgentGeneratorCountPair[T] {
+func MakeAgentGeneratorCountPair[T baseagent.IAgent[T]](generatorFunction AgentGenerator[T], count int) AgentGeneratorCountPair[T] {
 	return AgentGeneratorCountPair[T]{
 		generator: generatorFunction,
 		count:     count,
@@ -50,34 +50,15 @@ func MakeAgentGeneratorCountPair[T baseAgent.IAgent](generatorFunction AgentGene
 
 func (bs *BaseServer[T]) RunMessagingSession() {
 	for _, agent := range bs.Agents {
-		allMessages := agent.GetAllMessages()
+		allMessages := agent.GetAllMessages(bs.Agents)
 		for _, msg := range allMessages {
 			recipients := msg.GetRecipients()
 			for _, recip := range recipients {
-				msg.Accept(recip.(T))
+				msg.Accept(recip)
 			}
 		}
 	}
 }
-
-// func (bs *BaseServer[T]) runMessagingSession() {
-
-// }
-
-// func (bs *BaseServer[T]) distributeMessages(message message.IMessage, recipients []T) {
-// 	for _, recip := range recipients {
-// 		message.HowToHandleMessage(recip)
-// 	}
-// }
-
-// func (bs *BaseServer[T]) MessagingSession(agents []T) {
-
-// 	for _, agent := range agents {
-// 		messageFromAgent := agent.GetMessage()
-// 		bs.distributeMessages(messageFromAgent, messageFromAgent.GetRecipients())
-// 	}
-
-// }
 
 func (bs *BaseServer[T]) initialiseAgents(m []AgentGeneratorCountPair[T]) {
 
@@ -95,7 +76,7 @@ func (bs *BaseServer[T]) initialiseAgents(m []AgentGeneratorCountPair[T]) {
 	bs.NumAgents = len(agents)
 }
 
-func getNumAgents[T baseAgent.IAgent](pairs []AgentGeneratorCountPair[T]) int {
+func getNumAgents[T baseagent.IAgent[T]](pairs []AgentGeneratorCountPair[T]) int {
 
 	numAgents := 0
 
@@ -106,7 +87,7 @@ func getNumAgents[T baseAgent.IAgent](pairs []AgentGeneratorCountPair[T]) int {
 	return numAgents
 }
 
-func CreateServer[T baseAgent.IAgent](mapper []AgentGeneratorCountPair[T], numTurns int) *BaseServer[T] {
+func CreateServer[T baseagent.IAgent[T]](mapper []AgentGeneratorCountPair[T], numTurns int) *BaseServer[T] {
 	// generate the server and return it
 	serv := &BaseServer[T]{
 		NumTurns: numTurns,
