@@ -18,7 +18,7 @@ func (em *GreetingMessage) GetGreeting() string {
 	return em.greeting
 }
 
-func (em GreetingMessage) Accept(agent IExtendedAgent) {
+func (em GreetingMessage) InvokeMessageHandler(agent IExtendedAgent) {
 	agent.HandleGreetingMessage(em)
 }
 
