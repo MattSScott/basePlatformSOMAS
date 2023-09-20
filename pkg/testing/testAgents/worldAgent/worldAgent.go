@@ -20,12 +20,15 @@ func (wa *WorldAgent) GetAllMessages(availableAgents []baseExtendedAgent.IExtend
 }
 
 func (wa *WorldAgent) CreateGreetingMessage(recips []baseExtendedAgent.IExtendedAgent) baseExtendedAgent.GreetingMessage {
+	msgText := fmt.Sprintf("%s said: '%s'", wa.GetID(), wa.GetPhrase())
+	fmt.Println(msgText)
 	return baseExtendedAgent.CreateGreetingMessage(wa, recips, wa.GetPhrase())
 }
 
 func (wa *WorldAgent) HandleGreetingMessage(msg baseExtendedAgent.GreetingMessage) {
 	if msg.GetGreeting() == "hello" {
-		fmt.Println(wa.GetID(), " responded: 'world'")
+		respText := fmt.Sprintf("%s responded: 'world'", wa.GetID())
+		fmt.Println(respText)
 	}
 }
 

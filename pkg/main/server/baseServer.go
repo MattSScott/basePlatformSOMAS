@@ -54,6 +54,9 @@ func (bs *BaseServer[T]) RunMessagingSession() {
 		for _, msg := range allMessages {
 			recipients := msg.GetRecipients()
 			for _, recip := range recipients {
+				if agent.GetID() == recip.GetID() {
+					continue
+				}
 				msg.Accept(recip)
 			}
 		}
