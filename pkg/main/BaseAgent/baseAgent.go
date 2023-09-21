@@ -23,6 +23,13 @@ func NewAgent[T IAgent[T]]() *BaseAgent[T] {
 	}
 }
 
+func DefaultAgent[T IAgent[T]]() IAgent[T] {
+	return &BaseAgent[T]{
+		id:      uuid.New(),
+		network: make(map[uuid.UUID]T),
+	}
+}
+
 func (ba *BaseAgent[T]) GetAllMessages(listOfAgents []T) []message.IMessage[T] {
 
 	return []message.IMessage[T]{}
