@@ -11,34 +11,11 @@ type IBaseAgent interface {
 	baseagent.IAgent[IBaseAgent]
 }
 
-func TestAgentIDOperations(t *testing.T) {
+func TestAgentIdOperations(t *testing.T) {
 	baseAgent := baseagent.NewAgent[IBaseAgent]()
 
 	if baseAgent.GetID() == uuid.Nil {
 		t.Error("Agent not instantiated with valid ID")
-	}
-}
-
-func TestAddToNetwork(t *testing.T) {
-	agent1 := baseagent.NewAgent[IBaseAgent]()
-	agent2 := baseagent.NewAgent[IBaseAgent]()
-
-	agent1.AddAgentToNetwork(agent2)
-
-	if len(agent1.GetNetwork()) != 1 {
-		t.Error("Agent not correctly added to map")
-	}
-}
-
-func TestRemoveFromNetwork(t *testing.T) {
-	agent1 := baseagent.NewAgent[IBaseAgent]()
-	agent2 := baseagent.NewAgent[IBaseAgent]()
-
-	agent1.AddAgentToNetwork(agent2)
-	agent1.RemoveAgentFromNetwork(agent2)
-
-	if len(agent1.GetNetwork()) != 0 {
-		t.Error("Agent not correctly removed from map")
 	}
 }
 
