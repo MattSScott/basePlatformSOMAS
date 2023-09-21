@@ -6,11 +6,22 @@ import (
 	"github.com/google/uuid"
 )
 
+type INetwork[T any] interface {
+	// returns the full agent network map
+	GetNetwork() map[uuid.UUID]T
+	// adds an agent object to the network
+	AddAgentToNetwork(agent T)
+	// removes an agent object from the network
+	RemoveAgentFromNetwork(agent T)
+}
+
 type IAgent[T any] interface {
 	// composes messaging passing capabilities
 	message.IAgentMessenger[T]
-	// allows agent to update their internal state
-	UpdateAgentInternalState()
+	// handles network operations
+	INetwork[T]
 	// returns the unique ID of an agent
 	GetID() uuid.UUID
+	// allows agent to update their internal state
+	UpdateAgentInternalState()
 }
