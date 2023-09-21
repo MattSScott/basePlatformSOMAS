@@ -6,16 +6,14 @@ import (
 )
 
 type BaseAgent[T IAgent[T]] struct {
-	id      uuid.UUID
-	network []T
+	id uuid.UUID
 }
 
 func (ba *BaseAgent[T]) GetID() uuid.UUID {
 	return ba.id
 }
 
-func (ba *BaseAgent[T]) UpdateAgentInternalState() {
-}
+func (ba *BaseAgent[T]) UpdateAgentInternalState() {}
 
 func NewAgent[T IAgent[T]]() *BaseAgent[T] {
 	return &BaseAgent[T]{
@@ -23,14 +21,7 @@ func NewAgent[T IAgent[T]]() *BaseAgent[T] {
 	}
 }
 
-func (ba *BaseAgent[T]) GetAllMessages() []message.IMessage[T] {
+func (ba *BaseAgent[T]) GetAllMessages(listOfAgents []T) []message.IMessage[T] {
+
 	return []message.IMessage[T]{}
-}
-
-func (ba *BaseAgent[T]) GetNetwork() []T {
-	return ba.network
-}
-
-func (ba *BaseAgent[T]) SetNetwork(newNetwork []T) {
-	ba.network = newNetwork
 }

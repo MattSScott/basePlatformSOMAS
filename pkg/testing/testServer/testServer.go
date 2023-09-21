@@ -1,26 +1,26 @@
 package testserver
 
 import (
-	baseServer "github.com/MattSScott/basePlatformSOMAS/pkg/main/server"
+	baseserver "github.com/MattSScott/basePlatformSOMAS/pkg/main/BaseServer"
 	"github.com/MattSScott/basePlatformSOMAS/pkg/testing/testAgents/baseExtendedAgent"
 )
 
 // the base server functionality can be extended with 'environment specific' functions
 type IExtendedServer interface {
-	baseServer.IServer[baseExtendedAgent.IExtendedAgent]
+	baseserver.IServer[baseExtendedAgent.IExtendedAgent]
 	RunAdditionalPhase()
 }
 
 // composing the 'base server' allows access to the pre-made interface implementations
 // new fields can be added to the extended server data structure
 type TestServer struct {
-	*baseServer.BaseServer[baseExtendedAgent.IExtendedAgent]
+	*baseserver.BaseServer[baseExtendedAgent.IExtendedAgent]
 	name string
 }
 
-func New(mapper []baseServer.AgentGeneratorCountPair[baseExtendedAgent.IExtendedAgent], iterations int) *TestServer {
+func New(mapper []baseserver.AgentGeneratorCountPair[baseExtendedAgent.IExtendedAgent], iterations int) *TestServer {
 	return &TestServer{
-		BaseServer: baseServer.CreateServer[baseExtendedAgent.IExtendedAgent](mapper, iterations),
+		BaseServer: baseserver.CreateServer[baseExtendedAgent.IExtendedAgent](mapper, iterations),
 		name:       "TestServer",
 	}
 }

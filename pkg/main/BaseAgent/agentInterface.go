@@ -9,8 +9,8 @@ import (
 type IAgent[T any] interface {
 	// composes messaging passing capabilities
 	message.IAgentMessenger[T]
-	// allows agent to update their internal state
-	UpdateAgentInternalState()
 	// returns the unique ID of an agent
 	GetID() uuid.UUID
+	// allows agent to update their internal state
+	UpdateAgentInternalState()
 }

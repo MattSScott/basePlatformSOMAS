@@ -23,7 +23,17 @@ func (ag *BaseExtendedAgent) GetPhrase() string {
 	return ag.phrase
 }
 
+func (ag *BaseExtendedAgent) HandleGreetingMessage(GreetingMessage) {}
+
 func GetAgent(phrase string) *BaseExtendedAgent {
+	return &BaseExtendedAgent{
+		BaseAgent: baseAgent.NewAgent[IExtendedAgent](),
+		phrase:    phrase,
+	}
+
+}
+
+func GetDefaultAgent(phrase string) IExtendedAgent {
 	return &BaseExtendedAgent{
 		BaseAgent: baseAgent.NewAgent[IExtendedAgent](),
 		phrase:    phrase,

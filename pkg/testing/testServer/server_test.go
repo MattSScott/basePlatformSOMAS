@@ -1,7 +1,7 @@
 package testserver_test
 
 import (
-	"github.com/MattSScott/basePlatformSOMAS/pkg/main/server"
+	baseserver "github.com/MattSScott/basePlatformSOMAS/pkg/main/BaseServer"
 	"github.com/MattSScott/basePlatformSOMAS/pkg/testing/testAgents/baseExtendedAgent"
 	helloagent "github.com/MattSScott/basePlatformSOMAS/pkg/testing/testAgents/helloAgent"
 	worldagent "github.com/MattSScott/basePlatformSOMAS/pkg/testing/testAgents/worldAgent"
@@ -13,10 +13,10 @@ import (
 
 func TestInheritedServer(t *testing.T) {
 
-	m := make([]server.AgentGeneratorCountPair[baseExtendedAgent.IExtendedAgent], 5)
+	m := make([]baseserver.AgentGeneratorCountPair[baseExtendedAgent.IExtendedAgent], 2)
 
-	m[0] = server.MakeAgentGeneratorCountPair[baseExtendedAgent.IExtendedAgent](helloagent.GetHelloAgent, 3)
-	m[1] = server.MakeAgentGeneratorCountPair[baseExtendedAgent.IExtendedAgent](worldagent.GetWorldAgent, 2)
+	m[0] = baseserver.MakeAgentGeneratorCountPair[baseExtendedAgent.IExtendedAgent](helloagent.GetHelloAgent, 3)
+	m[1] = baseserver.MakeAgentGeneratorCountPair[baseExtendedAgent.IExtendedAgent](worldagent.GetWorldAgent, 2)
 
 	floors := 3
 	ts := testserver.New(m, floors)
@@ -35,10 +35,10 @@ func TestInheritedServer(t *testing.T) {
 
 func TestServerInterfaceComposition(t *testing.T) {
 
-	m := make([]server.AgentGeneratorCountPair[baseExtendedAgent.IExtendedAgent], 2)
+	m := make([]baseserver.AgentGeneratorCountPair[baseExtendedAgent.IExtendedAgent], 2)
 
-	m[0] = server.MakeAgentGeneratorCountPair[baseExtendedAgent.IExtendedAgent](helloagent.GetHelloAgent, 1)
-	m[1] = server.MakeAgentGeneratorCountPair[baseExtendedAgent.IExtendedAgent](worldagent.GetWorldAgent, 1)
+	m[0] = baseserver.MakeAgentGeneratorCountPair[baseExtendedAgent.IExtendedAgent](helloagent.GetHelloAgent, 1)
+	m[1] = baseserver.MakeAgentGeneratorCountPair[baseExtendedAgent.IExtendedAgent](worldagent.GetWorldAgent, 1)
 
 	// server can also be declared as type interface
 	var server testserver.IExtendedServer = testserver.New(m, 1)
@@ -57,10 +57,10 @@ func TestServerInterfaceComposition(t *testing.T) {
 }
 
 func TestServerMessagePassing(t *testing.T) {
-	m := make([]server.AgentGeneratorCountPair[baseExtendedAgent.IExtendedAgent], 5)
+	m := make([]baseserver.AgentGeneratorCountPair[baseExtendedAgent.IExtendedAgent], 2)
 
-	m[0] = server.MakeAgentGeneratorCountPair[baseExtendedAgent.IExtendedAgent](helloagent.GetHelloAgent, 1)
-	m[1] = server.MakeAgentGeneratorCountPair[baseExtendedAgent.IExtendedAgent](worldagent.GetWorldAgent, 1)
+	m[0] = baseserver.MakeAgentGeneratorCountPair[baseExtendedAgent.IExtendedAgent](helloagent.GetHelloAgent, 1)
+	m[1] = baseserver.MakeAgentGeneratorCountPair[baseExtendedAgent.IExtendedAgent](worldagent.GetWorldAgent, 1)
 
 	floors := 3
 	ts := testserver.New(m, floors)
