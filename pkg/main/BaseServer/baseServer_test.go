@@ -5,6 +5,7 @@ import (
 
 	baseagent "github.com/MattSScott/basePlatformSOMAS/pkg/main/BaseAgent"
 	baseserver "github.com/MattSScott/basePlatformSOMAS/pkg/main/BaseServer"
+	"github.com/MattSScott/basePlatformSOMAS/pkg/main/messaging"
 )
 
 type ITestBaseAgent interface {
@@ -72,6 +73,33 @@ func CreateTestServer(mapper []baseserver.AgentGeneratorCountPair[ITestBaseAgent
 	}
 }
 
+func TestAddAgent(t *testing.T) {
+
+	baseServer := baseserver.CreateServer[ITestBaseAgent]([]baseserver.AgentGeneratorCountPair[ITestBaseAgent]{}, 1)
+
+	agent1 := baseagent.NewAgent[ITestBaseAgent]()
+
+	baseServer.AddAgent(agent1)
+
+	if len(baseServer.GetAgents()) != 1 {
+		t.Error("Agent not correctly added to map")
+	}
+}
+
+func TestRemoveAgent(t *testing.T) {
+
+	baseServer := baseserver.CreateServer[ITestBaseAgent]([]baseserver.AgentGeneratorCountPair[ITestBaseAgent]{}, 1)
+
+	agent1 := baseagent.NewAgent[ITestBaseAgent]()
+
+	baseServer.AddAgent(agent1)
+	baseServer.RemoveAgent(agent1)
+
+	if len(baseServer.GetAgents()) != 0 {
+		t.Error("Agent not correctly removed from map")
+	}
+}
+
 func TestServerGameLoop(t *testing.T) {
 	m := make([]baseserver.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = baseserver.MakeAgentGeneratorCountPair[ITestBaseAgent](NewTestBaseAgent, 3)
@@ -86,6 +114,55 @@ func TestServerGameLoop(t *testing.T) {
 
 	if server.GetAdditionalField() != 1 {
 		t.Error("Run Game Loop method not successfully overridden")
+	}
+
+}
+
+func TestServerStartsCorrectly(t *testing.T) {
+	generator := baseserver.MakeAgentGeneratorCountPair[ITestBaseAgent](NewTestBaseAgent, 3)
+
+	baseServer := baseserver.CreateServer([]baseserver.AgentGeneratorCountPair[ITestBaseAgent]{generator}, 1)
+
+	baseServer.Start()
+}
+
+func TestAgentMapConvertsToArray(t *testing.T) {
+	generator := baseserver.MakeAgentGeneratorCountPair[ITestBaseAgent](NewTestBaseAgent, 3)
+
+	baseServer := baseserver.CreateServer([]baseserver.AgentGeneratorCountPair[ITestBaseAgent]{generator}, 1)
+
+	if len(baseServer.GenerateAgentArrayFromMap()) != 3 {
+		t.Error("Agents not correctly mapped to array")
+	}
+}
+
+func (tba *TestBaseAgent) GetAllMessages(others []ITestBaseAgent) []messaging.IMessage[ITestBaseAgent] {
+	msg := messaging.CreateMessage[ITestBaseAgent](tba, others)
+
+	return []messaging.IMessage[ITestBaseAgent]{msg}
+}
+
+func TestMessagingSession(t *testing.T) {
+	generator := baseserver.MakeAgentGeneratorCountPair[ITestBaseAgent](NewTestBaseAgent, 3)
+
+	baseServer := baseserver.CreateServer([]baseserver.AgentGeneratorCountPair[ITestBaseAgent]{generator}, 1)
+
+	agentArray := baseServer.GenerateAgentArrayFromMap()
+
+	agent1 := agentArray[0]
+
+	messages := agent1.GetAllMessages(agentArray)
+
+	for _, msg := range messages {
+		if len(msg.GetRecipients()) != 3 {
+			t.Error("Incorrect number of message recipients")
+		}
+		for _, recip := range msg.GetRecipients() {
+			if recip.GetID() == agent1.GetID() {
+				continue
+			}
+			msg.InvokeMessageHandler(recip)
+		}
 	}
 
 }

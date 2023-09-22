@@ -65,7 +65,7 @@ func TestServerMessagePassing(t *testing.T) {
 	floors := 3
 	ts := testserver.New(m, floors)
 
-	agents := ts.GetAgents()
+	agents := ts.GenerateAgentArrayFromMap()
 
 	a1 := agents[0]
 	a2 := agents[1]
