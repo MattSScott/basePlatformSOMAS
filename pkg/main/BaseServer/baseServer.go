@@ -9,7 +9,7 @@ import (
 
 type BaseServer[T baseagent.IAgent[T]] struct {
 	agentMap map[uuid.UUID]T
-	numTurns int
+	numIterations int
 }
 
 func (bs *BaseServer[T]) GetAgentMap() map[uuid.UUID]T {
@@ -24,8 +24,8 @@ func (bs *BaseServer[T]) RemoveAgent(agentToAdd T) {
 	delete(bs.agentMap, agentToAdd.GetID())
 }
 
-func (bs *BaseServer[T]) GetNumTurns() int {
-	return bs.numTurns
+func (bs *BaseServer[T]) GetIterations() int {
+	return bs.numIterations
 }
 
 func (bs *BaseServer[T]) RunGameLoop() {
@@ -39,7 +39,7 @@ func (bs *BaseServer[T]) Start() {
 	fmt.Printf("Server initialised with %d agents \n", len(bs.agentMap))
 	fmt.Print("\n")
 	//LOOPS
-	for i := 0; i < bs.numTurns; i++ {
+	for i := 0; i < bs.numIterations; i++ {
 		fmt.Printf("Game Loop %d running... \n \n", i)
 		fmt.Printf("Main game loop running... \n \n")
 		bs.RunGameLoop()
@@ -108,10 +108,10 @@ func (bs *BaseServer[T]) initialiseAgents(m []AgentGeneratorCountPair[T]) {
 }
 
 // generate a server instance based on a mapping function and number of iterations
-func CreateServer[T baseagent.IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iters int) *BaseServer[T] {
+func CreateServer[T baseagent.IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iterations int) *BaseServer[T] {
 	serv := &BaseServer[T]{
 		agentMap: make(map[uuid.UUID]T),
-		numTurns: iters,
+		numIterations: iterations,
 	}
 	serv.initialiseAgents(generatorArray)
 	return serv

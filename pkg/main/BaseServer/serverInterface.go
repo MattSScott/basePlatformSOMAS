@@ -20,7 +20,7 @@ type IServer[T baseagent.IAgent[T]] interface {
 	// gives operations for adding/removing agents from the simulator
 	IAgentOperations[T]
 	// gives access to number of iteration in simulator
-	GetNumTurns() int
+	GetIterations() int
 	// the set of functions defining how a 'game loop' should run
 	RunGameLoop()
 	// begins simulator

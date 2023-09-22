@@ -34,14 +34,14 @@ func TestAgentsCorrectlyInstantiated(t *testing.T) {
 
 }
 
-func TestNumTurnsInServer(t *testing.T) {
+func TestNumIterationsInServer(t *testing.T) {
 	m := make([]baseserver.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = baseserver.MakeAgentGeneratorCountPair[ITestBaseAgent](NewTestBaseAgent, 3)
 
 	server := baseserver.CreateServer[ITestBaseAgent](m, 1)
 
-	if server.GetNumTurns() != 1 {
-		t.Error("Incorrect number of turns instantiated")
+	if server.GetIterations() != 1 {
+		t.Error("Incorrect number of iterations instantiated")
 	}
 
 }
