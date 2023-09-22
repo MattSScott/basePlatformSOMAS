@@ -4,15 +4,24 @@ import (
 	"fmt"
 
 	baseagent "github.com/MattSScott/basePlatformSOMAS/pkg/main/BaseAgent"
+	"github.com/google/uuid"
 )
 
 type BaseServer[T baseagent.IAgent[T]] struct {
 	numTurns int
-	agents   []T
+	agents   map[uuid.UUID]T
 }
 
-func (bs *BaseServer[T]) GetAgents() []T {
+func (bs *BaseServer[T]) GetAgents() map[uuid.UUID]T {
 	return bs.agents
+}
+
+func (bs *BaseServer[T]) AddAgent(agentToAdd T) {
+	bs.agents[agentToAdd.GetID()] = agentToAdd
+}
+
+func (bs *BaseServer[T]) RemoveAgent(agentToAdd T) {
+	delete(bs.agents, agentToAdd.GetID())
 }
 
 func (bs *BaseServer[T]) GetNumTurns() int {
@@ -57,9 +66,24 @@ func MakeAgentGeneratorCountPair[T baseagent.IAgent[T]](generatorFunction AgentG
 	}
 }
 
+func (bs *BaseServer[T]) GenerateAgentArrayFromMap() []T {
+
+	agentMapToArray := make([]T, len(bs.agents))
+
+	i := 0
+	for _, ag := range bs.agents {
+		agentMapToArray[i] = ag
+		i++
+	}
+	return agentMapToArray
+}
+
 func (bs *BaseServer[T]) RunMessagingSession() {
+
+	agentArray := bs.GenerateAgentArrayFromMap()
+
 	for _, agent := range bs.agents {
-		allMessages := agent.GetAllMessages(bs.agents)
+		allMessages := agent.GetAllMessages(agentArray)
 		for _, msg := range allMessages {
 			recipients := msg.GetRecipients()
 			for _, recip := range recipients {
@@ -74,33 +98,19 @@ func (bs *BaseServer[T]) RunMessagingSession() {
 
 func (bs *BaseServer[T]) initialiseAgents(m []AgentGeneratorCountPair[T]) {
 
-	agents := make([]T, getNumAgents(m))
-	agentCount := 0
-
 	for _, pair := range m {
 		for i := 0; i < pair.count; i++ {
-			agents[agentCount] = pair.generator()
-			agentCount++
+			agent := pair.generator()
+			bs.AddAgent(agent)
 		}
 	}
 
-	bs.agents = agents
-}
-
-func getNumAgents[T baseagent.IAgent[T]](pairs []AgentGeneratorCountPair[T]) int {
-
-	numAgents := 0
-
-	for _, pair := range pairs {
-		numAgents += pair.count
-	}
-
-	return numAgents
 }
 
 // generate a server instance based on a mapping function and number of iterations
 func CreateServer[T baseagent.IAgent[T]](mapper []AgentGeneratorCountPair[T], iterations int) *BaseServer[T] {
 	serv := &BaseServer[T]{
+		agents:   make(map[uuid.UUID]T),
 		numTurns: iterations,
 	}
 	serv.initialiseAgents(mapper)
