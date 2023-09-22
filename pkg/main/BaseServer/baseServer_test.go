@@ -28,7 +28,7 @@ func TestAgentsCorrectlyInstantiated(t *testing.T) {
 
 	server := baseserver.CreateServer[ITestBaseAgent](m, 1)
 
-	if len(server.GetAgents()) != 3 {
+	if len(server.GetAgentMap()) != 3 {
 		t.Error("Incorrect number of agents added to server")
 	}
 
@@ -81,7 +81,7 @@ func TestAddAgent(t *testing.T) {
 
 	baseServer.AddAgent(agent1)
 
-	if len(baseServer.GetAgents()) != 1 {
+	if len(baseServer.GetAgentMap()) != 1 {
 		t.Error("Agent not correctly added to map")
 	}
 }
@@ -95,7 +95,7 @@ func TestRemoveAgent(t *testing.T) {
 	baseServer.AddAgent(agent1)
 	baseServer.RemoveAgent(agent1)
 
-	if len(baseServer.GetAgents()) != 0 {
+	if len(baseServer.GetAgentMap()) != 0 {
 		t.Error("Agent not correctly removed from map")
 	}
 }
@@ -106,7 +106,7 @@ func TestFullAgentHashmap(t *testing.T) {
 		baseServer.AddAgent(baseagent.NewAgent[ITestBaseAgent]())
 	}
 
-	for id, agent := range baseServer.GetAgents() {
+	for id, agent := range baseServer.GetAgentMap() {
 		if agent.GetID() != id {
 			t.Error("Server agent hashmap key doesn't match object")
 		}
