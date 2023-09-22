@@ -8,7 +8,7 @@ import (
 )
 
 type BaseServer[T baseagent.IAgent[T]] struct {
-	agentMap map[uuid.UUID]T
+	agentMap   map[uuid.UUID]T
 	iterations int
 }
 
@@ -110,7 +110,7 @@ func (bs *BaseServer[T]) initialiseAgents(m []AgentGeneratorCountPair[T]) {
 // generate a server instance based on a mapping function and number of iterations
 func CreateServer[T baseagent.IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iterations int) *BaseServer[T] {
 	serv := &BaseServer[T]{
-		agentMap: make(map[uuid.UUID]T),
+		agentMap:   make(map[uuid.UUID]T),
 		iterations: iterations,
 	}
 	serv.initialiseAgents(generatorArray)
