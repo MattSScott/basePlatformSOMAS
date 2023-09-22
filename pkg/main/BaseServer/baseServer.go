@@ -9,7 +9,7 @@ import (
 
 type BaseServer[T baseagent.IAgent[T]] struct {
 	agentMap map[uuid.UUID]T
-	numIterations int
+	iterations int
 }
 
 func (bs *BaseServer[T]) GetAgentMap() map[uuid.UUID]T {
@@ -25,7 +25,7 @@ func (bs *BaseServer[T]) RemoveAgent(agentToAdd T) {
 }
 
 func (bs *BaseServer[T]) GetIterations() int {
-	return bs.numIterations
+	return bs.iterations
 }
 
 func (bs *BaseServer[T]) RunGameLoop() {
@@ -39,7 +39,7 @@ func (bs *BaseServer[T]) Start() {
 	fmt.Printf("Server initialised with %d agents \n", len(bs.agentMap))
 	fmt.Print("\n")
 	//LOOPS
-	for i := 0; i < bs.numIterations; i++ {
+	for i := 0; i < bs.iterations; i++ {
 		fmt.Printf("Game Loop %d running... \n \n", i)
 		fmt.Printf("Main game loop running... \n \n")
 		bs.RunGameLoop()
@@ -111,7 +111,7 @@ func (bs *BaseServer[T]) initialiseAgents(m []AgentGeneratorCountPair[T]) {
 func CreateServer[T baseagent.IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iterations int) *BaseServer[T] {
 	serv := &BaseServer[T]{
 		agentMap: make(map[uuid.UUID]T),
-		numIterations: iterations,
+		iterations: iterations,
 	}
 	serv.initialiseAgents(generatorArray)
 	return serv
