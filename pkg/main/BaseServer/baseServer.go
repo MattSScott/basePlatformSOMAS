@@ -108,11 +108,11 @@ func (bs *BaseServer[T]) initialiseAgents(m []AgentGeneratorCountPair[T]) {
 }
 
 // generate a server instance based on a mapping function and number of iterations
-func CreateServer[T baseagent.IAgent[T]](mapper []AgentGeneratorCountPair[T], iterations int) *BaseServer[T] {
+func CreateServer[T baseagent.IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iters int) *BaseServer[T] {
 	serv := &BaseServer[T]{
 		agentMap: make(map[uuid.UUID]T),
-		numTurns: iterations,
+		numTurns: iters,
 	}
-	serv.initialiseAgents(mapper)
+	serv.initialiseAgents(generatorArray)
 	return serv
 }
