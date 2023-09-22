@@ -100,6 +100,19 @@ func TestRemoveAgent(t *testing.T) {
 	}
 }
 
+func TestFullAgentHashmap(t *testing.T) {
+	baseServer := baseserver.CreateServer[ITestBaseAgent]([]baseserver.AgentGeneratorCountPair[ITestBaseAgent]{}, 1)
+	for i := 0; i < 5; i++ {
+		baseServer.AddAgent(baseagent.NewAgent[ITestBaseAgent]())
+	}
+
+	for id, agent := range baseServer.GetAgents() {
+		if agent.GetID() != id {
+			t.Error("Server agent hashmap key doesn't match object")
+		}
+	}
+}
+
 func TestServerGameLoop(t *testing.T) {
 	m := make([]baseserver.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = baseserver.MakeAgentGeneratorCountPair[ITestBaseAgent](NewTestBaseAgent, 3)
