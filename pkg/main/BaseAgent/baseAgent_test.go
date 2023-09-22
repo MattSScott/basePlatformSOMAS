@@ -12,7 +12,7 @@ type IBaseAgent interface {
 }
 
 func TestAgentIdOperations(t *testing.T) {
-	baseAgent := baseagent.NewAgent[IBaseAgent]()
+	baseAgent := baseagent.NewBaseAgent[IBaseAgent]()
 
 	if baseAgent.GetID() == uuid.Nil {
 		t.Error("Agent not instantiated with valid ID")
@@ -30,7 +30,7 @@ func (aws *AgentWithState) UpdateAgentInternalState() {
 
 func TestUpdateAgentInternalState(t *testing.T) {
 	ag := AgentWithState{
-		baseagent.NewAgent[*AgentWithState](),
+		baseagent.NewBaseAgent[*AgentWithState](),
 		0,
 	}
 
@@ -47,7 +47,7 @@ func TestUpdateAgentInternalState(t *testing.T) {
 
 func TestMessageRetrieval(t *testing.T) {
 
-	agent := baseagent.NewAgent[IBaseAgent]()
+	agent := baseagent.NewBaseAgent[IBaseAgent]()
 
 	messages := agent.GetAllMessages([]IBaseAgent{agent})
 

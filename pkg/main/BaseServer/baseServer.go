@@ -8,38 +8,38 @@ import (
 )
 
 type BaseServer[T baseagent.IAgent[T]] struct {
-	numTurns int
-	agents   map[uuid.UUID]T
+	agentMap   map[uuid.UUID]T
+	iterations int
 }
 
-func (bs *BaseServer[T]) GetAgents() map[uuid.UUID]T {
-	return bs.agents
+func (bs *BaseServer[T]) GetAgentMap() map[uuid.UUID]T {
+	return bs.agentMap
 }
 
 func (bs *BaseServer[T]) AddAgent(agentToAdd T) {
-	bs.agents[agentToAdd.GetID()] = agentToAdd
+	bs.agentMap[agentToAdd.GetID()] = agentToAdd
 }
 
 func (bs *BaseServer[T]) RemoveAgent(agentToAdd T) {
-	delete(bs.agents, agentToAdd.GetID())
+	delete(bs.agentMap, agentToAdd.GetID())
 }
 
-func (bs *BaseServer[T]) GetNumTurns() int {
-	return bs.numTurns
+func (bs *BaseServer[T]) GetIterations() int {
+	return bs.iterations
 }
 
 func (bs *BaseServer[T]) RunGameLoop() {
-	for _, agent := range bs.agents {
-		fmt.Printf("Agent %s updating state \n", agent.GetID())
+	for id, agent := range bs.agentMap {
+		fmt.Printf("Agent %s updating state \n", id)
 		agent.UpdateAgentInternalState()
 	}
 }
 
 func (bs *BaseServer[T]) Start() {
-	fmt.Printf("Server initialised with %d agents \n", len(bs.agents))
+	fmt.Printf("Server initialised with %d agents \n", len(bs.agentMap))
 	fmt.Print("\n")
 	//LOOPS
-	for i := 0; i < bs.numTurns; i++ {
+	for i := 0; i < bs.iterations; i++ {
 		fmt.Printf("Game Loop %d running... \n \n", i)
 		fmt.Printf("Main game loop running... \n \n")
 		bs.RunGameLoop()
@@ -68,10 +68,10 @@ func MakeAgentGeneratorCountPair[T baseagent.IAgent[T]](generatorFunction AgentG
 
 func (bs *BaseServer[T]) GenerateAgentArrayFromMap() []T {
 
-	agentMapToArray := make([]T, len(bs.agents))
+	agentMapToArray := make([]T, len(bs.agentMap))
 
 	i := 0
-	for _, ag := range bs.agents {
+	for _, ag := range bs.agentMap {
 		agentMapToArray[i] = ag
 		i++
 	}
@@ -82,7 +82,7 @@ func (bs *BaseServer[T]) RunMessagingSession() {
 
 	agentArray := bs.GenerateAgentArrayFromMap()
 
-	for _, agent := range bs.agents {
+	for _, agent := range bs.agentMap {
 		allMessages := agent.GetAllMessages(agentArray)
 		for _, msg := range allMessages {
 			recipients := msg.GetRecipients()
@@ -108,11 +108,11 @@ func (bs *BaseServer[T]) initialiseAgents(m []AgentGeneratorCountPair[T]) {
 }
 
 // generate a server instance based on a mapping function and number of iterations
-func CreateServer[T baseagent.IAgent[T]](mapper []AgentGeneratorCountPair[T], iterations int) *BaseServer[T] {
+func CreateServer[T baseagent.IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iterations int) *BaseServer[T] {
 	serv := &BaseServer[T]{
-		agents:   make(map[uuid.UUID]T),
-		numTurns: iterations,
+		agentMap:   make(map[uuid.UUID]T),
+		iterations: iterations,
 	}
-	serv.initialiseAgents(mapper)
+	serv.initialiseAgents(generatorArray)
 	return serv
 }

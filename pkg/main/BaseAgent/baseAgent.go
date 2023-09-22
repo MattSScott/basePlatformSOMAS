@@ -15,7 +15,7 @@ func (ba *BaseAgent[T]) GetID() uuid.UUID {
 
 func (ba *BaseAgent[T]) UpdateAgentInternalState() {}
 
-func NewAgent[T IAgent[T]]() *BaseAgent[T] {
+func NewBaseAgent[T IAgent[T]]() *BaseAgent[T] {
 	return &BaseAgent[T]{
 		id: uuid.New(),
 	}

@@ -21,7 +21,7 @@ func TestInheritedServer(t *testing.T) {
 	floors := 3
 	ts := testserver.New(m, floors)
 
-	if len(ts.GetAgents()) != 5 {
+	if len(ts.GetAgentMap()) != 5 {
 		t.Error("Agents not properly instantiated")
 	}
 
@@ -43,11 +43,11 @@ func TestServerInterfaceComposition(t *testing.T) {
 	// server can also be declared as type interface
 	var server testserver.IExtendedServer = testserver.New(m, 1)
 
-	if len(server.GetAgents()) != 2 {
+	if len(server.GetAgentMap()) != 2 {
 		t.Error("Agents not properly instantiated")
 	}
 
-	for _, agent := range server.GetAgents() {
+	for _, agent := range server.GetAgentMap() {
 		if agent.GetID() == uuid.Nil {
 			t.Error("Agent types not correctly instantiated")
 		}

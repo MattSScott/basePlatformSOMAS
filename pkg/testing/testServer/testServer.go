@@ -26,7 +26,7 @@ func New(mapper []baseserver.AgentGeneratorCountPair[baseExtendedAgent.IExtended
 }
 
 func (s *TestServer) RunAdditionalPhase() {
-	for _, agent := range s.GetAgents() {
+	for _, agent := range s.GetAgentMap() {
 		agent.GetID()
 	}
 }
@@ -42,7 +42,7 @@ func (s *TestServer) RunGameLoop() {
 	s.BaseServer.RunGameLoop()
 
 	// able to call methods from the parametrised subclass too
-	for _, agent := range s.GetAgents() {
+	for _, agent := range s.GetAgentMap() {
 		agent.GetPhrase()
 
 	}

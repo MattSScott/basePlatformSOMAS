@@ -7,7 +7,7 @@ import (
 
 type IAgentOperations[T baseagent.IAgent[T]] interface {
 	// gives access to the agents in the simulator
-	GetAgents() map[uuid.UUID]T
+	GetAgentMap() map[uuid.UUID]T
 	// adds an agent to the server
 	AddAgent(agentToAdd T)
 	// removes an agent from the server
@@ -17,12 +17,12 @@ type IAgentOperations[T baseagent.IAgent[T]] interface {
 }
 
 type IServer[T baseagent.IAgent[T]] interface {
+	// gives operations for adding/removing agents from the simulator
+	IAgentOperations[T]
+	// gives access to number of iteration in simulator
+	GetIterations() int
 	// the set of functions defining how a 'game loop' should run
 	RunGameLoop()
 	// begins simulator
 	Start()
-	// gives operations for adding/removing agents from the simulator
-	IAgentOperations[T]
-	// gives access to number of iteration in simulator
-	GetNumTurns() int
 }

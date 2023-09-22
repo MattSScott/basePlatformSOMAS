@@ -18,7 +18,7 @@ type TestBaseAgent struct {
 
 func NewTestBaseAgent() ITestBaseAgent {
 	return &TestBaseAgent{
-		baseagent.NewAgent[ITestBaseAgent](),
+		baseagent.NewBaseAgent[ITestBaseAgent](),
 	}
 }
 
@@ -28,20 +28,20 @@ func TestAgentsCorrectlyInstantiated(t *testing.T) {
 
 	server := baseserver.CreateServer[ITestBaseAgent](m, 1)
 
-	if len(server.GetAgents()) != 3 {
+	if len(server.GetAgentMap()) != 3 {
 		t.Error("Incorrect number of agents added to server")
 	}
 
 }
 
-func TestNumTurnsInServer(t *testing.T) {
+func TestNumIterationsInServer(t *testing.T) {
 	m := make([]baseserver.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = baseserver.MakeAgentGeneratorCountPair[ITestBaseAgent](NewTestBaseAgent, 3)
 
 	server := baseserver.CreateServer[ITestBaseAgent](m, 1)
 
-	if server.GetNumTurns() != 1 {
-		t.Error("Incorrect number of turns instantiated")
+	if server.GetIterations() != 1 {
+		t.Error("Incorrect number of iterations instantiated")
 	}
 
 }
@@ -77,11 +77,11 @@ func TestAddAgent(t *testing.T) {
 
 	baseServer := baseserver.CreateServer[ITestBaseAgent]([]baseserver.AgentGeneratorCountPair[ITestBaseAgent]{}, 1)
 
-	agent1 := baseagent.NewAgent[ITestBaseAgent]()
+	agent1 := baseagent.NewBaseAgent[ITestBaseAgent]()
 
 	baseServer.AddAgent(agent1)
 
-	if len(baseServer.GetAgents()) != 1 {
+	if len(baseServer.GetAgentMap()) != 1 {
 		t.Error("Agent not correctly added to map")
 	}
 }
@@ -90,12 +90,12 @@ func TestRemoveAgent(t *testing.T) {
 
 	baseServer := baseserver.CreateServer[ITestBaseAgent]([]baseserver.AgentGeneratorCountPair[ITestBaseAgent]{}, 1)
 
-	agent1 := baseagent.NewAgent[ITestBaseAgent]()
+	agent1 := baseagent.NewBaseAgent[ITestBaseAgent]()
 
 	baseServer.AddAgent(agent1)
 	baseServer.RemoveAgent(agent1)
 
-	if len(baseServer.GetAgents()) != 0 {
+	if len(baseServer.GetAgentMap()) != 0 {
 		t.Error("Agent not correctly removed from map")
 	}
 }
@@ -103,10 +103,10 @@ func TestRemoveAgent(t *testing.T) {
 func TestFullAgentHashmap(t *testing.T) {
 	baseServer := baseserver.CreateServer[ITestBaseAgent]([]baseserver.AgentGeneratorCountPair[ITestBaseAgent]{}, 1)
 	for i := 0; i < 5; i++ {
-		baseServer.AddAgent(baseagent.NewAgent[ITestBaseAgent]())
+		baseServer.AddAgent(baseagent.NewBaseAgent[ITestBaseAgent]())
 	}
 
-	for id, agent := range baseServer.GetAgents() {
+	for id, agent := range baseServer.GetAgentMap() {
 		if agent.GetID() != id {
 			t.Error("Server agent hashmap key doesn't match object")
 		}
