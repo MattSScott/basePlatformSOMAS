@@ -34,6 +34,6 @@ func (ha *HelloAgent) HandleGreetingMessage(msg baseExtendedAgent.GreetingMessag
 
 func GetHelloAgent() baseExtendedAgent.IExtendedAgent {
 	return &HelloAgent{
-		BaseExtendedAgent: baseExtendedAgent.GetBaseAgent("hello"),
+		BaseExtendedAgent: baseExtendedAgent.GetBaseExtendedAgent("hello"),
 	}
 }

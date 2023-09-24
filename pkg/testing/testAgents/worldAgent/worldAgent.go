@@ -34,6 +34,6 @@ func (wa *WorldAgent) HandleGreetingMessage(msg baseExtendedAgent.GreetingMessag
 
 func GetWorldAgent() baseExtendedAgent.IExtendedAgent {
 	return &WorldAgent{
-		BaseExtendedAgent: baseExtendedAgent.GetBaseAgent("wello"),
+		BaseExtendedAgent: baseExtendedAgent.GetBaseExtendedAgent("wello"),
 	}
 }

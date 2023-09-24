@@ -5,8 +5,6 @@ import (
 
 	baseExtendedAgent "github.com/MattSScott/basePlatformSOMAS/pkg/testing/testAgents/baseExtendedAgent"
 	"github.com/google/uuid"
-	
-	
 )
 
 func TestGetNewIExtendedAgent(t *testing.T) {
@@ -14,7 +12,21 @@ func TestGetNewIExtendedAgent(t *testing.T) {
 	phrase := iagent.GetPhrase()
 	id := iagent.GetID()
 
-	if phrase != "teststring"{
+	if phrase != "teststring" {
+		t.Error("Unsuccessful default implementation of IExtendedAgent due to string mismatch")
+	}
+
+	if id == uuid.Nil {
+		t.Error("Unsuccessful default implementation of IExtendedAgent due to Nil ID")
+	}
+}
+
+func TestGetBaseExtendedAgent(t *testing.T) {
+	iagent := baseExtendedAgent.GetBaseExtendedAgent("teststring")
+	phrase := iagent.GetPhrase()
+	id := iagent.GetID()
+
+	if phrase != "teststring" {
 		t.Error("Unsuccessful default implementation of IExtendedAgent due to string mismatch")
 	}
 
