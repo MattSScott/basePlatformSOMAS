@@ -3,9 +3,9 @@ package baseserver_test
 import (
 	"testing"
 
-	baseagent "github.com/MattSScott/basePlatformSOMAS/pkg/main/BaseAgent"
-	baseserver "github.com/MattSScott/basePlatformSOMAS/pkg/main/BaseServer"
-	"github.com/MattSScott/basePlatformSOMAS/pkg/main/messaging"
+	baseagent "github.com/MattSScott/basePlatformSOMAS/BaseAgent"
+	baseserver "github.com/MattSScott/basePlatformSOMAS/BaseServer"
+	"github.com/MattSScott/basePlatformSOMAS/messaging"
 )
 
 type ITestBaseAgent interface {

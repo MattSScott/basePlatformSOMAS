@@ -3,8 +3,8 @@ package messaging_test
 import (
 	"testing"
 
-	baseagent "github.com/MattSScott/basePlatformSOMAS/pkg/main/BaseAgent"
-	"github.com/MattSScott/basePlatformSOMAS/pkg/main/messaging"
+	baseagent "github.com/MattSScott/basePlatformSOMAS/BaseAgent"
+	"github.com/MattSScott/basePlatformSOMAS/messaging"
 )
 
 type Message1 struct {
