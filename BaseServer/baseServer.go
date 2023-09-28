@@ -3,7 +3,7 @@ package baseserver
 import (
 	"fmt"
 
-	baseagent "github.com/MattSScott/basePlatformSOMAS/pkg/main/BaseAgent"
+	baseagent "github.com/MattSScott/basePlatformSOMAS/BaseAgent"
 	"github.com/google/uuid"
 )
 

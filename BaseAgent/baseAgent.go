@@ -1,7 +1,7 @@
 package baseagent
 
 import (
-	message "github.com/MattSScott/basePlatformSOMAS/pkg/main/messaging"
+	message "github.com/MattSScott/basePlatformSOMAS/messaging"
 	"github.com/google/uuid"
 )
 

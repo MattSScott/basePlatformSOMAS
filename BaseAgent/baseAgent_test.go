@@ -3,7 +3,7 @@ package baseagent_test
 import (
 	"testing"
 
-	baseagent "github.com/MattSScott/basePlatformSOMAS/pkg/main/BaseAgent"
+	baseagent "github.com/MattSScott/basePlatformSOMAS/BaseAgent"
 	"github.com/google/uuid"
 )
 
