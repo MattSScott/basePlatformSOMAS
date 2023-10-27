@@ -23,6 +23,8 @@ type IServer[T baseagent.IAgent[T]] interface {
 	GetIterations() int
 	// the set of functions defining how a 'game loop' should run
 	RunGameLoop()
+	// starts the agents' messaging session
+	RunMessagingSession()
 	// begins simulator
 	Start()
 }
