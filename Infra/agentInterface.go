@@ -15,4 +15,6 @@ type IAgent[T IExposedAgentFunctions] interface {
 	UpdateAgentInternalState()
 }
 
-type IExposedAgentFunctions interface{}
+type IExposedAgentFunctions interface {
+	IAgent[IExposedAgentFunctions]
+}

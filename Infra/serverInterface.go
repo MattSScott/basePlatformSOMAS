@@ -2,7 +2,7 @@ package infra
 
 import "github.com/google/uuid"
 
-type IAgentOperations[T IAgent[T]] interface {
+type IAgentOperations[U IExposedAgentFunctions, T IAgent[U]] interface {
 	// gives access to the agents in the simulator
 	GetAgentMap() map[uuid.UUID]T
 	// adds an agent to the server
@@ -11,11 +11,13 @@ type IAgentOperations[T IAgent[T]] interface {
 	RemoveAgent(agentToRemove T)
 	// translate the agent map into an array of agents
 	GenerateAgentArrayFromMap() []T
+	// casts agent...
+	CastAgentToExposedAgentFunctions(T) U
 }
 
-type IServer[T IAgent[T]] interface {
+type IServer[U IExposedAgentFunctions, T IAgent[U]] interface {
 	// gives operations for adding/removing agents from the simulator
-	IAgentOperations[T]
+	IAgentOperations[U, T]
 	// gives access to number of iteration in simulator
 	GetIterations() int
 	// the set of functions defining how a 'game loop' should run
@@ -39,7 +41,7 @@ type IExposedServerFunctions[T IExposedAgentFunctions] interface {
 	// return hashset of all agent IDs
 	ViewAgentIdSet() map[uuid.UUID]struct{}
 	// return exposed functions for agent
-	AccessAgentByID(uuid.UUID) T
+	GetAgentFromID(uuid.UUID) T
 }
 
 type RoundRunner interface {
