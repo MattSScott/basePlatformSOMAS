@@ -26,23 +26,26 @@ type IServer[T IAgent[T]] interface {
 	Start()
 }
 
-type MessagingProtocolinterface interface {
-	SendMessage(IMessage, uuid.UUID)
+type IMessagingProtocol interface {
+	RunSynchronousMessaging()
+	SendSynchronousMessage(IMessage, []uuid.UUID)
+	SendMessage(IMessage, []uuid.UUID)
 	ReadChannel(uuid.UUID) <-chan IMessage
 	AcknowledgeClosure(uuid.UUID)
 	AcknowledgeServerMessageReceived()
 }
 
-type IExposedServerFunctions interface {
-	MessagingProtocol
+type IExposedServerFunctions[T IExposedAgentFunctions] interface {
+	// return hashset of all agent IDs
 	ViewAgentIdSet() map[uuid.UUID]struct{}
-	getAgentServerChannel() *chan uuid.UUID
-	agentStoppedTalking(uuid.UUID)
+	// return exposed functions for agent
+	AccessAgentByID(uuid.UUID) T
 }
 
 type RoundRunner interface {
+	RunRound()
 	RunTurn()
-}   
+}
 
 type ServerNotification int
 
