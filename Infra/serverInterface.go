@@ -1,6 +1,10 @@
 package infra
 
-import "github.com/google/uuid"
+import (
+	"sync"
+
+	"github.com/google/uuid"
+)
 
 type IAgentOperations[T IAgent[T]] interface {
 	// gives access to the agents in the simulator
@@ -27,6 +31,7 @@ type IServer[T IAgent[T]] interface {
 }
 
 type IMessagingProtocol interface {
+	listenOnChannel(chan IMessage, chan ServerNotification, *sync.WaitGroup)
 	RunSynchronousMessaging()
 	SendSynchronousMessage(IMessage, []uuid.UUID)
 	SendMessage(IMessage, []uuid.UUID)
