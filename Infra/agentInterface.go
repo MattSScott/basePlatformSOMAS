@@ -4,7 +4,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type IAgent[T IExposedAgentFunctions] interface {
+type IAgent[T any] interface {
 	// composes messaging passing capabilities
 	IMessagingProtocol
 	// composes necessary server functions for agent access
@@ -14,5 +14,3 @@ type IAgent[T IExposedAgentFunctions] interface {
 	// allows agent to update their internal state
 	UpdateAgentInternalState()
 }
-
-type IExposedAgentFunctions interface{}

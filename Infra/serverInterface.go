@@ -35,7 +35,7 @@ type IMessagingProtocol interface {
 	AcknowledgeServerMessageReceived()
 }
 
-type IExposedServerFunctions[T IExposedAgentFunctions] interface {
+type IExposedServerFunctions[T any] interface {
 	// return hashset of all agent IDs
 	ViewAgentIdSet() map[uuid.UUID]struct{}
 	// return exposed functions for agent
