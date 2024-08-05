@@ -39,20 +39,17 @@ type IMessagingProtocol interface {
 	ReadChannel(uuid.UUID) <-chan IMessage
 	AcknowledgeClosure(uuid.UUID)
 	AcknowledgeServerMessageReceived()
+	// indicate agent has finished discussion
 	agentStoppedTalking(uuid.UUID)
+	// allow agent to listen on channel
 	listenOnChannel(chan IMessage, chan ServerNotification, *sync.WaitGroup)
 }
-
-// type iUnexportedServerFunctions interface {
-// 	agentStoppedTalking(uuid.UUID)
-// }
 
 type IExposedServerFunctions[T any] interface {
 	// return hashset of all agent IDs
 	ViewAgentIdSet() map[uuid.UUID]struct{}
 	// return exposed functions for agent
 	AccessAgentByID(uuid.UUID) T
-	//agentStoppedTalking(uuid.UUID)
 }
 
 type RoundRunner interface {

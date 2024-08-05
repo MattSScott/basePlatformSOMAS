@@ -12,6 +12,6 @@ type IAgent[T any] interface {
 	GetID() uuid.UUID
 	// allows agent to update their internal state
 	UpdateAgentInternalState()
+	// TODO
 	NotifyAgentInactive()
-	//listenOnChannel(chan IMessage, chan ServerNotification, *sync.WaitGroup)
 }

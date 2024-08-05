@@ -132,7 +132,7 @@ func (serv *BaseServer[T]) agentBeginSpin() {
 		serv.waitEnd.Add(1)
 		agentAgentChannel := serv.agentAgentChannelMap[agent.GetID()]
 		serverAgentChannel := serv.serverAgentChannelMap[agent.GetID()]
-		go (agent).listenOnChannel(agentAgentChannel, serverAgentChannel, serv.waitEnd)
+		go agent.listenOnChannel(agentAgentChannel, serverAgentChannel, serv.waitEnd)
 	}
 }
 
@@ -247,12 +247,10 @@ func (serv *BaseServer[T]) GetAgentMap() map[uuid.UUID]T {
 
 func (serv *BaseServer[T]) agentStoppedTalking(id uuid.UUID) {
 	fmt.Println("sending stop talking request,id:", id)
-
 	select {
 	case serv.agentServerChannel <- id:
 	default:
 	}
-
 }
 
 func (serv *BaseServer[T]) SetRunHandler(handler RoundRunner) {
