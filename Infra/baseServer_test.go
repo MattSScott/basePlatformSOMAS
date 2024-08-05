@@ -3,8 +3,7 @@ package infra_test
 import (
 	"testing"
 
-	infra "github.com/MattSScott/basePlatformSOMAS/Infra"
-	
+	"github.com/MattSScott/basePlatformSOMAS/infra"
 )
 
 type ITestBaseAgent interface {
@@ -12,20 +11,20 @@ type ITestBaseAgent interface {
 }
 
 type TestBaseAgent struct {
-	*baseagent.BaseAgent[ITestBaseAgent]
+	*infra.BaseAgent[ITestBaseAgent]
 }
 
 func NewTestBaseAgent() ITestBaseAgent {
 	return &TestBaseAgent{
-		baseagent.NewBaseAgent[ITestBaseAgent](),
+		infra.CreateBaseAgent[ITestBaseAgent](),
 	}
 }
 
 func TestAgentsCorrectlyInstantiated(t *testing.T) {
-	m := make([]baseserver.AgentGeneratorCountPair[ITestBaseAgent], 1)
-	m[0] = baseserver.MakeAgentGeneratorCountPair[ITestBaseAgent](NewTestBaseAgent, 3)
+	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
+	m[0] = infra.MakeAgentGeneratorCountPair[ITestBaseAgent](NewTestBaseAgent, 3)
 
-	server := baseserver.CreateServer[ITestBaseAgent](m, 1)
+	server := infra.CreateServer[ITestBaseAgent](m, 1)
 
 	if len(server.GetAgentMap()) != 3 {
 		t.Error("Incorrect number of agents added to server")
@@ -34,10 +33,10 @@ func TestAgentsCorrectlyInstantiated(t *testing.T) {
 }
 
 func TestNumIterationsInServer(t *testing.T) {
-	m := make([]baseserver.AgentGeneratorCountPair[ITestBaseAgent], 1)
-	m[0] = baseserver.MakeAgentGeneratorCountPair[ITestBaseAgent](NewTestBaseAgent, 3)
+	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
+	m[0] = infra.MakeAgentGeneratorCountPair[ITestBaseAgent](NewTestBaseAgent, 3)
 
-	server := baseserver.CreateServer[ITestBaseAgent](m, 1)
+	server := infra.CreateServer[ITestBaseAgent](m, 1)
 
 	if server.GetIterations() != 1 {
 		t.Error("Incorrect number of iterations instantiated")
@@ -46,12 +45,12 @@ func TestNumIterationsInServer(t *testing.T) {
 }
 
 type IExtendedTestServer interface {
-	baseserver.IServer[ITestBaseAgent]
+	infra.IServer[ITestBaseAgent]
 	GetAdditionalField() int
 }
 
 type ExtendedTestServer struct {
-	*baseserver.BaseServer[ITestBaseAgent]
+	*infra.BaseServer[ITestBaseAgent]
 	testField int
 }
 
@@ -65,18 +64,18 @@ func (ets *ExtendedTestServer) RunGameLoop() {
 	ets.testField += 1
 }
 
-func CreateTestServer(mapper []baseserver.AgentGeneratorCountPair[ITestBaseAgent], iters int) IExtendedTestServer {
+func CreateTestServer(mapper []infra.AgentGeneratorCountPair[ITestBaseAgent], iters int) IExtendedTestServer {
 	return &ExtendedTestServer{
-		BaseServer: baseserver.CreateServer[ITestBaseAgent](mapper, iters),
+		BaseServer: infra.CreateServer[ITestBaseAgent](mapper, iters),
 		testField:  0,
 	}
 }
 
 func TestAddAgent(t *testing.T) {
 
-	baseServer := baseserver.CreateServer[ITestBaseAgent]([]baseserver.AgentGeneratorCountPair[ITestBaseAgent]{}, 1)
+	baseServer := infra.CreateServer[ITestBaseAgent]([]infra.AgentGeneratorCountPair[ITestBaseAgent]{}, 1)
 
-	agent1 := baseagent.NewBaseAgent[ITestBaseAgent]()
+	agent1 := infra.NewBaseAgent[ITestBaseAgent]()
 
 	baseServer.AddAgent(agent1)
 
@@ -87,9 +86,9 @@ func TestAddAgent(t *testing.T) {
 
 func TestRemoveAgent(t *testing.T) {
 
-	baseServer := baseserver.CreateServer[ITestBaseAgent]([]baseserver.AgentGeneratorCountPair[ITestBaseAgent]{}, 1)
+	baseServer := infra.CreateServer[ITestBaseAgent]([]infra.AgentGeneratorCountPair[ITestBaseAgent]{}, 1)
 
-	agent1 := baseagent.NewBaseAgent[ITestBaseAgent]()
+	agent1 := infra.NewBaseAgent[ITestBaseAgent]()
 
 	baseServer.AddAgent(agent1)
 	baseServer.RemoveAgent(agent1)
@@ -100,9 +99,9 @@ func TestRemoveAgent(t *testing.T) {
 }
 
 func TestFullAgentHashmap(t *testing.T) {
-	baseServer := baseserver.CreateServer[ITestBaseAgent]([]baseserver.AgentGeneratorCountPair[ITestBaseAgent]{}, 1)
+	baseServer := infra.CreateServer[ITestBaseAgent]([]infra.AgentGeneratorCountPair[ITestBaseAgent]{}, 1)
 	for i := 0; i < 5; i++ {
-		baseServer.AddAgent(baseagent.NewBaseAgent[ITestBaseAgent]())
+		baseServer.AddAgent(infra.NewBaseAgent[ITestBaseAgent]())
 	}
 
 	for id, agent := range baseServer.GetAgentMap() {
@@ -113,8 +112,8 @@ func TestFullAgentHashmap(t *testing.T) {
 }
 
 func TestServerGameLoop(t *testing.T) {
-	m := make([]baseserver.AgentGeneratorCountPair[ITestBaseAgent], 1)
-	m[0] = baseserver.MakeAgentGeneratorCountPair[ITestBaseAgent](NewTestBaseAgent, 3)
+	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
+	m[0] = infra.MakeAgentGeneratorCountPair[ITestBaseAgent](NewTestBaseAgent, 3)
 
 	server := CreateTestServer(m, 1)
 
@@ -131,33 +130,33 @@ func TestServerGameLoop(t *testing.T) {
 }
 
 func TestServerStartsCorrectly(t *testing.T) {
-	generator := baseserver.MakeAgentGeneratorCountPair[ITestBaseAgent](NewTestBaseAgent, 3)
+	generator := infra.MakeAgentGeneratorCountPair[ITestBaseAgent](NewTestBaseAgent, 3)
 
-	baseServer := baseserver.CreateServer([]baseserver.AgentGeneratorCountPair[ITestBaseAgent]{generator}, 1)
+	baseServer := infra.CreateServer([]infra.AgentGeneratorCountPair[ITestBaseAgent]{generator}, 1)
 
 	baseServer.Start()
 }
 
 func TestAgentMapConvertsToArray(t *testing.T) {
-	generator := baseserver.MakeAgentGeneratorCountPair[ITestBaseAgent](NewTestBaseAgent, 3)
+	generator := infra.MakeAgentGeneratorCountPair[ITestBaseAgent](NewTestBaseAgent, 3)
 
-	baseServer := baseserver.CreateServer([]baseserver.AgentGeneratorCountPair[ITestBaseAgent]{generator}, 1)
+	baseServer := infra.CreateServer([]infra.AgentGeneratorCountPair[ITestBaseAgent]{generator}, 1)
 
 	if len(baseServer.GenerateAgentArrayFromMap()) != 3 {
 		t.Error("Agents not correctly mapped to array")
 	}
 }
 
-func (tba *TestBaseAgent) GetAllMessages(others []ITestBaseAgent) []messaging.IMessage[ITestBaseAgent] {
-	msg := messaging.CreateMessage[ITestBaseAgent](tba, others)
+func (tba *TestBaseAgent) GetAllMessages(others []ITestBaseAgent) []infra.IMessage[ITestBaseAgent] {
+	msg := infra.CreateMessage[ITestBaseAgent](tba, others)
 
-	return []messaging.IMessage[ITestBaseAgent]{msg}
+	return []infra.IMessage[ITestBaseAgent]{msg}
 }
 
 func TestMessagingSession(t *testing.T) {
-	generator := baseserver.MakeAgentGeneratorCountPair[ITestBaseAgent](NewTestBaseAgent, 3)
+	generator := infra.MakeAgentGeneratorCountPair[ITestBaseAgent](NewTestBaseAgent, 3)
 
-	baseServer := baseserver.CreateServer([]baseserver.AgentGeneratorCountPair[ITestBaseAgent]{generator}, 1)
+	baseServer := infra.CreateServer([]infra.AgentGeneratorCountPair[ITestBaseAgent]{generator}, 1)
 
 	agentArray := baseServer.GenerateAgentArrayFromMap()
 

@@ -3,8 +3,7 @@ package infra_test
 import (
 	"testing"
 
-	infra "github.com/MattSScott/basePlatformSOMAS/Infra"
-	
+	"github.com/MattSScott/basePlatformSOMAS/infra"
 )
 
 type Message1 struct {
@@ -13,25 +12,25 @@ type Message1 struct {
 }
 
 type Message2 struct {
-	messaging.BaseMessage[IExtendedAgent]
+	infra.BaseMessage[IExtendedAgent]
 	messageField2 int
 }
 
 type NullMessage struct {
-	messaging.BaseMessage[IExtendedAgent]
+	infra.BaseMessage[IExtendedAgent]
 }
 
 type IExtendedAgent interface {
-	baseagent.IAgent[IExtendedAgent]
+	infra.IAgent[IExtendedAgent]
 	GetAgentField() int
-	GetAllMessages([]IExtendedAgent) []messaging.IMessage[IExtendedAgent]
+	GetAllMessages([]IExtendedAgent) []infra.IMessage[IExtendedAgent]
 	HandleMessage1(msg Message1)
 	HandleMessage2(msg Message2)
 	HandleNullMessage(msg NullMessage)
 }
 
 type ExtendedAgent struct {
-	baseagent.BaseAgent[IExtendedAgent]
+	infra.BaseAgent[IExtendedAgent]
 	agentField int
 }
 
@@ -53,7 +52,7 @@ func (ea *ExtendedAgent) GetAgentField() int {
 
 func (ea *ExtendedAgent) GetMessage1() Message1 {
 	return Message1{
-		messaging.BaseMessage[IExtendedAgent]{},
+		infra.BaseMessage[IExtendedAgent]{},
 		5,
 	}
 }
@@ -64,7 +63,7 @@ func (ea *ExtendedAgent) HandleMessage1(msg Message1) {
 
 func (ea *ExtendedAgent) GetMessage2() Message2 {
 	return Message2{
-		messaging.BaseMessage[IExtendedAgent]{},
+		infra.BaseMessage[IExtendedAgent]{},
 		10,
 	}
 }
@@ -73,7 +72,7 @@ func (ea *ExtendedAgent) HandleMessage2(msg Message2) {
 	ea.agentField += msg.messageField2
 }
 func (ea *ExtendedAgent) GetNullMessage(recips []IExtendedAgent) NullMessage {
-	return NullMessage{messaging.CreateMessage[IExtendedAgent](ea, recips)}
+	return NullMessage{infra.CreateMessage[IExtendedAgent](ea, recips)}
 }
 
 func (ea *ExtendedAgent) HandleNullMessage(msg NullMessage) {
@@ -81,10 +80,10 @@ func (ea *ExtendedAgent) HandleNullMessage(msg NullMessage) {
 	ea.agentField = sender.GetAgentField()
 }
 
-func (ea *ExtendedAgent) GetAllMessages([]IExtendedAgent) []messaging.IMessage[IExtendedAgent] {
+func (ea *ExtendedAgent) GetAllMessages([]IExtendedAgent) []infra.IMessage[IExtendedAgent] {
 	msg1 := ea.GetMessage1()
 	msg2 := ea.GetMessage2()
-	return []messaging.IMessage[IExtendedAgent]{msg1, msg2}
+	return []infra.IMessage[IExtendedAgent]{msg1, msg2}
 }
 func TestMessageCanBeExtended(t *testing.T) {
 	agent1 := &ExtendedAgent{agentField: 0}
