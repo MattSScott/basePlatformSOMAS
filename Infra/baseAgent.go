@@ -8,6 +8,7 @@ import (
 )
 
 type BaseAgent[T IAgent[T]] struct {
+	IMessagingProtocol
 	IExposedServerFunctions[T]
 	id uuid.UUID
 }

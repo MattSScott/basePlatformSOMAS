@@ -43,9 +43,9 @@ type IMessagingProtocol interface {
 	listenOnChannel(chan IMessage, chan ServerNotification, *sync.WaitGroup)
 }
 
-type iUnexportedServerFunctions interface {
-	agentStoppedTalking(uuid.UUID)
-}
+// type iUnexportedServerFunctions interface {
+// 	agentStoppedTalking(uuid.UUID)
+// }
 
 type IExposedServerFunctions[T any] interface {
 	// return hashset of all agent IDs
