@@ -68,6 +68,7 @@ listening:
 			}
 		}
 	}
+	go a.NotifyAgentInactive()
 	go a.AcknowledgeClosure(a.id)
 	fmt.Println("stopped listening on channel")
 }
