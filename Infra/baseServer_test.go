@@ -15,8 +15,10 @@ type TestBaseAgent struct {
 }
 
 func NewTestBaseAgent() ITestBaseAgent {
+	var testServ infra.IServer[IBaseAgent] = TestServer{}
+
 	return &TestBaseAgent{
-		infra.CreateBaseAgent[ITestBaseAgent](),
+		infra.CreateBaseAgent[IBaseAgent](testServ),
 	}
 }
 

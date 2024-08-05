@@ -245,6 +245,7 @@ func (serv *BaseServer[T]) GetAgentMap() map[uuid.UUID]T {
 	return serv.agentMap
 }
 
+// TODO: this is never called
 func (serv *BaseServer[T]) agentStoppedTalking(id uuid.UUID) {
 	fmt.Println("sending stop talking request,id:", id)
 	select {
