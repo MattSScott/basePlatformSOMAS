@@ -3,7 +3,7 @@ package infra_test
 import (
 	"testing"
 
-	infra "github.com/MattSScott/basePlatformSOMAS/Infra"
+	"github.com/MattSScott/basePlatformSOMAS/infra"
 	"github.com/google/uuid"
 )
 
@@ -12,7 +12,8 @@ type IBaseAgent interface {
 }
 
 func TestAgentIdOperations(t *testing.T) {
-	baseAgent := infra.NewBaseAgent[IBaseAgent]()
+	var IServ infra.IServer[IBaseAgent] = infra.IServer[IBaseAgent]{}
+	baseAgent := infra.CreateBaseAgent(IServ)
 
 	if baseAgent.GetID() == uuid.Nil {
 		t.Error("Agent not instantiated with valid ID")
@@ -20,7 +21,7 @@ func TestAgentIdOperations(t *testing.T) {
 }
 
 type AgentWithState struct {
-	*baseagent.BaseAgent[*AgentWithState]
+	*BaseAgent[*AgentWithState]
 	state int
 }
 
@@ -30,7 +31,7 @@ func (aws *AgentWithState) UpdateAgentInternalState() {
 
 func TestUpdateAgentInternalState(t *testing.T) {
 	ag := AgentWithState{
-		baseagent.NewBaseAgent[*AgentWithState](),
+		infra.CreateBaseAgent[*AgentWithState](),
 		0,
 	}
 
@@ -47,7 +48,7 @@ func TestUpdateAgentInternalState(t *testing.T) {
 
 func TestMessageRetrieval(t *testing.T) {
 
-	agent := baseagent.NewBaseAgent[IBaseAgent]()
+	agent := infra.CreateBaseAgent[IBaseAgent]()
 
 	messages := agent.GetAllMessages([]IBaseAgent{agent})
 
