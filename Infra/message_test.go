@@ -7,23 +7,23 @@ import (
 )
 
 type Message1 struct {
-	infra.BaseMessage[IExtendedAgent]
+	infra.BaseMessage
 	messageField1 int
 }
 
 type Message2 struct {
-	infra.BaseMessage[IExtendedAgent]
+	infra.BaseMessage
 	messageField2 int
 }
 
 type NullMessage struct {
-	infra.BaseMessage[IExtendedAgent]
+	infra.BaseMessage
 }
 
 type IExtendedAgent interface {
 	infra.IAgent[IExtendedAgent]
 	GetAgentField() int
-	GetAllMessages([]IExtendedAgent) []infra.IMessage[IExtendedAgent]
+	GetAllMessages([]IExtendedAgent) []infra.IMessage
 	HandleMessage1(msg Message1)
 	HandleMessage2(msg Message2)
 	HandleNullMessage(msg NullMessage)
@@ -52,7 +52,7 @@ func (ea *ExtendedAgent) GetAgentField() int {
 
 func (ea *ExtendedAgent) GetMessage1() Message1 {
 	return Message1{
-		infra.BaseMessage[IExtendedAgent]{},
+		infra.BaseMessage{},
 		5,
 	}
 }
@@ -63,7 +63,7 @@ func (ea *ExtendedAgent) HandleMessage1(msg Message1) {
 
 func (ea *ExtendedAgent) GetMessage2() Message2 {
 	return Message2{
-		infra.BaseMessage[IExtendedAgent]{},
+		infra.BaseMessage{},
 		10,
 	}
 }
@@ -76,14 +76,14 @@ func (ea *ExtendedAgent) GetNullMessage(recips []IExtendedAgent) NullMessage {
 }
 
 func (ea *ExtendedAgent) HandleNullMessage(msg NullMessage) {
-	sender := msg.GetSender()
-	ea.agentField = sender.GetAgentField()
+	// sender := msg.GetSender()
+
 }
 
 func (ea *ExtendedAgent) GetAllMessages([]IExtendedAgent) []infra.IMessage[IExtendedAgent] {
 	msg1 := ea.GetMessage1()
 	msg2 := ea.GetMessage2()
-	return []infra.IMessage[IExtendedAgent]{msg1, msg2}
+	return []infra.IMessage{msg1, msg2}
 }
 func TestMessageCanBeExtended(t *testing.T) {
 	agent1 := &ExtendedAgent{agentField: 0}
