@@ -41,9 +41,9 @@ func (server *BaseServer[T]) HandleStartOfTurn(iter, round int) {
 
 }
 
-func (serv *BaseServer[T]) getAgentServerChannel() *chan uuid.UUID {
-	return &serv.agentServerChannel
-}
+// func (serv *BaseServer[T]) getAgentServerChannel() *chan uuid.UUID {
+// 	return &serv.agentServerChannel
+// }
 
 func (serv *BaseServer[T]) waitForMessagingToEnd() {
 	//maxMessagingDuration := time.Second
@@ -246,7 +246,6 @@ func (serv *BaseServer[T]) GetAgentMap() map[uuid.UUID]T {
 }
 
 func (serv *BaseServer[T]) agentStoppedTalking(id uuid.UUID) {
-	//agentServerChannel := a.getAgentServerChannel()
 	fmt.Println("sending stop talking request,id:", id)
 
 	select {
@@ -346,21 +345,6 @@ func (bs *BaseServer[T]) RunSynchronousMessagingSession() {
 		agent.RunSynchronousMessaging()
 	}
 }
-
-// func (bs *BaseServer[T]) RunSynchronousMessagingSession() {
-// 	for _, agent := range bs.agentMap {
-// 		allMessages := agent.GetAllMessages()
-// 		for _, msg := range allMessages {
-// 			recipients := msg.GetRecipients()
-// 			for _, recip := range recipients {
-// 				if agent.GetID() == recip.GetID() {
-// 					continue
-// 				}
-// 				msg.InvokeMessageHandler(recip)
-// 			}
-// 		}
-// 	}
-// }
 
 func (bs *BaseServer[T]) initialiseAgents(m []AgentGeneratorCountPair[T]) {
 

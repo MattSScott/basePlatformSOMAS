@@ -1,18 +1,18 @@
-package baseagent_test
+package infra_test
 
 import (
 	"testing"
 
-	baseagent "github.com/MattSScott/basePlatformSOMAS/BaseAgent"
+	infra "github.com/MattSScott/basePlatformSOMAS/Infra"
 	"github.com/google/uuid"
 )
 
 type IBaseAgent interface {
-	baseagent.IAgent[IBaseAgent]
+	infra.IAgent[IBaseAgent]
 }
 
 func TestAgentIdOperations(t *testing.T) {
-	baseAgent := baseagent.NewBaseAgent[IBaseAgent]()
+	baseAgent := infra.NewBaseAgent[IBaseAgent]()
 
 	if baseAgent.GetID() == uuid.Nil {
 		t.Error("Agent not instantiated with valid ID")

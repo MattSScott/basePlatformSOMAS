@@ -1,15 +1,14 @@
-package baseserver_test
+package infra_test
 
 import (
 	"testing"
 
-	baseagent "github.com/MattSScott/basePlatformSOMAS/BaseAgent"
-	baseserver "github.com/MattSScott/basePlatformSOMAS/BaseServer"
-	"github.com/MattSScott/basePlatformSOMAS/messaging"
+	infra "github.com/MattSScott/basePlatformSOMAS/Infra"
+	
 )
 
 type ITestBaseAgent interface {
-	baseagent.IAgent[ITestBaseAgent]
+	infra.IAgent[ITestBaseAgent]
 }
 
 type TestBaseAgent struct {

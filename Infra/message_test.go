@@ -1,14 +1,14 @@
-package messaging_test
+package infra_test
 
 import (
 	"testing"
 
-	baseagent "github.com/MattSScott/basePlatformSOMAS/BaseAgent"
-	"github.com/MattSScott/basePlatformSOMAS/messaging"
+	infra "github.com/MattSScott/basePlatformSOMAS/Infra"
+	
 )
 
 type Message1 struct {
-	messaging.BaseMessage[IExtendedAgent]
+	infra.BaseMessage[IExtendedAgent]
 	messageField1 int
 }
 

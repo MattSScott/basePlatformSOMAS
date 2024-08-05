@@ -1,6 +1,8 @@
 package infra
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+)
 
 type IAgentOperations[T IAgent[T]] interface {
 	// gives access to the agents in the simulator
@@ -33,6 +35,11 @@ type IMessagingProtocol interface {
 	ReadChannel(uuid.UUID) <-chan IMessage
 	AcknowledgeClosure(uuid.UUID)
 	AcknowledgeServerMessageReceived()
+	//agentStoppedTalking(uuid.UUID)
+}
+
+type iUnexportedServerFunctions interface {
+	agentStoppedTalking(uuid.UUID)
 }
 
 type IExposedServerFunctions[T any] interface {
@@ -40,6 +47,7 @@ type IExposedServerFunctions[T any] interface {
 	ViewAgentIdSet() map[uuid.UUID]struct{}
 	// return exposed functions for agent
 	AccessAgentByID(uuid.UUID) T
+	//agentStoppedTalking(uuid.UUID)
 }
 
 type RoundRunner interface {
