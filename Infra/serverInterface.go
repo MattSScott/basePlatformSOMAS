@@ -39,10 +39,10 @@ type IMessagingProtocol interface {
 	ReadChannel(uuid.UUID) <-chan IMessage
 	AcknowledgeClosure(uuid.UUID)
 	AcknowledgeServerMessageReceived()
-	// indicate agent has finished discussion
-	agentStoppedTalking(uuid.UUID)
 	// allow agent to listen on channel
 	listenOnChannel(chan IMessage, chan ServerNotification, *sync.WaitGroup)
+	// send notification that agent stopped talking session
+	agentStoppedTalking(id uuid.UUID)
 }
 
 type IExposedServerFunctions[T any] interface {

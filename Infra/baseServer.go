@@ -136,6 +136,10 @@ func (serv *BaseServer[T]) agentBeginSpin() {
 	}
 }
 
+func (serv *BaseServer[T]) AccessAgentByID(id uuid.UUID) T {
+	return serv.agentMap[id]
+}
+
 func GenerateServer[T IAgent[T]](maxDuration time.Duration, agentServerChannelBufferSize int) *BaseServer[T] {
 	return &BaseServer[T]{
 		agentMap:               make(map[uuid.UUID]T),

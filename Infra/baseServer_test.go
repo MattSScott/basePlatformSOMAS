@@ -15,16 +15,18 @@ type TestBaseAgent struct {
 }
 
 func NewTestBaseAgent() ITestBaseAgent {
-	var testServ infra.IServer[IBaseAgent] = TestServer{}
+	serv := &infra.BaseServer[ITestBaseAgent]{}
 
 	return &TestBaseAgent{
-		infra.CreateBaseAgent[IBaseAgent](testServ),
+		infra.CreateBaseAgent[ITestBaseAgent](serv),
 	}
 }
 
 func TestAgentsCorrectlyInstantiated(t *testing.T) {
 	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = infra.MakeAgentGeneratorCountPair[ITestBaseAgent](NewTestBaseAgent, 3)
+	ag := NewTestBaseAgent()
+	ag.NotifyAgentInactive()
 
 	server := infra.CreateServer[ITestBaseAgent](m, 1)
 
