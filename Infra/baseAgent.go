@@ -7,28 +7,27 @@ import (
 	"github.com/google/uuid"
 )
 
-type BaseAgent struct {
-	unexportedServerFunctions
-	IMessagingProtocol
-	ListenOnChannel
+type BaseAgent[T IAgent[T]] struct {
+	IExposedServerFunctions[T]
 	id uuid.UUID
 }
 
-func (ba *BaseAgent) GetID() uuid.UUID {
+func (ba *BaseAgent[T]) GetID() uuid.UUID {
 	return ba.id
 }
 
-func CreateBaseAgent() *BaseAgent {
-	return &BaseAgent{
-		id: uuid.New(),
+func CreateBaseAgent[T IAgent[T]](serv IExposedServerFunctions[T]) *BaseAgent[T] {
+	return &BaseAgent[T]{
+		IExposedServerFunctions: serv,
+		id:                      uuid.New(),
 	}
 }
 
-func (a *BaseAgent) NotifyAgentInactive() {
+func (a *BaseAgent[T]) NotifyAgentInactive() {
 	a.agentStoppedTalking(a.id)
 }
 
-func (a *BaseAgent) listenOnChannel(agentAgentchannel chan IMessage, serverAgentchannel chan ServerNotification, wait *sync.WaitGroup) {
+func (a *BaseAgent[T]) listenOnChannel(agentAgentchannel chan IMessage, serverAgentchannel chan ServerNotification, wait *sync.WaitGroup) {
 	defer wait.Done()
 
 	// checkMessageHandler()
