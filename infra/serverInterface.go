@@ -33,7 +33,6 @@ type IServer[T IAgent[T]] interface {
 }
 
 type IMessagingProtocol interface {
-	listenOnChannel(chan IMessage, chan ServerNotification, *sync.WaitGroup)
 	RunSynchronousMessaging()
 	SendSynchronousMessage(IMessage, []uuid.UUID)
 	SendMessage(IMessage, []uuid.UUID)
