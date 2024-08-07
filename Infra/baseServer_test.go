@@ -1,32 +1,32 @@
-package infra
+package infra_test
 
 import (
 	"sync"
 	"testing"
 	"time"
 
+	infra "github.com/MattSScott/basePlatformSOMAS/infra"
 	"github.com/google/uuid"
 )
 
 type ITestBaseAgent interface {
-	IAgent[ITestBaseAgent]
+	infra.IAgent[ITestBaseAgent]
 }
-
 type TestBaseAgent struct {
-	*BaseAgent[ITestBaseAgent]
+	*infra.BaseAgent[ITestBaseAgent]
 }
 
 func NewTestBaseAgent() ITestBaseAgent {
-	serv := &BaseServer[ITestBaseAgent]{}
+	serv := &infra.BaseServer[ITestBaseAgent]{}
 
 	return &TestBaseAgent{
-		CreateBaseAgent[ITestBaseAgent](serv),
+		infra.CreateBaseAgent[ITestBaseAgent](serv),
 	}
 }
 
 func TestGenearateServer(t *testing.T) {
-	server := GenerateServer[ITestBaseAgent](time.Second, 2)
-	agent := CreateBaseAgent[ITestBaseAgent](server)
+	server := infra.GenerateServer[ITestBaseAgent](time.Second, 2)
+	agent := infra.CreateBaseAgent[ITestBaseAgent](server)
 	//fmt.Println(a,abc)
 	//fmt.Println(len(a.GetAgentMap()))
 
@@ -37,8 +37,8 @@ func TestGenearateServer(t *testing.T) {
 }
 
 func TestAgentsCorrectlyInstantiated(t *testing.T) {
-	m := make([]AgentGeneratorCountPair[ITestBaseAgent], 1)
-	m[0] = MakeAgentGeneratorCountPair[ITestBaseAgent](NewTestBaseAgent, 3)
+	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
+	m[0] = infra.MakeAgentGeneratorCountPair[ITestBaseAgent](NewTestBaseAgent, 3)
 	ag := NewTestBaseAgent()
 	ag.NotifyAgentInactive()
 
@@ -63,7 +63,7 @@ func TestHandlerInitialiser(t *testing.T) {
 }
 
 func TestSpinStart(t *testing.T) {
-	server := GenerateServer[ITestBaseAgent](time.Second, 2)
+	server := infra.GenerateServer[ITestBaseAgent](time.Second, 2)
 	arbitraryAgentID := uuid.New()
 	//create a fake entry in the serverAgentChannelMap to send messages
 	// to that wont be checked by an agent
@@ -80,7 +80,7 @@ func TestSpinStart(t *testing.T) {
 	select {
 	case msg := <-server.serverAgentChannelMap[arbitraryAgentID]:
 
-		if msg != StopListeningSpinner {
+		if msg != infra.StopListeningSpinner {
 			t.Errorf("Incorrect Message Sent")
 			return
 		} else {
