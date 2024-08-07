@@ -41,10 +41,6 @@ func (server *BaseServer[T]) HandleStartOfTurn(iter, round int) {
 
 }
 
-// func (serv *BaseServer[T]) getAgentServerChannel() *chan uuid.UUID {
-// 	return &serv.agentServerChannel
-// }
-
 func (serv *BaseServer[T]) waitForMessagingToEnd() {
 	//maxMessagingDuration := time.Second
 	timeoutChannel := time.After(serv.maxMessagingDuration)
@@ -268,6 +264,8 @@ func (serv *BaseServer[T]) checkHandler() {
 	}
 }
 
+func (serv *BaseServer[T]) RunTurn() {}
+
 // func (bs *BaseServer[T]) GetAgentMap() map[uuid.UUID]T {
 // 	return bs.agentMap
 // }
@@ -285,11 +283,17 @@ func (bs *BaseServer[T]) GetIterations() int {
 }
 
 func (bs *BaseServer[T]) RunGameLoop() {
+	if bs.roundRunner == nil {
+		panic("roundRuner has not been set.")
+
+	}
 	for id, agent := range bs.agentMap {
 		fmt.Printf("Agent %s updating state \n", id)
 		agent.UpdateAgentInternalState()
 	}
 }
+
+func (bs *BaseServer[T]) RunRound() {}
 
 // func (bs *BaseServer[T]) Start() {
 // 	fmt.Printf("Server initialised with %d agents \n", len(bs.agentMap))
