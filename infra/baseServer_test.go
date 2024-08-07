@@ -1,6 +1,7 @@
 package infra_test
 
 import (
+	"sync"
 	"testing"
 	"time"
 
@@ -65,20 +66,20 @@ func TestSpinStart(t *testing.T) {
 	server := infra.GenerateServer[ITestBaseAgent](time.Second, 2)
 	server.Initialise()
 	arbitraryAgentID := uuid.New()
-	server.SetServerAgentChannel(arbitraryAgentID, make(chan infra.ServerNotification))
+	server.SetServerAgentChannel(arbitraryAgentID, make(chan infra.ServerNotification, 1))
 	//create a fake entry in the serverAgentChannelMap to send messages
 	// to that wont be checked by an agent
-	//var waitGroup sync.WaitGroup
-	//waitGroup.Add(1)
+	var waitGroup sync.WaitGroup
+	waitGroup.Add(1)
 	//server.SendServerNotification(arbitraryAgentID, infra.StartListeningNotification)
 
 	go func() {
-		//defer waitGroup.Done()
+		defer waitGroup.Done()
 		server.SendServerNotification(arbitraryAgentID, infra.StartListeningNotification)
 
 	}()
 
-	//waitGroup.Wait()
+	waitGroup.Wait()
 	msg := <-server.GetServerAgentChannel(arbitraryAgentID)
 	if msg != infra.StartListeningNotification {
 		t.Errorf("Incorrect Message Sent")
