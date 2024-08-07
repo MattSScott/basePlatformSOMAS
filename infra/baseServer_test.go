@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/MattSScott/basePlatformSOMAS/infra"
+	"github.com/google/uuid"
 )
 
 type ITestBaseAgent interface {
@@ -60,35 +61,30 @@ func TestHandlerInitialiser(t *testing.T) {
 
 }
 
-// func TestSpinStart(t *testing.T) {
-// 	server := infra.GenerateServer[ITestBaseAgent](time.Second, 2)
-// 	server.Initialise()
-// 	arbitraryAgentID := uuid.New()
-// 	//create a fake entry in the serverAgentChannelMap to send messages
-// 	// to that wont be checked by an agent
-// 	var waitGroup sync.WaitGroup
-// 	waitGroup.Add(1)
+func TestSpinStart(t *testing.T) {
+	server := infra.GenerateServer[ITestBaseAgent](time.Second, 2)
+	server.Initialise()
+	arbitraryAgentID := uuid.New()
+	server.SetServerAgentChannel(arbitraryAgentID, make(chan infra.ServerNotification))
+	//create a fake entry in the serverAgentChannelMap to send messages
+	// to that wont be checked by an agent
+	//var waitGroup sync.WaitGroup
+	//waitGroup.Add(1)
+	//server.SendServerNotification(arbitraryAgentID, infra.StartListeningNotification)
 
-// 	go func() {
-// 		defer waitGroup.Done()
-// 		server.sendServerNotification(arbitraryAgentID, infra.StartListeningNotification)
+	go func() {
+		//defer waitGroup.Done()
+		server.SendServerNotification(arbitraryAgentID, infra.StartListeningNotification)
 
-// 	}()
-// 	waitGroup.Wait()
-// 	select {
-// 	case msg := <-server.serverAgentChannelMap[arbitraryAgentID]:
+	}()
 
-// 		if msg != infra.StopListeningSpinner {
-// 			t.Errorf("Incorrect Message Sent")
-// 			return
-// 		} else {
-// 			return
-// 		}
-// 	default:
-// 		t.Errorf("no message recieved")
-// 	}
+	//waitGroup.Wait()
+	msg := <-server.GetServerAgentChannel(arbitraryAgentID)
+	if msg != infra.StartListeningNotification {
+		t.Errorf("Incorrect Message Sent")
+	}
 
-// }
+}
 
 // func TestNumIterationsInServer(t *testing.T) {
 // 	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
