@@ -5,7 +5,6 @@ import (
 )
 
 type IAgent[T any] interface {
-	// composes messaging passing capabilities
 	IMessagingProtocol
 	// composes necessary server functions for agent access
 	IExposedServerFunctions[T]
@@ -13,4 +12,6 @@ type IAgent[T any] interface {
 	GetID() uuid.UUID
 	// allows agent to update their internal state
 	UpdateAgentInternalState()
+	// TODO
+	NotifyAgentInactive()
 }

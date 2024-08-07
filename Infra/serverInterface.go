@@ -20,6 +20,8 @@ type IAgentOperations[T IAgent[T]] interface {
 type IServer[T IAgent[T]] interface {
 	// gives operations for adding/removing agents from the simulator
 	IAgentOperations[T]
+	// TODO
+	IExposedServerFunctions[T]
 	// gives access to number of iteration in simulator
 	GetIterations() int
 	// the set of functions defining how a 'game loop' should run
@@ -38,6 +40,10 @@ type IMessagingProtocol interface {
 	ReadChannel(uuid.UUID) <-chan IMessage
 	AcknowledgeClosure(uuid.UUID)
 	AcknowledgeServerMessageReceived()
+	// allow agent to listen on channel
+	listenOnChannel(chan IMessage, chan ServerNotification, *sync.WaitGroup)
+	// send notification that agent stopped talking session
+	agentStoppedTalking(id uuid.UUID)
 }
 
 type IExposedServerFunctions[T any] interface {

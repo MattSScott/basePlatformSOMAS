@@ -41,10 +41,6 @@ func (server *BaseServer[T]) HandleStartOfTurn(iter, round int) {
 
 }
 
-// func (serv *BaseServer[T]) getAgentServerChannel() *chan uuid.UUID {
-// 	return &serv.agentServerChannel
-// }
-
 func (serv *BaseServer[T]) waitForMessagingToEnd() {
 	//maxMessagingDuration := time.Second
 	timeoutChannel := time.After(serv.maxMessagingDuration)
@@ -134,6 +130,10 @@ func (serv *BaseServer[T]) agentBeginSpin() {
 		serverAgentChannel := serv.serverAgentChannelMap[agent.GetID()]
 		go agent.listenOnChannel(agentAgentChannel, serverAgentChannel, serv.waitEnd)
 	}
+}
+
+func (serv *BaseServer[T]) AccessAgentByID(id uuid.UUID) T {
+	return serv.agentMap[id]
 }
 
 func GenerateServer[T IAgent[T]](maxDuration time.Duration, agentServerChannelBufferSize int) *BaseServer[T] {
@@ -245,8 +245,8 @@ func (serv *BaseServer[T]) GetAgentMap() map[uuid.UUID]T {
 	return serv.agentMap
 }
 
+// TODO: this is never called
 func (serv *BaseServer[T]) agentStoppedTalking(id uuid.UUID) {
-	//agentServerChannel := a.getAgentServerChannel()
 	fmt.Println("sending stop talking request,id:", id)
 	select {
 	case serv.agentServerChannel <- id:
@@ -263,6 +263,8 @@ func (serv *BaseServer[T]) checkHandler() {
 		panic("handler has not been set. Have you run SetRunHandler?")
 	}
 }
+
+func (serv *BaseServer[T]) RunTurn() {}
 
 // func (bs *BaseServer[T]) GetAgentMap() map[uuid.UUID]T {
 // 	return bs.agentMap
@@ -281,11 +283,17 @@ func (bs *BaseServer[T]) GetIterations() int {
 }
 
 func (bs *BaseServer[T]) RunGameLoop() {
+	if bs.roundRunner == nil {
+		panic("roundRuner has not been set.")
+
+	}
 	for id, agent := range bs.agentMap {
 		fmt.Printf("Agent %s updating state \n", id)
 		agent.UpdateAgentInternalState()
 	}
 }
+
+func (bs *BaseServer[T]) RunRound() {}
 
 // func (bs *BaseServer[T]) Start() {
 // 	fmt.Printf("Server initialised with %d agents \n", len(bs.agentMap))
@@ -344,21 +352,6 @@ func (bs *BaseServer[T]) RunSynchronousMessagingSession() {
 		agent.RunSynchronousMessaging()
 	}
 }
-
-// func (bs *BaseServer[T]) RunSynchronousMessagingSession() {
-// 	for _, agent := range bs.agentMap {
-// 		allMessages := agent.GetAllMessages()
-// 		for _, msg := range allMessages {
-// 			recipients := msg.GetRecipients()
-// 			for _, recip := range recipients {
-// 				if agent.GetID() == recip.GetID() {
-// 					continue
-// 				}
-// 				msg.InvokeMessageHandler(recip)
-// 			}
-// 		}
-// 	}
-// }
 
 func (bs *BaseServer[T]) initialiseAgents(m []AgentGeneratorCountPair[T]) {
 
