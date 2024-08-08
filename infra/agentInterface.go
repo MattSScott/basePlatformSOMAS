@@ -1,11 +1,12 @@
 package infra
 
 import (
+	"sync"
+
 	"github.com/google/uuid"
 )
 
 type IAgent[T any] interface {
-	IMessagingProtocol
 	// composes necessary server functions for agent access
 	IExposedServerFunctions[T]
 	// returns the unique ID of an agent
@@ -14,4 +15,8 @@ type IAgent[T any] interface {
 	UpdateAgentInternalState()
 	// TODO
 	NotifyAgentInactive()
+	// TODO: move to better location
+	RunSynchronousMessaging()
+	// allow agent to listen on channel
+	listenOnChannel(chan IMessage, chan ServerNotification, *sync.WaitGroup)
 }

@@ -8,7 +8,6 @@ import (
 )
 
 type BaseAgent[T IAgent[T]] struct {
-	IMessagingProtocol
 	IExposedServerFunctions[T]
 	id uuid.UUID
 }
@@ -29,6 +28,8 @@ func (a *BaseAgent[T]) UpdateAgentInternalState() {}
 func (a *BaseAgent[T]) NotifyAgentInactive() {
 	a.agentStoppedTalking(a.id)
 }
+
+func (a *BaseAgent[T]) RunSynchronousMessaging() {}
 
 func (a *BaseAgent[T]) listenOnChannel(agentAgentchannel chan IMessage, serverAgentchannel chan ServerNotification, wait *sync.WaitGroup) {
 	defer wait.Done()
