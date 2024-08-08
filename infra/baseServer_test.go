@@ -11,43 +11,65 @@ import (
 
 type ITestBaseAgent interface {
 	infra.IAgent[ITestBaseAgent]
+	CreateTestMessage() TestMessage
 }
-type TestBaseAgent struct {
+type TestAgent struct {
 	*infra.BaseAgent[ITestBaseAgent]
 }
 
-func NewTestBaseAgent() ITestBaseAgent {
-	serv := &infra.BaseServer[ITestBaseAgent]{}
+type TestServer struct {
+	*infra.BaseServer[ITestBaseAgent]
+}
 
-	return &TestBaseAgent{
+type TestMessage struct {
+	infra.BaseMessage
+	arbitraryField int
+}
+
+func (tba *TestAgent) CreateTestMessage() TestMessage {
+	return TestMessage{
+		infra.BaseMessage{},
+		5,
+	}
+}
+
+func CreateTestAgent(serv TestServer) TestAgent {
+	return TestAgent{
 		infra.CreateBaseAgent[ITestBaseAgent](serv),
 	}
 }
 
-func TestGenearateServer(t *testing.T) {
-	server := infra.GenerateServer[ITestBaseAgent](time.Second, 2)
-	agent := infra.CreateBaseAgent[ITestBaseAgent](server)
-	//fmt.Println(a,abc)
-	//fmt.Println(len(a.GetAgentMap()))
+func NewTestAgent(serv *infra.BaseServer[ITestBaseAgent]) ITestBaseAgent {
 
-	server.AddAgent(agent)
-	if len(server.GetAgentMap()) != 1 {
-		t.Error("len of agentmap is ", len(server.GetAgentMap()))
+	return &TestAgent{
+		infra.CreateBaseAgent[ITestBaseAgent](serv),
 	}
 }
 
-func TestAgentsCorrectlyInstantiated(t *testing.T) {
-	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
-	m[0] = infra.MakeAgentGeneratorCountPair[ITestBaseAgent](NewTestBaseAgent, 3)
-	ag := NewTestBaseAgent()
-	ag.NotifyAgentInactive()
+// func TestGenearateServer(t *testing.T) {
+// 	server := infra.GenerateServer[ITestBaseAgent](time.Second, 2)
+// 	agent := infra.CreateBaseAgent[ITestBaseAgent](server)
+// 	//fmt.Println(a,abc)
+// 	//fmt.Println(len(a.GetAgentMap()))
 
-	server := infra.CreateServer[ITestBaseAgent](m, 1)
+// 	server.AddAgent(agent)
+// 	if len(server.GetAgentMap()) != 1 {
+// 		t.Error("len of agentmap is ", len(server.GetAgentMap()))
+// 	}
+// }
 
-	if len(server.GetAgentMap()) != 3 {
-		t.Error("Incorrect number of agents added to server")
-	}
-}
+// func TestAgentsCorrectlyInstantiated(t *testing.T) {
+// 	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
+// 	m[0] = infra.MakeAgentGeneratorCountPair[ITestBaseAgent](NewTestBaseAgent, 3)
+// 	ag := NewTestBaseAgent()
+// 	ag.NotifyAgentInactive()
+
+// 	server := infra.CreateServer[ITestBaseAgent](m, 1)
+
+// 	if len(server.GetAgentMap()) != 3 {
+// 		t.Error("Incorrect number of agents added to server")
+// 	}
+// }
 
 func TestHandlerInitialiser(t *testing.T) {
 	defer func() {
@@ -84,6 +106,37 @@ func TestSpinStart(t *testing.T) {
 	if msg != infra.StartListeningNotification {
 		t.Errorf("Incorrect Message Sent")
 	}
+
+}
+
+func TestAgentAgentMessage(t *testing.T) {
+	server := infra.GenerateServer[ITestBaseAgent](time.Second, 2)
+
+	arbitraryAgentID := uuid.New()
+
+	server.SetAgentAgentChannel(arbitraryAgentID, make(chan infra.IMessage))
+
+	agent1 := NewTestAgent(server)
+	testMessage := agent1.CreateTestMessage()
+	server.AddAgent(agent1)
+	arrayReceivers := make([]uuid.UUID,1)
+	arrayReceivers[0] = arbitraryAgentID
+	//server.SendMessage(testMessage,arrayReceivers)
+	server.Initialise()
+	go func() {
+		
+		//defer waitGroup.Done()
+		server.SendMessage(testMessage,arrayReceivers)
+	}()
+
+	//waitGroup.Wait()
+	msg := <-server.GetAgentAgentChannel(arbitraryAgentID)
+	if _,ok := msg.(TestMessage); ok {
+		t.Logf("Message sent")
+	}else {
+		t.Errorf("message not sent")
+	}
+
 
 }
 

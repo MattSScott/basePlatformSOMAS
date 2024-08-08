@@ -1,35 +1,47 @@
-package infra
+package infra_test
 
 import (
-	//infra "github.com/MattSScott/basePlatformSOMAS/Infra"
+	"github.com/MattSScott/basePlatformSOMAS/infra"
 )
 
 type Message1 struct {
-	BaseMessage
+	infra.BaseMessage
 	messageField1 int
 }
 
 type Message2 struct {
-	BaseMessage
+	infra.BaseMessage
 	messageField2 int
 }
 
 type NullMessage struct {
-	BaseMessage
+	infra.BaseMessage
 }
 
 type IExtendedAgent interface {
-	IAgent[IExtendedAgent]
+	infra.IAgent[IExtendedAgent]
 	GetAgentField() int
-	GetAllMessages([]IExtendedAgent) []IMessage
-	HandleMessage1(msg Message1)
-	HandleMessage2(msg Message2)
-	HandleNullMessage(msg NullMessage)
+	GetAllMessages([]IExtendedAgent) []infra.IMessage
+	HandleMessage1(msg Message1) Message1
+	HandleMessage2(msg Message2) Message2
+	HandleNullMessage(msg NullMessage) NullMessage
 }
 
 type ExtendedAgent struct {
-	BaseAgent[IExtendedAgent]
+	infra.BaseAgent[IExtendedAgent]
 	agentField int
+}
+
+func (agent *ExtendedAgent) HandleMessage1(msg Message1) Message1 {
+	return msg
+}
+
+func (agent *ExtendedAgent) HandleMessage2(msg Message2) Message2 {
+	return msg
+}
+
+func (agent *ExtendedAgent) HandleNullMessage(msg NullMessage) NullMessage {
+	return msg
 }
 
 func (m1 Message1) InvokeMessageHandler(agent IExtendedAgent) {
@@ -48,20 +60,20 @@ func (ea *ExtendedAgent) GetAgentField() int {
 	return ea.agentField
 }
 
-func (ea *ExtendedAgent) GetMessage1() Message1 {
+func (ea *ExtendedAgent) CreateMessage1() Message1 {
 	return Message1{
-		BaseMessage{},
+		infra.BaseMessage{},
 		5,
 	}
 }
 
-func (ea *ExtendedAgent) HandleMessage1(msg Message1) {
-	ea.agentField += msg.messageField1
-}
+// func (ea *ExtendedAgent) HandleMessage1(msg Message1) {
+// 	ea.agentField += msg.messageField1
+// }
 
-func (ea *ExtendedAgent) GetMessage2() Message2 {
+func (ea *ExtendedAgent) CreateMessage2() Message2 {
 	return Message2{
-		BaseMessage{},
+		infra.BaseMessage{},
 		10,
 	}
 }
