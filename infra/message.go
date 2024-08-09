@@ -13,11 +13,11 @@ import (
 // }
 
 // base interface structure used for message - can be composed for more complex message structures
-type IMessage interface {
+type IMessage[T any] interface {
 	// returns the sender of a message
 	GetSender() uuid.UUID
 	// calls the appropriate messsage handler method on the receiving agent
-	InvokeMessageHandler(uuid.UUID)
+	InvokeMessageHandler(T)
 	// prints message to console
 	Print()
 }
@@ -42,5 +42,5 @@ func (bm BaseMessage) GetSender() uuid.UUID {
 	return bm.sender
 }
 
-func (bm BaseMessage) InvokeMessageHandler(agent uuid.UUID) {
+func (bm BaseMessage) InvokeMessageHandler(agent IAgent[any]) {
 }

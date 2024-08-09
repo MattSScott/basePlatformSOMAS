@@ -16,7 +16,7 @@ type ITestBaseAgent interface {
 
 type ITestServer interface {
 	infra.IServer[ITestBaseAgent]
-	infra.PrivateServerFields
+	infra.PrivateServerFields[ITestBaseAgent]
 }
 
 type TestAgent struct {
@@ -31,6 +31,10 @@ type TestServer struct {
 type TestMessage struct {
 	infra.BaseMessage
 	arbitraryField int
+}
+
+func (tm TestMessage) InvokeMessageHandler(ag ITestBaseAgent) {
+
 }
 
 func (tba *TestAgent) CreateTestMessage() TestMessage {
@@ -136,7 +140,7 @@ func TestAgentAgentMessage(t *testing.T) {
 
 	arbitraryAgentID := uuid.New()
 
-	server.SetAgentAgentChannel(arbitraryAgentID, make(chan infra.IMessage))
+	server.SetAgentAgentChannel(arbitraryAgentID, make(chan infra.IMessage[ITestBaseAgent]))
 
 	agent1 := NewTestAgent(server)
 	testMessage := agent1.CreateTestMessage()

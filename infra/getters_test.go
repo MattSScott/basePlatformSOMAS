@@ -2,12 +2,12 @@ package infra
 
 import "github.com/google/uuid"
 
-type PrivateServerFields interface {
+type PrivateServerFields[T IAgent[T]] interface {
 	ServerNotification(uuid.UUID, ServerNotification)
 	GetServerAgentChannel(uuid.UUID) chan ServerNotification
 	SetServerAgentChannel(uuid.UUID, chan ServerNotification)
-	GetAgentAgentChannel(uuid.UUID) chan IMessage
-	SetAgentAgentChannel(uuid.UUID, chan IMessage)
+	GetAgentAgentChannel(uuid.UUID) chan IMessage[T]
+	SetAgentAgentChannel(uuid.UUID, chan IMessage[T])
 }
 
 func (serv *BaseServer[T]) SendServerNotification(id uuid.UUID, serverNotification ServerNotification) {
@@ -25,10 +25,10 @@ func (serv *BaseServer[T]) SetServerAgentChannel(id uuid.UUID, channelValue chan
 	serv.serverAgentChannelMap[id] = channelValue
 }
 
-func (serv *BaseServer[T]) GetAgentAgentChannel(id uuid.UUID) chan IMessage {
+func (serv *BaseServer[T]) GetAgentAgentChannel(id uuid.UUID) chan IMessage[T] {
 	return serv.agentAgentChannelMap[id]
 }
 
-func (serv *BaseServer[T]) SetAgentAgentChannel(id uuid.UUID, channelValue chan IMessage) {
+func (serv *BaseServer[T]) SetAgentAgentChannel(id uuid.UUID, channelValue chan IMessage[T]) {
 	serv.agentAgentChannelMap[id] = channelValue
 }

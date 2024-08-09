@@ -14,7 +14,7 @@ type BaseServer[T IAgent[T]] struct {
 	// map of agentid -> empty struct so that agents cannot access each others agent structs
 	agentIdSet map[uuid.UUID]struct{}
 	// a map of agentid -> channel used by agents to send messages to agents
-	agentAgentChannelMap map[uuid.UUID]chan IMessage
+	agentAgentChannelMap map[uuid.UUID]chan IMessage[T]
 	// a map of agentid -> channel used by the server to send messages to agents
 	serverAgentChannelMap map[uuid.UUID]chan ServerNotification
 	//a channel that agents send their IDs to tell server they are ending messaging
@@ -78,7 +78,7 @@ func (server *BaseServer[T]) HandleEndOfTurn(iter, round int) {
 
 func (server *BaseServer[T]) RunAgentLoop() {}
 
-func (server *BaseServer[T]) SendMessage(msg IMessage, receivers []uuid.UUID) {
+func (server *BaseServer[T]) SendMessage(msg IMessage[T], receivers []uuid.UUID) {
 	for _, receiver := range receivers {
 		select {
 		case server.agentAgentChannelMap[receiver] <- msg:
@@ -91,13 +91,13 @@ func (serv *BaseServer[T]) AcknowledgeServerMessageReceived() {
 	serv.listeningWaitGroup.Done()
 }
 
-func (server *BaseServer[T]) ReadChannel(agentID uuid.UUID) <-chan IMessage {
+func (server *BaseServer[T]) ReadChannel(agentID uuid.UUID) <-chan IMessage[T] {
 	return server.agentAgentChannelMap[agentID]
 }
 
 func (server *BaseServer[T]) initialiseChannels() {
 	for _, agent := range server.agentMap {
-		agentAgentChannel := make(chan IMessage, 20)
+		agentAgentChannel := make(chan IMessage[T], 20)
 		serverAgentChannel := make(chan ServerNotification, 20)
 		server.agentAgentChannelMap[agent.GetID()] = agentAgentChannel
 		server.serverAgentChannelMap[agent.GetID()] = serverAgentChannel
@@ -330,12 +330,12 @@ func (bs *BaseServer[T]) GenerateAgentArrayFromMap() []T {
 	return agentMapToArray
 }
 
-func (bs *BaseServer[T]) SendSynchronousMessage(msg IMessage, recipients []uuid.UUID) {
+func (bs *BaseServer[T]) SendSynchronousMessage(msg IMessage[T], recipients []uuid.UUID) {
 	for _, recip := range recipients {
 		if msg.GetSender() == recip {
 			continue
 		}
-		msg.InvokeMessageHandler(recip)
+		msg.InvokeMessageHandler(bs.agentMap[recip])
 	}
 
 }
@@ -362,7 +362,7 @@ func CreateServer[T IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iter
 	serv := &BaseServer[T]{
 		agentMap:               make(map[uuid.UUID]T),
 		agentIdSet:             make(map[uuid.UUID]struct{}),
-		agentAgentChannelMap:   make(map[uuid.UUID]chan IMessage),
+		agentAgentChannelMap:   make(map[uuid.UUID]chan IMessage[T]),
 		serverAgentChannelMap:  make(map[uuid.UUID]chan ServerNotification),
 		closureChannel:         make(chan uuid.UUID),
 		waitEnd:                &sync.WaitGroup{},
@@ -377,7 +377,7 @@ func CreateServer[T IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iter
 	return serv
 }
 
-func listenOnChannel[T IAgent[T]](a T, agentAgentchannel chan IMessage, serverAgentchannel chan ServerNotification, wait *sync.WaitGroup) {
+func listenOnChannel[T IAgent[T]](a T, agentAgentchannel chan IMessage[T], serverAgentchannel chan ServerNotification, wait *sync.WaitGroup) {
 	defer wait.Done()
 
 	// checkMessageHandler()
@@ -409,7 +409,7 @@ listening:
 				select {
 				case msg := <-agentAgentchannel:
 					msg.Print()
-					msg.InvokeMessageHandler(a.GetID())
+					msg.InvokeMessageHandler(a)
 				default:
 				}
 			}

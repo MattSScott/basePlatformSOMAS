@@ -30,10 +30,10 @@ type IServer[T IAgent[T]] interface {
 	Start()
 }
 
-type IMessagingProtocol interface {
-	SendSynchronousMessage(IMessage, []uuid.UUID)
-	SendMessage(IMessage, []uuid.UUID)
-	ReadChannel(uuid.UUID) <-chan IMessage
+type IMessagingProtocol[T any] interface {
+	SendSynchronousMessage(IMessage[T], []uuid.UUID)
+	SendMessage(IMessage[T], []uuid.UUID)
+	ReadChannel(uuid.UUID) <-chan IMessage[T]
 	AcknowledgeClosure(uuid.UUID)
 	AcknowledgeServerMessageReceived()
 	// send notification that agent stopped talking session
@@ -41,11 +41,11 @@ type IMessagingProtocol interface {
 }
 
 type IExposedServerFunctions[T any] interface {
-	IMessagingProtocol
+	IMessagingProtocol[T]
 	// return hashset of all agent IDs
 	ViewAgentIdSet() map[uuid.UUID]struct{}
 	// return exposed functions for agent
-	AccessAgentByID(uuid.UUID) T
+	// AccessAgentByID(uuid.UUID) T
 }
 
 type RoundRunner interface {

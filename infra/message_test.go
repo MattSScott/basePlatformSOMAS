@@ -1,6 +1,10 @@
 package infra_test
 
-import "github.com/MattSScott/basePlatformSOMAS/infra"
+import (
+	"testing"
+
+	"github.com/MattSScott/basePlatformSOMAS/infra"
+)
 
 type Message1 struct {
 	infra.BaseMessage
@@ -19,7 +23,7 @@ type NullMessage struct {
 type IExtendedAgent interface {
 	infra.IAgent[IExtendedAgent]
 	GetAgentField() int
-	GetAllMessages([]IExtendedAgent) []infra.IMessage
+	GetAllMessages([]IExtendedAgent) []infra.IMessage[IExtendedAgent]
 	HandleMessage1(msg Message1) Message1
 	HandleMessage2(msg Message2) Message2
 	HandleNullMessage(msg NullMessage) NullMessage
@@ -79,9 +83,12 @@ func (ea *ExtendedAgent) CreateMessage2() Message2 {
 // func (ea *ExtendedAgent) HandleMessage2(msg Message2) {
 // 	ea.agentField += msg.messageField2
 // }
-// func (ea *ExtendedAgent) GetNullMessage(recips []IExtendedAgent) NullMessage {
-// 	return NullMessage{infra.CreateMessage[IExtendedAgent](ea, recips)}
-// }
+
+func (ea *ExtendedAgent) GetNullMessage() NullMessage {
+	return NullMessage{
+		infra.CreateBaseMessage(ea.GetID()),
+	}
+}
 
 // func (ea *ExtendedAgent) HandleNullMessage(msg NullMessage) {
 // 	// sender := msg.GetSender()
@@ -112,20 +119,21 @@ func (ea *ExtendedAgent) CreateMessage2() Message2 {
 // 	}
 // }
 
-// func TestMessageSender(t *testing.T) {
+func TestMessageSender(t *testing.T) {
 
-// 	a1 := &ExtendedAgent{agentField: 5}
-// 	a2 := &ExtendedAgent{agentField: 10}
-// 	a3 := &ExtendedAgent{agentField: 15}
+	a1 := ExtendedAgent{agentField: 5}
+	a2 := ExtendedAgent{agentField: 10}
+	a3 := ExtendedAgent{agentField: 15}
 
-// 	nullMsg := a1.GetNullMessage([]IExtendedAgent{a2, a3})
+	// nullMsg := a1.GetNullMessage([]IExtendedAgent{a2, a3})
+	nullMsg := a1.GetNullMessage()
 
-// 	for _, recip := range nullMsg.GetRecipients() {
-// 		nullMsg.InvokeMessageHandler(recip)
-// 	}
+	for _, recip := range []*ExtendedAgent{&a2, &a3} {
+		nullMsg.InvokeMessageHandler(recip)
+	}
 
-// 	if a1.GetAgentField() != a2.GetAgentField() || a3.GetAgentField() != a1.GetAgentField() {
-// 		t.Error("Message not properly distributed to recipients")
-// 	}
+	if a1.GetAgentField() != a2.GetAgentField() || a3.GetAgentField() != a1.GetAgentField() {
+		t.Error("Message not properly distributed to recipients")
+	}
 
-// }
+}

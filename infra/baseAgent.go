@@ -27,3 +27,5 @@ func (a *BaseAgent[T]) NotifyAgentFinishedMessaging() {
 }
 
 func (a *BaseAgent[T]) RunSynchronousMessaging() {}
+
+func (a *BaseAgent[T]) GetAllMessages([]T) []IMessage[T] { return nil }
