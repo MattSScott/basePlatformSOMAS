@@ -2,6 +2,14 @@ package infra
 
 import "github.com/google/uuid"
 
+type PrivateServerFields interface {
+	ServerNotification(uuid.UUID, ServerNotification)
+	GetServerAgentChannel(uuid.UUID) chan ServerNotification
+	SetServerAgentChannel(uuid.UUID, chan ServerNotification)
+	GetAgentAgentChannel(uuid.UUID) chan IMessage
+	SetAgentAgentChannel(uuid.UUID, chan IMessage)
+}
+
 func (serv *BaseServer[T]) SendServerNotification(id uuid.UUID, serverNotification ServerNotification) {
 	select {
 	case serv.serverAgentChannelMap[id] <- serverNotification:

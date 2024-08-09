@@ -15,7 +15,8 @@ type ITestBaseAgent interface {
 }
 
 type ITestServer interface {
-	*infra.IServer[ITestBaseAgent]
+	infra.IServer[ITestBaseAgent]
+	infra.PrivateServerFields
 }
 
 type TestAgent struct {
@@ -37,11 +38,9 @@ func (tba *TestAgent) CreateTestMessage() TestMessage {
 		infra.BaseMessage{},
 		5,
 	}
-
 }
 
 func NewTestAgent(serv infra.IExposedServerFunctions[ITestBaseAgent]) ITestBaseAgent {
-
 	return &TestAgent{
 		BaseAgent:       infra.CreateBaseAgent(serv),
 		receivedMessage: false,
@@ -69,11 +68,6 @@ func TestGenerateServer(t *testing.T) {
 	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = infra.MakeAgentGeneratorCountPair(NewTestAgent, 3)
 	server := infra.CreateServer[ITestBaseAgent](m, 1, time.Second, 2)
-	//agent := NewTestAgent(server)
-	//fmt.Println(a,abc)
-	//fmt.Println(len(a.GetAgentMap()))
-
-	//server.AddAgent(agent)
 	if len(server.GetAgentMap()) != 3 {
 		t.Error("len of agentmap is ", len(server.GetAgentMap()))
 	}
@@ -84,13 +78,11 @@ func TestAgentsCorrectlyInstantiated(t *testing.T) {
 	m[0] = infra.MakeAgentGeneratorCountPair(NewTestAgent, 3)
 
 	server := infra.CreateServer(m, 1, time.Second, 2)
-	// server.Initialise()
 
 	ag := NewTestAgent(server)
 	ag.NotifyAgentFinishedMessaging()
 	lenAgentMap := len(server.GetAgentMap())
 	if lenAgentMap != 3 {
-
 		t.Error("Incorrect number of agents added to server", lenAgentMap)
 	}
 }
@@ -121,7 +113,6 @@ func TestSpinStart(t *testing.T) {
 	// to that wont be checked by an agent
 	var waitGroup sync.WaitGroup
 	waitGroup.Add(1)
-	//server.SendServerNotification(arbitraryAgentID, infra.StartListeningNotification)
 
 	go func() {
 		defer waitGroup.Done()
