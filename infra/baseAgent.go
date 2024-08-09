@@ -31,13 +31,13 @@ func (a *BaseAgent[T]) NotifyAgentInactive() {
 
 func (a *BaseAgent[T]) RunSynchronousMessaging() {}
 
-func (a *BaseAgent[T]) listenOnChannel(agentAgentchannel chan IMessage, serverAgentchannel chan ServerNotification, wait *sync.WaitGroup) {
+func listenOnChannel[T IAgent[T]](a T, agentAgentchannel chan IMessage, serverAgentchannel chan ServerNotification, wait *sync.WaitGroup) {
 	defer wait.Done()
 
 	// checkMessageHandler()
 
 	listenAgentChannel := false
-	fmt.Println("started listening", a.id)
+	fmt.Println("started listening", a.GetID())
 
 listening:
 	for {
@@ -63,13 +63,13 @@ listening:
 				select {
 				case msg := <-agentAgentchannel:
 					msg.Print()
-					msg.InvokeMessageHandler(a.id)
+					msg.InvokeMessageHandler(a.GetID())
 				default:
 				}
 			}
 		}
 	}
-	a.agentStoppedTalking(a.id)
-	go a.AcknowledgeClosure(a.id)
+	a.agentStoppedTalking(a.GetID())
+	go a.AcknowledgeClosure(a.GetID())
 	fmt.Println("stopped listening on channel")
 }

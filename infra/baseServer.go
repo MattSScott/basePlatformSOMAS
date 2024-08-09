@@ -130,7 +130,7 @@ func (serv *BaseServer[T]) agentBeginSpin() {
 		serv.waitEnd.Add(1)
 		agentAgentChannel := serv.agentAgentChannelMap[agent.GetID()]
 		serverAgentChannel := serv.serverAgentChannelMap[agent.GetID()]
-		go agent.listenOnChannel(agentAgentChannel, serverAgentChannel, serv.waitEnd)
+		go listenOnChannel(agent,agentAgentChannel, serverAgentChannel, serv.waitEnd)
 	}
 }
 

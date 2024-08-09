@@ -1,8 +1,6 @@
 package infra
 
 import (
-	"sync"
-
 	"github.com/google/uuid"
 )
 
@@ -17,9 +15,7 @@ type IAgent[T any] interface {
 	NotifyAgentInactive()
 	// TODO: move to better location
 	RunSynchronousMessaging()
-	// allow agent to listen on channel
-	unexportedAgentMethods
+	
 }
-type unexportedAgentMethods interface {
-	listenOnChannel(chan IMessage, chan ServerNotification, *sync.WaitGroup)
-}
+
+
