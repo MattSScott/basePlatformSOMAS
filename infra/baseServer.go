@@ -87,7 +87,6 @@ func (server *BaseServer[T]) SendMessage(msg IMessage, receivers []uuid.UUID) {
 	}
 }
 
-
 func (serv *BaseServer[T]) AcknowledgeServerMessageReceived() {
 	serv.listeningWaitGroup.Done()
 }

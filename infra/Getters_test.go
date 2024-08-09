@@ -13,7 +13,7 @@ func (serv *BaseServer[T]) GetServerAgentChannel(id uuid.UUID) chan ServerNotifi
 	return serv.serverAgentChannelMap[id]
 }
 
-func (serv *BaseServer[T]) SetServerAgentChannel(id uuid.UUID,channelValue chan ServerNotification) {
+func (serv *BaseServer[T]) SetServerAgentChannel(id uuid.UUID, channelValue chan ServerNotification) {
 	serv.serverAgentChannelMap[id] = channelValue
 }
 
@@ -21,6 +21,6 @@ func (serv *BaseServer[T]) GetAgentAgentChannel(id uuid.UUID) chan IMessage {
 	return serv.agentAgentChannelMap[id]
 }
 
-func (serv *BaseServer[T]) SetAgentAgentChannel(id uuid.UUID,channelValue chan IMessage) {
+func (serv *BaseServer[T]) SetAgentAgentChannel(id uuid.UUID, channelValue chan IMessage) {
 	serv.agentAgentChannelMap[id] = channelValue
 }
