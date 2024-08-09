@@ -81,7 +81,9 @@ func (server *BaseServer[T]) RunAgentLoop() {
 
 }
 
-func (server *BaseServer[T]) SendMessage(msg IMessage, receiver uuid.UUID) {
+func (server *BaseServer[T]) SendMessage(msg IMessage, receivers []uuid.UUID) {
+	for _ ,receiver := range receivers {
+
 	switch message := msg.(type) {
 	case IMessage:
 		select {
@@ -90,7 +92,7 @@ func (server *BaseServer[T]) SendMessage(msg IMessage, receiver uuid.UUID) {
 		}
 	default:
 		fmt.Println("unknown message type")
-	}
+	}}
 }
 
 func (serv *BaseServer[T]) AcknowledgeServerMessageReceived() {

@@ -10,23 +10,59 @@ import (
 )
 
 type ITestBaseAgent interface {
+	CreateTestMessage() TestMessage
+
 	infra.IAgent[ITestBaseAgent]
 }
 type TestBaseAgent struct {
 	*infra.BaseAgent[ITestBaseAgent]
 }
 
+type TestAgent struct {
+	*infra.BaseAgent[ITestBaseAgent]
+}
+
+type TestServer struct {
+	*infra.BaseServer[ITestBaseAgent]
+}
+
+type TestMessage struct {
+	infra.BaseMessage
+	arbitraryField int
+}
+
+func (tba *TestAgent) CreateTestMessage() TestMessage {
+	return TestMessage{
+		infra.BaseMessage{},
+		5,
+	}
+	
+}
+
+func CreateTestAgent(serv TestServer) TestAgent {
+	return TestAgent{
+		infra.CreateBaseAgent[ITestBaseAgent](serv),
+	}
+}
+
+func NewTestAgent(serv *infra.BaseServer[ITestBaseAgent]) ITestBaseAgent {
+
+	return &TestAgent{
+		infra.CreateBaseAgent[ITestBaseAgent](serv),
+	}
+}
+
 func NewTestBaseAgent() ITestBaseAgent {
 	serv := &infra.BaseServer[ITestBaseAgent]{}
 
-	return &TestBaseAgent{
+	return &TestAgent{
 		infra.CreateBaseAgent[ITestBaseAgent](serv),
 	}
 }
 
 func TestGenearateServer(t *testing.T) {
 	server := infra.GenerateServer[ITestBaseAgent](time.Second, 2)
-	agent := infra.CreateBaseAgent[ITestBaseAgent](server)
+	agent := NewTestAgent(server)
 	//fmt.Println(a,abc)
 	//fmt.Println(len(a.GetAgentMap()))
 
@@ -83,6 +119,36 @@ func TestSpinStart(t *testing.T) {
 	msg := <-server.GetServerAgentChannel(arbitraryAgentID)
 	if msg != infra.StartListeningNotification {
 		t.Errorf("Incorrect Message Sent")
+	}
+
+}
+
+func TestAgentAgentMessage(t *testing.T) {
+	server := infra.GenerateServer[ITestBaseAgent](time.Second, 2)
+
+	arbitraryAgentID := uuid.New()
+
+	server.SetAgentAgentChannel(arbitraryAgentID, make(chan infra.IMessage))
+
+	agent1 := NewTestAgent(server)
+	testMessage := agent1.CreateTestMessage()
+	server.AddAgent(agent1)
+	arrayReceivers := make([]uuid.UUID, 1)
+	arrayReceivers[0] = arbitraryAgentID
+	//server.SendMessage(testMessage,arrayReceivers)
+	server.Initialise()
+	go func() {
+
+		//defer waitGroup.Done()
+		server.SendMessage(testMessage, arrayReceivers)
+	}()
+
+	//waitGroup.Wait()
+	msg := <-server.GetAgentAgentChannel(arbitraryAgentID)
+	if _, ok := msg.(TestMessage); ok {
+		t.Logf("Message sent")
+	} else {
+		t.Errorf("message not sent")
 	}
 
 }

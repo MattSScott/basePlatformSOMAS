@@ -32,7 +32,7 @@ type IServer[T IAgent[T]] interface {
 
 type IMessagingProtocol interface {
 	SendSynchronousMessage(IMessage, []uuid.UUID)
-	SendMessage(IMessage, uuid.UUID)
+	SendMessage(IMessage, []uuid.UUID)
 	ReadChannel(uuid.UUID) <-chan IMessage
 	AcknowledgeClosure(uuid.UUID)
 	AcknowledgeServerMessageReceived()
