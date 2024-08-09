@@ -1,14 +1,10 @@
 package infra
 
 import (
-	"fmt"
-	"sync"
-
 	"github.com/google/uuid"
 )
 
 type BaseAgent[T IAgent[T]] struct {
-	IMessagingProtocol
 	IExposedServerFunctions[T]
 	id uuid.UUID
 }
@@ -26,49 +22,8 @@ func CreateBaseAgent[T IAgent[T]](serv IExposedServerFunctions[T]) *BaseAgent[T]
 
 func (a *BaseAgent[T]) UpdateAgentInternalState() {}
 
-func (a *BaseAgent[T]) NotifyAgentInactive() {
+func (a *BaseAgent[T]) NotifyAgentFinishedMessaging() {
 	a.agentStoppedTalking(a.id)
 }
 
-func (a *BaseAgent[T]) listenOnChannel(agentAgentchannel chan IMessage, serverAgentchannel chan ServerNotification, wait *sync.WaitGroup) {
-	defer wait.Done()
-
-	// checkMessageHandler()
-
-	listenAgentChannel := false
-	fmt.Println("started listening", a.id)
-
-listening:
-	for {
-		select {
-		case serverMessage := <-serverAgentchannel:
-			//fmt.Println("server message", a.id, " ", serverMessage)
-			switch serverMessage {
-			case StartListeningNotification:
-				//fmt.Println("started listening", a.id)
-				listenAgentChannel = true
-			case EndListeningNotification:
-				//fmt.Println("stopped listening", a.id)
-				listenAgentChannel = false
-			case StopListeningSpinner:
-				//fmt.Println("stopping listening on channel", a.id)
-				break listening
-			default:
-				//fmt.Println("unknown message type")
-			}
-			a.AcknowledgeServerMessageReceived()
-		default:
-			if listenAgentChannel {
-				select {
-				case msg := <-agentAgentchannel:
-					msg.Print()
-					msg.InvokeMessageHandler(a.id)
-				default:
-				}
-			}
-		}
-	}
-	a.agentStoppedTalking(a.id)
-	go a.AcknowledgeClosure(a.id)
-	fmt.Println("stopped listening on channel")
-}
+func (a *BaseAgent[T]) RunSynchronousMessaging() {}

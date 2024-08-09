@@ -1,8 +1,6 @@
 package infra_test
 
-import (
-	"github.com/MattSScott/basePlatformSOMAS/infra"
-)
+import "github.com/MattSScott/basePlatformSOMAS/infra"
 
 type Message1 struct {
 	infra.BaseMessage

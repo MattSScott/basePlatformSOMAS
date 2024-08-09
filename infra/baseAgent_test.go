@@ -1,9 +1,5 @@
 package infra
 
-import (
-	//infra "github.com/MattSScott/basePlatformSOMAS/Infra"
-)
-
 type IBaseAgent interface {
 	IAgent[IBaseAgent]
 }

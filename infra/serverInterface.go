@@ -1,8 +1,6 @@
 package infra
 
 import (
-	"sync"
-
 	"github.com/google/uuid"
 )
 
@@ -20,7 +18,7 @@ type IAgentOperations[T IAgent[T]] interface {
 type IServer[T IAgent[T]] interface {
 	// gives operations for adding/removing agents from the simulator
 	IAgentOperations[T]
-	// TODO
+	// exposes server methods to agents for messaging, etc
 	IExposedServerFunctions[T]
 	// gives access to number of iteration in simulator
 	GetIterations() int
@@ -33,19 +31,17 @@ type IServer[T IAgent[T]] interface {
 }
 
 type IMessagingProtocol interface {
-	RunSynchronousMessaging()
 	SendSynchronousMessage(IMessage, []uuid.UUID)
 	SendMessage(IMessage, []uuid.UUID)
 	ReadChannel(uuid.UUID) <-chan IMessage
 	AcknowledgeClosure(uuid.UUID)
 	AcknowledgeServerMessageReceived()
-	// allow agent to listen on channel
-	listenOnChannel(chan IMessage, chan ServerNotification, *sync.WaitGroup)
 	// send notification that agent stopped talking session
-	agentStoppedTalking(id uuid.UUID)
+	agentStoppedTalking(uuid.UUID)
 }
 
 type IExposedServerFunctions[T any] interface {
+	IMessagingProtocol
 	// return hashset of all agent IDs
 	ViewAgentIdSet() map[uuid.UUID]struct{}
 	// return exposed functions for agent
