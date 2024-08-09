@@ -67,13 +67,15 @@ func NewTestAgent(serv infra.IExposedServerFunctions[ITestBaseAgent]) ITestBaseA
 // }
 
 func TestGenerateServer(t *testing.T) {
-	server := infra.GenerateServer[ITestBaseAgent](time.Second, 2)
-	agent := NewTestAgent(server)
+	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
+	m[0] = infra.MakeAgentGeneratorCountPair(NewTestAgent, 3)
+	server := infra.CreateServer[ITestBaseAgent](m,1,time.Second, 2)
+	//agent := NewTestAgent(server)
 	//fmt.Println(a,abc)
 	//fmt.Println(len(a.GetAgentMap()))
 
-	server.AddAgent(agent)
-	if len(server.GetAgentMap()) != 1 {
+	//server.AddAgent(agent)
+	if len(server.GetAgentMap()) != 3 {
 		t.Error("len of agentmap is ", len(server.GetAgentMap()))
 	}
 }
@@ -101,14 +103,18 @@ func TestHandlerInitialiser(t *testing.T) {
 
 		}
 	}()
-	server := infra.GenerateServer[ITestBaseAgent](time.Second, 2)
+	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
+	m[0] = infra.MakeAgentGeneratorCountPair(NewTestAgent, 3)
+	server := infra.CreateServer[ITestBaseAgent](m,1,time.Second, 2)
 	server.Initialise()
 	server.RunGameLoop()
 
 }
 
 func TestSpinStart(t *testing.T) {
-	server := infra.GenerateServer[ITestBaseAgent](time.Second, 2)
+	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
+	m[0] = infra.MakeAgentGeneratorCountPair(NewTestAgent, 3)
+	server := infra.CreateServer[ITestBaseAgent](m,1,time.Second, 2)
 	server.Initialise()
 	arbitraryAgentID := uuid.New()
 	server.SetServerAgentChannel(arbitraryAgentID, make(chan infra.ServerNotification, 1))
@@ -133,7 +139,10 @@ func TestSpinStart(t *testing.T) {
 }
 
 func TestAgentAgentMessage(t *testing.T) {
-	server := infra.GenerateServer[ITestBaseAgent](time.Second, 2)
+	//server := infra.GenerateServer[ITestBaseAgent](time.Second, 2)
+	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
+	m[0] = infra.MakeAgentGeneratorCountPair(NewTestAgent, 3)
+	server := infra.CreateServer[ITestBaseAgent](m,1,time.Second, 2)
 
 	arbitraryAgentID := uuid.New()
 

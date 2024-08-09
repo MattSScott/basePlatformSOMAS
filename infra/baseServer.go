@@ -138,21 +138,21 @@ func (serv *BaseServer[T]) AccessAgentByID(id uuid.UUID) T {
 	return serv.agentMap[id]
 }
 
-func GenerateServer[T IAgent[T]](maxDuration time.Duration, agentServerChannelBufferSize int) *BaseServer[T] {
-	return &BaseServer[T]{
-		agentMap:               make(map[uuid.UUID]T),
-		agentIdSet:             make(map[uuid.UUID]struct{}),
-		agentAgentChannelMap:   make(map[uuid.UUID]chan IMessage),
-		serverAgentChannelMap:  make(map[uuid.UUID]chan ServerNotification),
-		closureChannel:         make(chan uuid.UUID),
-		waitEnd:                &sync.WaitGroup{},
-		listeningWaitGroup:     &sync.WaitGroup{},
-		agentStoppedTalkingMap: make(map[uuid.UUID]struct{}),
-		agentServerChannel:     make(chan uuid.UUID, agentServerChannelBufferSize),
-		maxMessagingDuration:   maxDuration,
-		roundRunner:            nil, // TODO: need to initialise somehow (panic if uninitialised!)
-	}
-}
+// func GenerateServer[T IAgent[T]](maxDuration time.Duration, agentServerChannelBufferSize int) *BaseServer[T] {
+// 	return &BaseServer[T]{
+// 		agentMap:               make(map[uuid.UUID]T),
+// 		agentIdSet:             make(map[uuid.UUID]struct{}),
+// 		agentAgentChannelMap:   make(map[uuid.UUID]chan IMessage),
+// 		serverAgentChannelMap:  make(map[uuid.UUID]chan ServerNotification),
+// 		closureChannel:         make(chan uuid.UUID),
+// 		waitEnd:                &sync.WaitGroup{},
+// 		listeningWaitGroup:     &sync.WaitGroup{},
+// 		agentStoppedTalkingMap: make(map[uuid.UUID]struct{}),
+// 		agentServerChannel:     make(chan uuid.UUID, agentServerChannelBufferSize),
+// 		maxMessagingDuration:   maxDuration,
+// 		roundRunner:            nil, // TODO: need to initialise somehow (panic if uninitialised!)
+// 	}
+// }
 
 func (serv *BaseServer[T]) sendServerNotification(id uuid.UUID, serverNotification ServerNotification) {
 	select {
