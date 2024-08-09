@@ -313,7 +313,7 @@ func (bs *BaseServer[T]) RunRound() {}
 
 // }
 
-type AgentGenerator[T IAgent[T]] func() T
+type AgentGenerator[T IAgent[T]] func(IExposedServerFunctions[T]) T
 
 type AgentGeneratorCountPair[T IAgent[T]] struct {
 	generator AgentGenerator[T]
@@ -359,7 +359,7 @@ func (bs *BaseServer[T]) initialiseAgents(m []AgentGeneratorCountPair[T]) {
 
 	for _, pair := range m {
 		for i := 0; i < pair.count; i++ {
-			agent := pair.generator()
+			agent := pair.generator(bs)
 			bs.AddAgent(agent)
 		}
 	}
@@ -367,9 +367,19 @@ func (bs *BaseServer[T]) initialiseAgents(m []AgentGeneratorCountPair[T]) {
 }
 
 // generate a server instance based on a mapping function and number of iterations
-func CreateServer[T IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iterations int) *BaseServer[T] {
+func CreateServer[T IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iterations int,maxDuration time.Duration, agentServerChannelBufferSize int) *BaseServer[T] {
 	serv := &BaseServer[T]{
-		agentMap:   make(map[uuid.UUID]T),
+		agentMap:               make(map[uuid.UUID]T),
+		agentIdSet:             make(map[uuid.UUID]struct{}),
+		agentAgentChannelMap:   make(map[uuid.UUID]chan IMessage),
+		serverAgentChannelMap:  make(map[uuid.UUID]chan ServerNotification),
+		closureChannel:         make(chan uuid.UUID),
+		waitEnd:                &sync.WaitGroup{},
+		listeningWaitGroup:     &sync.WaitGroup{},
+		agentStoppedTalkingMap: make(map[uuid.UUID]struct{}),
+		agentServerChannel:     make(chan uuid.UUID, agentServerChannelBufferSize),
+		maxMessagingDuration:   maxDuration,
+		roundRunner:            nil, // TODO: need to initialise somehow (panic if uninitialised!)
 		iterations: iterations,
 	}
 	serv.initialiseAgents(generatorArray)
