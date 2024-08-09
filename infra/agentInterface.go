@@ -15,7 +15,4 @@ type IAgent[T any] interface {
 	NotifyAgentInactive()
 	// TODO: move to better location
 	RunSynchronousMessaging()
-	
 }
-
-

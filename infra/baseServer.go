@@ -77,22 +77,15 @@ func (server *BaseServer[T]) HandleEndOfTurn(iter, round int) {
 	fmt.Printf("Iteration %d, Round %d finished.\n", iter, round)
 }
 
-func (server *BaseServer[T]) RunAgentLoop() {
-
-}
+func (server *BaseServer[T]) RunAgentLoop() {}
 
 func (server *BaseServer[T]) SendMessage(msg IMessage, receivers []uuid.UUID) {
-	for _ ,receiver := range receivers {
-
-	switch message := msg.(type) {
-	case IMessage:
+	for _, receiver := range receivers {
 		select {
-		case server.agentAgentChannelMap[receiver] <- message:
+		case server.agentAgentChannelMap[receiver] <- msg:
 		default:
 		}
-	default:
-		fmt.Println("unknown message type")
-	}}
+	}
 }
 
 func (serv *BaseServer[T]) AcknowledgeServerMessageReceived() {
@@ -130,7 +123,7 @@ func (serv *BaseServer[T]) agentBeginSpin() {
 		serv.waitEnd.Add(1)
 		agentAgentChannel := serv.agentAgentChannelMap[agent.GetID()]
 		serverAgentChannel := serv.serverAgentChannelMap[agent.GetID()]
-		go listenOnChannel(agent,agentAgentChannel, serverAgentChannel, serv.waitEnd)
+		go listenOnChannel(agent, agentAgentChannel, serverAgentChannel, serv.waitEnd)
 	}
 }
 
@@ -367,7 +360,7 @@ func (bs *BaseServer[T]) initialiseAgents(m []AgentGeneratorCountPair[T]) {
 }
 
 // generate a server instance based on a mapping function and number of iterations
-func CreateServer[T IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iterations int,maxDuration time.Duration, agentServerChannelBufferSize int) *BaseServer[T] {
+func CreateServer[T IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iterations int, maxDuration time.Duration, agentServerChannelBufferSize int) *BaseServer[T] {
 	serv := &BaseServer[T]{
 		agentMap:               make(map[uuid.UUID]T),
 		agentIdSet:             make(map[uuid.UUID]struct{}),
@@ -380,7 +373,7 @@ func CreateServer[T IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iter
 		agentServerChannel:     make(chan uuid.UUID, agentServerChannelBufferSize),
 		maxMessagingDuration:   maxDuration,
 		roundRunner:            nil, // TODO: need to initialise somehow (panic if uninitialised!)
-		iterations: iterations,
+		iterations:             iterations,
 	}
 	serv.initialiseAgents(generatorArray)
 	return serv
