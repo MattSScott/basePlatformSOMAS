@@ -42,7 +42,6 @@ func (server *BaseServer[T]) HandleStartOfTurn(iter, round int) {
 }
 
 func (serv *BaseServer[T]) waitForMessagingToEnd() {
-	//maxMessagingDuration := time.Second
 	timeoutChannel := time.After(serv.maxMessagingDuration)
 
 agentMessaging:
@@ -143,7 +142,7 @@ func (serv *BaseServer[T]) AccessAgentByID(id uuid.UUID) T {
 // 		agentStoppedTalkingMap: make(map[uuid.UUID]struct{}),
 // 		agentServerChannel:     make(chan uuid.UUID, agentServerChannelBufferSize),
 // 		maxMessagingDuration:   maxDuration,
-// 		roundRunner:            nil, // TODO: need to initialise somehow (panic if uninitialised!)
+// 		roundRunner:            nil,
 // 	}
 // }
 
@@ -240,7 +239,6 @@ func (serv *BaseServer[T]) GetAgentMap() map[uuid.UUID]T {
 	return serv.agentMap
 }
 
-// TODO: this is never called
 func (serv *BaseServer[T]) agentStoppedTalking(id uuid.UUID) {
 	fmt.Println("sending stop talking request,id:", id)
 	select {
@@ -372,7 +370,7 @@ func CreateServer[T IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iter
 		agentStoppedTalkingMap: make(map[uuid.UUID]struct{}),
 		agentServerChannel:     make(chan uuid.UUID, agentServerChannelBufferSize),
 		maxMessagingDuration:   maxDuration,
-		roundRunner:            nil, // TODO: need to initialise somehow (panic if uninitialised!)
+		roundRunner:            nil,
 		iterations:             iterations,
 	}
 	serv.initialiseAgents(generatorArray)

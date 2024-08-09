@@ -18,7 +18,7 @@ type IAgentOperations[T IAgent[T]] interface {
 type IServer[T IAgent[T]] interface {
 	// gives operations for adding/removing agents from the simulator
 	IAgentOperations[T]
-	// TODO
+	// exposes server methods to agents for messaging, etc
 	IExposedServerFunctions[T]
 	// gives access to number of iteration in simulator
 	GetIterations() int

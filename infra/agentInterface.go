@@ -11,8 +11,8 @@ type IAgent[T any] interface {
 	GetID() uuid.UUID
 	// allows agent to update their internal state
 	UpdateAgentInternalState()
-	// TODO
-	NotifyAgentInactive()
-	// TODO: move to better location
+	// signals end of agent's listening session
+	NotifyAgentFinishedMessaging()
+	// allows for synchronous messaging to be run
 	RunSynchronousMessaging()
 }

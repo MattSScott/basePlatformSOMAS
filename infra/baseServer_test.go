@@ -88,7 +88,7 @@ func TestAgentsCorrectlyInstantiated(t *testing.T) {
 	// server.Initialise()
 
 	ag := NewTestAgent(server)
-	ag.NotifyAgentInactive()
+	ag.NotifyAgentFinishedMessaging()
 	lenAgentMap := len(server.GetAgentMap())
 	if lenAgentMap != 3 {
 

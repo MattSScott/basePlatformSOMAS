@@ -22,7 +22,7 @@ func CreateBaseAgent[T IAgent[T]](serv IExposedServerFunctions[T]) *BaseAgent[T]
 
 func (a *BaseAgent[T]) UpdateAgentInternalState() {}
 
-func (a *BaseAgent[T]) NotifyAgentInactive() {
+func (a *BaseAgent[T]) NotifyAgentFinishedMessaging() {
 	a.agentStoppedTalking(a.id)
 }
 
