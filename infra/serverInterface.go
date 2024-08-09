@@ -37,7 +37,7 @@ type IMessagingProtocol interface {
 	AcknowledgeClosure(uuid.UUID)
 	AcknowledgeServerMessageReceived()
 	// send notification that agent stopped talking session
-	agentStoppedTalking(id uuid.UUID)
+	agentStoppedTalking(uuid.UUID)
 }
 
 type IExposedServerFunctions[T any] interface {

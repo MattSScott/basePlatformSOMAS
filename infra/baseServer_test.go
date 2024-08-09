@@ -69,7 +69,7 @@ func NewTestAgent(serv infra.IExposedServerFunctions[ITestBaseAgent]) ITestBaseA
 func TestGenerateServer(t *testing.T) {
 	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = infra.MakeAgentGeneratorCountPair(NewTestAgent, 3)
-	server := infra.CreateServer[ITestBaseAgent](m,1,time.Second, 2)
+	server := infra.CreateServer[ITestBaseAgent](m, 1, time.Second, 2)
 	//agent := NewTestAgent(server)
 	//fmt.Println(a,abc)
 	//fmt.Println(len(a.GetAgentMap()))
@@ -84,7 +84,7 @@ func TestAgentsCorrectlyInstantiated(t *testing.T) {
 	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = infra.MakeAgentGeneratorCountPair(NewTestAgent, 3)
 
-	server := infra.CreateServer(m, 1,time.Second,2)
+	server := infra.CreateServer(m, 1, time.Second, 2)
 	// server.Initialise()
 
 	ag := NewTestAgent(server)
@@ -92,7 +92,7 @@ func TestAgentsCorrectlyInstantiated(t *testing.T) {
 	lenAgentMap := len(server.GetAgentMap())
 	if lenAgentMap != 3 {
 
-		t.Error("Incorrect number of agents added to server",lenAgentMap)
+		t.Error("Incorrect number of agents added to server", lenAgentMap)
 	}
 }
 
@@ -105,7 +105,7 @@ func TestHandlerInitialiser(t *testing.T) {
 	}()
 	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = infra.MakeAgentGeneratorCountPair(NewTestAgent, 3)
-	server := infra.CreateServer[ITestBaseAgent](m,1,time.Second, 2)
+	server := infra.CreateServer[ITestBaseAgent](m, 1, time.Second, 2)
 	server.Initialise()
 	server.RunGameLoop()
 
@@ -114,7 +114,7 @@ func TestHandlerInitialiser(t *testing.T) {
 func TestSpinStart(t *testing.T) {
 	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = infra.MakeAgentGeneratorCountPair(NewTestAgent, 3)
-	server := infra.CreateServer[ITestBaseAgent](m,1,time.Second, 2)
+	server := infra.CreateServer[ITestBaseAgent](m, 1, time.Second, 2)
 	server.Initialise()
 	arbitraryAgentID := uuid.New()
 	server.SetServerAgentChannel(arbitraryAgentID, make(chan infra.ServerNotification, 1))
@@ -142,7 +142,7 @@ func TestAgentAgentMessage(t *testing.T) {
 	//server := infra.GenerateServer[ITestBaseAgent](time.Second, 2)
 	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = infra.MakeAgentGeneratorCountPair(NewTestAgent, 3)
-	server := infra.CreateServer[ITestBaseAgent](m,1,time.Second, 2)
+	server := infra.CreateServer[ITestBaseAgent](m, 1, time.Second, 2)
 
 	arbitraryAgentID := uuid.New()
 
