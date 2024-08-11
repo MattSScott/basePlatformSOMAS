@@ -277,7 +277,7 @@ func (bs *BaseServer[T]) GetIterations() int {
 
 func (bs *BaseServer[T]) RunGameLoop() {
 	if bs.roundRunner == nil {
-		panic("roundRuner has not been set.")
+		panic("roundRunner has not been set.")
 
 	}
 	for id, agent := range bs.agentMap {

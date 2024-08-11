@@ -1,6 +1,7 @@
 package infra_test
 
 import (
+	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -12,6 +13,7 @@ import (
 type ITestBaseAgent interface {
 	infra.IAgent[ITestBaseAgent]
 	CreateTestMessage() TestMessage
+	HandleTestMessage()
 }
 
 type ITestServer interface {
@@ -34,10 +36,17 @@ type TestMessage struct {
 }
 
 func (tm TestMessage) InvokeMessageHandler(ag ITestBaseAgent) {
-
+	ag.HandleTestMessage()
 }
 
-func (tba *TestAgent) CreateTestMessage() TestMessage {
+func (tba TestAgent) CreateTestMessage() TestMessage {
+	return TestMessage{
+		infra.BaseMessage{},
+		5,
+	}
+}
+
+func NewTestMessage() TestMessage {
 	return TestMessage{
 		infra.BaseMessage{},
 		5,
@@ -49,6 +58,10 @@ func NewTestAgent(serv infra.IExposedServerFunctions[ITestBaseAgent]) ITestBaseA
 		BaseAgent:       infra.CreateBaseAgent(serv),
 		receivedMessage: false,
 	}
+}
+
+func (ag *TestAgent) HandleTestMessage() {
+	ag.receivedMessage = true
 }
 
 // func NewTestBaseAgent() ITestBaseAgent {
@@ -164,9 +177,113 @@ func TestAgentAgentMessage(t *testing.T) {
 	}
 }
 
-func TestAgentListeningSpinner(t *testing.T) {
-
+func TestAgentListeningSpinnerOpen(t *testing.T) {
+	const numAgents = 3
+	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
+	m[0] = infra.MakeAgentGeneratorCountPair(NewTestAgent, numAgents)
+	server := infra.CreateServer[ITestBaseAgent](m, 1, time.Second, 2)
+	server.Initialise()
+	msg := NewTestMessage()
+	agentMap := server.GetAgentMap()
+	arrayOfIDs := make([]uuid.UUID, numAgents)
+	i := 0
+	for id := range agentMap {
+		arrayOfIDs[i] = id
+		i++
+	}
+	server.BeginAgentListeningSession()
+	server.SendMessage(msg, arrayOfIDs)
+	fmt.Println(arrayOfIDs)
+	//time.Sleep(10*time.Second)
+	server.EndAgentListeningSession()
+	for _, ag := range agentMap {
+		testAgent := ag.(*TestAgent)
+		if testAgent.receivedMessage == false {
+			t.Errorf("agent did not receive a message")
+		}
+	}
 }
+
+func TestAgentListeningSpinnerClosed(t *testing.T) {
+	const numAgents = 3
+	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
+	m[0] = infra.MakeAgentGeneratorCountPair(NewTestAgent, numAgents)
+	server := infra.CreateServer[ITestBaseAgent](m, 1, time.Second, 2)
+	server.Initialise()
+	msg := NewTestMessage()
+	agentMap := server.GetAgentMap()
+	arrayOfIDs := make([]uuid.UUID, numAgents)
+	i := 0
+	for id := range agentMap {
+		arrayOfIDs[i] = id
+		i++
+	}
+	server.BeginAgentListeningSession()
+	server.EndAgentListeningSession()
+	server.SendMessage(msg, arrayOfIDs)
+	fmt.Println(arrayOfIDs)
+	//time.Sleep(10*time.Second)
+
+	for _, ag := range agentMap {
+		testAgent := ag.(*TestAgent)
+		if testAgent.receivedMessage != false {
+			t.Errorf("agent did not stop listening")
+		}
+	}
+}
+
+func TestAgentChannelsClosed(t *testing.T) {
+	defer func() {
+		if panicValue := recover(); panicValue == nil {
+			//check if channels are closed by attempting to send a message to them
+			//if a panic occurs due to closed channel then good
+			t.Errorf("did not close channels")
+		}
+
+		// } else {
+		// 	switch panicV := panicValue.(type) {
+		// 	case string:
+		// 		t.Errorf(panicV)
+
+		// 	default:
+		// 		errmesage := reflect.TypeOf(panicValue)
+		// 		t.Errorf(errmesage.String())
+		// 	}
+		// }
+	}()
+	const numAgents = 3
+	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
+	m[0] = infra.MakeAgentGeneratorCountPair(NewTestAgent, numAgents)
+	server := infra.CreateServer[ITestBaseAgent](m, 1, time.Second, 2)
+	server.Initialise()
+	msg := NewTestMessage()
+	agentMap := server.GetAgentMap()
+	arrayOfIDs := make([]uuid.UUID, numAgents)
+	i := 0
+	for id := range agentMap {
+		arrayOfIDs[i] = id
+		i++
+	}
+	server.BeginAgentListeningSession()
+	server.EndAgentListeningSession()
+	server.Cleanup()
+	server.SendMessage(msg, arrayOfIDs)
+	fmt.Println(arrayOfIDs)
+	//time.Sleep(10*time.Second)
+
+	for _, ag := range agentMap {
+		testAgent := ag.(*TestAgent)
+		if testAgent.receivedMessage != false {
+			t.Errorf("agent did not stop listening")
+		}
+	}
+}
+
+
+
+
+
+
 
 // func TestNumIterationsInServer(t *testing.T) {
 // 	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)

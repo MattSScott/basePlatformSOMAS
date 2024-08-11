@@ -1,12 +1,12 @@
-package infra
+package infra_test
+
+import "github.com/MattSScott/basePlatformSOMAS/infra"
 
 type IBaseAgent interface {
-	IAgent[IBaseAgent]
+	infra.IAgent[IBaseAgent]
 }
 
-type TestServer struct {
-	IServer[IBaseAgent]
-}
+
 
 // func TestAgentIdOperations(t *testing.T) {
 // 	var testServ infra.IServer[IBaseAgent] = TestServer{}

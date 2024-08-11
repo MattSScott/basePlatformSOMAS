@@ -43,4 +43,5 @@ func (bm BaseMessage) GetSender() uuid.UUID {
 }
 
 // func (bm BaseMessage) InvokeMessageHandler(agent IAgent[any]) {
+//
 // }

@@ -32,3 +32,15 @@ func (serv *BaseServer[T]) GetAgentAgentChannel(id uuid.UUID) chan IMessage[T] {
 func (serv *BaseServer[T]) SetAgentAgentChannel(id uuid.UUID, channelValue chan IMessage[T]) {
 	serv.agentAgentChannelMap[id] = channelValue
 }
+
+func (serv *BaseServer[T]) BeginAgentListeningSession() {
+	serv.beginAgentListeningSession()
+}
+
+func (serv *BaseServer[T]) EndAgentListeningSession() {
+	serv.endAgentListeningSession()
+}
+
+func (serv *BaseServer[T]) Cleanup() {
+	serv.cleanUp()
+}
