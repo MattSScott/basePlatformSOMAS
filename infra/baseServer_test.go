@@ -14,6 +14,7 @@ type ITestBaseAgent interface {
 	infra.IAgent[ITestBaseAgent]
 	CreateTestMessage() TestMessage
 	HandleTestMessage()
+	GetReceivedMessage() bool
 }
 
 type ITestServer interface {
@@ -63,6 +64,10 @@ func NewTestAgent(serv infra.IExposedServerFunctions[ITestBaseAgent]) ITestBaseA
 func (ag *TestAgent) HandleTestMessage() {
 	ag.receivedMessage = true
 	ag.NotifyAgentFinishedMessaging()
+}
+
+func (ag *TestAgent) GetReceivedMessage() bool {
+	return ag.receivedMessage
 }
 
 // func NewTestBaseAgent() ITestBaseAgent {
@@ -199,10 +204,9 @@ func TestAgentListeningSpinnerOpen(t *testing.T) {
 	server.WaitForMessagingToEnd()
 	//server.WaitForMessagingToEnd()
 	//server.WaitForMessagingToEnd()
-	for _, ag := range agentMap {
-		testAgent := ag.(*TestAgent)
-		if testAgent.receivedMessage == false {
-			t.Error("agent did not receive a message",ag.GetID())
+	for id, ag := range agentMap {
+		if !ag.GetReceivedMessage() {
+			t.Errorf("agent %s did not receive a message\n", id)
 		}
 	}
 	//t.Errorf("ended function")
