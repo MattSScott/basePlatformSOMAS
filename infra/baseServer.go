@@ -182,6 +182,10 @@ func (serv *BaseServer[T]) Initialise() {
 	serv.agentBeginSpin()
 }
 
+func (serv *BaseServer[T]) AgentsStartListening() {
+	serv.agentBeginSpin()
+}
+
 func (serv *BaseServer[T]) Start() {
 	serv.checkHandler()
 	turns := 5
