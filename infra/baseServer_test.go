@@ -14,8 +14,10 @@ type ITestBaseAgent interface {
 	infra.IAgent[ITestBaseAgent]
 	CreateTestMessage() TestMessage
 	HandleTestMessage()
-	GetReceivedMessage() bool
+	getAgentAttribute() AttributeType
 }
+
+type AttributeType interface{}
 
 type ITestServer interface {
 	infra.IServer[ITestBaseAgent]
@@ -25,6 +27,12 @@ type ITestServer interface {
 type TestAgent struct {
 	*infra.BaseAgent[ITestBaseAgent]
 	receivedMessage bool
+}
+
+type TestAgent2 struct {
+	*infra.BaseAgent[ITestBaseAgent]
+	counter int
+	limit int
 }
 
 type TestServer struct {
@@ -47,6 +55,13 @@ func (tba TestAgent) CreateTestMessage() TestMessage {
 	}
 }
 
+func (tba TestAgent2) CreateTestMessage() TestMessage {
+	return TestMessage{
+		infra.BaseMessage{},
+		5,
+	}
+}
+
 func NewTestMessage() TestMessage {
 	return TestMessage{
 		infra.BaseMessage{},
@@ -61,13 +76,37 @@ func NewTestAgent(serv infra.IExposedServerFunctions[ITestBaseAgent]) ITestBaseA
 	}
 }
 
+func NewTestAgent2(serv infra.IExposedServerFunctions[ITestBaseAgent]) ITestBaseAgent {
+	return &TestAgent2{
+		BaseAgent: infra.CreateBaseAgent(serv),
+		counter:   0,
+	}
+}
+
 func (ag *TestAgent) HandleTestMessage() {
 	ag.receivedMessage = true
 	ag.NotifyAgentFinishedMessaging()
 	ag.SetListeningSpinner(true)
 }
 
-func (ag *TestAgent) GetReceivedMessage() bool {
+func (a *TestAgent2) setLimit(limit int) {
+	a.limit = limit
+}
+
+func (ag *TestAgent2) HandleTestMessage() {
+	ag.counter += 1
+	if ag.counter == ag.limit {
+		ag.NotifyAgentFinishedMessaging()
+		ag.SetListeningSpinner(true)
+	}
+
+}
+
+func (ag *TestAgent2) getAgentAttribute() AttributeType {
+	return ag.counter
+}
+
+func (ag *TestAgent) getAgentAttribute() AttributeType {
 	return ag.receivedMessage
 }
 
@@ -91,7 +130,7 @@ func (ag *TestAgent) GetReceivedMessage() bool {
 func TestGenerateServer(t *testing.T) {
 	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = infra.MakeAgentGeneratorCountPair(NewTestAgent, 3)
-	server := infra.CreateServer[ITestBaseAgent](m, 1, time.Second)
+	server := infra.CreateServer[ITestBaseAgent](m, 1, time.Second,1000,20)
 	if len(server.GetAgentMap()) != 3 {
 		t.Error("len of agentmap is ", len(server.GetAgentMap()))
 	}
@@ -101,7 +140,7 @@ func TestAgentsCorrectlyInstantiated(t *testing.T) {
 	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = infra.MakeAgentGeneratorCountPair(NewTestAgent, 3)
 
-	server := infra.CreateServer(m, 1, time.Second)
+	server := infra.CreateServer(m, 1, time.Second,1000,20)
 
 	ag := NewTestAgent(server)
 	ag.NotifyAgentFinishedMessaging()
@@ -118,7 +157,7 @@ func TestHandlerInitialiser(t *testing.T) {
 	}()
 	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = infra.MakeAgentGeneratorCountPair(NewTestAgent, 3)
-	server := infra.CreateServer(m, 1, time.Second)
+	server := infra.CreateServer(m, 1, time.Second,1000,20)
 	server.Initialise()
 	server.RunGameLoop()
 }
@@ -126,7 +165,7 @@ func TestHandlerInitialiser(t *testing.T) {
 func TestSpinStart(t *testing.T) {
 	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = infra.MakeAgentGeneratorCountPair(NewTestAgent, 3)
-	server := infra.CreateServer(m, 1, time.Second)
+	server := infra.CreateServer(m, 1, time.Second,1000,20)
 	server.Initialise()
 	arbitraryAgentID := uuid.New()
 	server.SetServerAgentChannel(arbitraryAgentID, make(chan infra.ServerNotification, 1))
@@ -153,7 +192,7 @@ func TestAgentAgentMessage(t *testing.T) {
 	//server := infra.GenerateServer[ITestBaseAgent](time.Second, 2)
 	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = infra.MakeAgentGeneratorCountPair(NewTestAgent, 3)
-	server := infra.CreateServer(m, 1, time.Second)
+	server := infra.CreateServer(m, 1, time.Second,1000,20)
 
 	arbitraryAgentID := uuid.New()
 
@@ -181,46 +220,52 @@ func TestAgentAgentMessage(t *testing.T) {
 	}
 }
 
-
 func TestAgentListeningSpinner(t *testing.T) {
-
-	const numAgents = 200
+	numberOfMessages := 1000
+	const numAgents = 10
 	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
-	m[0] = infra.MakeAgentGeneratorCountPair(NewTestAgent, numAgents)
-	server := infra.CreateServer(m, 1, 5*time.Second)
+	m[0] = infra.MakeAgentGeneratorCountPair(NewTestAgent2, numAgents)
+	server := infra.CreateServer(m, 1, 5*time.Second,1000,20)
 	server.Initialise()
-	msg := NewTestMessage()
+
+	//msg := NewTestMessage()
 	agentMap := server.GetAgentMap()
 	arrayOfIDs := make([]uuid.UUID, numAgents)
 	i := 0
-	for id := range agentMap {
+	for id,ag := range agentMap {
 		arrayOfIDs[i] = id
 		i++
+		agent := ag.(*TestAgent2)
+		agent.setLimit(numberOfMessages)
 	}
 	server.BeginAgentListeningSession()
 	fmt.Println("ENDED BEGIN AGENT LISTENING")
 	//j = j + 1
-	server.SendMessage(msg, arrayOfIDs)
+	
+	for j := 0; j < numberOfMessages; j++ {
+		msg := NewTestMessage()
+		server.SendMessage(msg, arrayOfIDs)
+	}
 	//time.Sleep(5*time.Second)
 	fmt.Println("FINISHED SENDING MESSAGES")
 	server.EndAgentListeningSession()
 	//server.WaitForMessagingToEnd()
 	//server.WaitForMessagingToEnd()
 	for id, ag := range agentMap {
-		if !ag.GetReceivedMessage() {
-			t.Errorf("agent %s did not receive a message\n", id)
+		flagValue := (ag.getAgentAttribute()).(int)
+		if flagValue != numberOfMessages {
+			t.Errorf("agent %s recieved %d messages, expected %d\n", id, flagValue, numberOfMessages)
 		}
 	}
 	//t.Errorf("ended function")
 }
-
 
 func TestAgentListeningSpinnerOpen(t *testing.T) {
 
 	const numAgents = 250
 	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = infra.MakeAgentGeneratorCountPair(NewTestAgent, numAgents)
-	server := infra.CreateServer(m, 1, 5*time.Second)
+	server := infra.CreateServer(m, 1, 5*time.Second,1000,20)
 	server.Initialise()
 	msg := NewTestMessage()
 	agentMap := server.GetAgentMap()
@@ -240,18 +285,19 @@ func TestAgentListeningSpinnerOpen(t *testing.T) {
 	//server.WaitForMessagingToEnd()
 	//server.WaitForMessagingToEnd()
 	for id, ag := range agentMap {
-		if !ag.GetReceivedMessage() {
+		flagValue := (ag.getAgentAttribute()).(bool)
+		if !flagValue {
 			t.Errorf("agent %s did not receive a message\n", id)
 		}
 	}
-	t.Errorf("ended function")
+	//t.Errorf("ended function")
 }
 
 func TestAgentListeningSpinnerClosed(t *testing.T) {
 	const numAgents = 3
 	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = infra.MakeAgentGeneratorCountPair(NewTestAgent, numAgents)
-	server := infra.CreateServer(m, 1, time.Second)
+	server := infra.CreateServer(m, 1, time.Second,1000,20)
 	server.Initialise()
 	msg := NewTestMessage()
 	agentMap := server.GetAgentMap()
@@ -297,7 +343,7 @@ func TestAgentChannelsClosed(t *testing.T) {
 	const numAgents = 3
 	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = infra.MakeAgentGeneratorCountPair(NewTestAgent, numAgents)
-	server := infra.CreateServer(m, 1, time.Second)
+	server := infra.CreateServer(m, 1, time.Second,1000,20)
 	server.Initialise()
 	msg := NewTestMessage()
 	agentMap := server.GetAgentMap()

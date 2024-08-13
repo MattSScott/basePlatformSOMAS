@@ -33,6 +33,9 @@ type BaseServer[T IAgent[T]] struct {
 	roundRunner RoundRunner
 	//iterations
 	iterations int
+	//agentServerChannel buffer siize
+	agentAgentChanBufferSize int
+	serverAgentChanBufferSize int
 }
 
 func (server *BaseServer[T]) HandleStartOfTurn(iter, round int) {
@@ -98,10 +101,10 @@ func (server *BaseServer[T]) ReadChannel(agentID uuid.UUID) <-chan IMessage[T] {
 	return server.agentAgentChannelMap[agentID]
 }
 
-func (server *BaseServer[T]) initialiseChannels() {
+func (server *BaseServer[T]) initialiseChannels(agentAgentChannelSize, serverAgentChannelSize int) {
 	for _, agent := range server.agentMap {
-		agentAgentChannel := make(chan IMessage[T], 20)
-		serverAgentChannel := make(chan ServerNotification, 20)
+		agentAgentChannel := make(chan IMessage[T], agentAgentChannelSize)
+		serverAgentChannel := make(chan ServerNotification, serverAgentChannelSize)
 		server.agentAgentChannelMap[agent.GetID()] = agentAgentChannel
 		server.serverAgentChannelMap[agent.GetID()] = serverAgentChannel
 	}
@@ -175,7 +178,7 @@ func (serv *BaseServer[T]) beginAgentListeningSession() {
 // }
 
 func (serv *BaseServer[T]) Initialise() {
-	serv.initialiseChannels()
+	serv.initialiseChannels(serv.agentAgentChanBufferSize,serv.serverAgentChanBufferSize)
 	serv.agentBeginSpin()
 }
 
@@ -361,7 +364,7 @@ func (bs *BaseServer[T]) initialiseAgents(m []AgentGeneratorCountPair[T]) {
 }
 
 // generate a server instance based on a mapping function and number of iterations
-func CreateServer[T IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iterations int, maxDuration time.Duration) *BaseServer[T] {
+func CreateServer[T IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iterations int, maxDuration time.Duration,agentAgentChanBuffer,serverAgentChanBuffer int) *BaseServer[T] {
 	serv := &BaseServer[T]{
 		agentMap:               make(map[uuid.UUID]T),
 		agentIdSet:             make(map[uuid.UUID]struct{}),
@@ -375,6 +378,8 @@ func CreateServer[T IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iter
 		maxMessagingDuration:   maxDuration,
 		roundRunner:            nil,
 		iterations:             iterations,
+		agentAgentChanBufferSize: agentAgentChanBuffer,
+		serverAgentChanBufferSize: serverAgentChanBuffer,
 	}
 	serv.initialiseAgents(generatorArray)
 	serv.agentServerChannel = make(chan uuid.UUID, len(serv.agentMap))
