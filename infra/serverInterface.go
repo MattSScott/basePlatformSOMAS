@@ -25,7 +25,7 @@ type IServer[T IAgent[T]] interface {
 	// the set of functions defining how a 'game loop' should run
 	RunGameLoop()
 	// starts the agents' messaging session
-	RunMessagingSession()
+	// RunMessagingSession()
 	// begins simulator
 	Start()
 }

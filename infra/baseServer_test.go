@@ -113,7 +113,7 @@ func TestHandlerInitialiser(t *testing.T) {
 	}()
 	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = infra.MakeAgentGeneratorCountPair(NewTestAgent, 3)
-	server := infra.CreateServer[ITestBaseAgent](m, 1, time.Second, 2)
+	server := infra.CreateServer(m, 1, time.Second, 2)
 	server.Initialise()
 	server.RunGameLoop()
 
@@ -122,7 +122,7 @@ func TestHandlerInitialiser(t *testing.T) {
 func TestSpinStart(t *testing.T) {
 	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = infra.MakeAgentGeneratorCountPair(NewTestAgent, 3)
-	server := infra.CreateServer[ITestBaseAgent](m, 1, time.Second, 2)
+	server := infra.CreateServer(m, 1, time.Second, 2)
 	server.Initialise()
 	arbitraryAgentID := uuid.New()
 	server.SetServerAgentChannel(arbitraryAgentID, make(chan infra.ServerNotification, 1))
@@ -149,7 +149,7 @@ func TestAgentAgentMessage(t *testing.T) {
 	//server := infra.GenerateServer[ITestBaseAgent](time.Second, 2)
 	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = infra.MakeAgentGeneratorCountPair(NewTestAgent, 3)
-	server := infra.CreateServer[ITestBaseAgent](m, 1, time.Second, 2)
+	server := infra.CreateServer(m, 1, time.Second, 2)
 
 	arbitraryAgentID := uuid.New()
 
@@ -181,7 +181,7 @@ func TestAgentListeningSpinnerOpen(t *testing.T) {
 	const numAgents = 3
 	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = infra.MakeAgentGeneratorCountPair(NewTestAgent, numAgents)
-	server := infra.CreateServer[ITestBaseAgent](m, 1, time.Second, 2)
+	server := infra.CreateServer(m, 1, time.Second, 2)
 	server.Initialise()
 	msg := NewTestMessage()
 	agentMap := server.GetAgentMap()
@@ -193,8 +193,6 @@ func TestAgentListeningSpinnerOpen(t *testing.T) {
 	}
 	server.BeginAgentListeningSession()
 	server.SendMessage(msg, arrayOfIDs)
-	fmt.Println(arrayOfIDs)
-	//time.Sleep(10*time.Second)
 	server.EndAgentListeningSession()
 	for _, ag := range agentMap {
 		testAgent := ag.(*TestAgent)
@@ -208,7 +206,7 @@ func TestAgentListeningSpinnerClosed(t *testing.T) {
 	const numAgents = 3
 	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = infra.MakeAgentGeneratorCountPair(NewTestAgent, numAgents)
-	server := infra.CreateServer[ITestBaseAgent](m, 1, time.Second, 2)
+	server := infra.CreateServer(m, 1, time.Second, 2)
 	server.Initialise()
 	msg := NewTestMessage()
 	agentMap := server.GetAgentMap()
@@ -254,7 +252,7 @@ func TestAgentChannelsClosed(t *testing.T) {
 	const numAgents = 3
 	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = infra.MakeAgentGeneratorCountPair(NewTestAgent, numAgents)
-	server := infra.CreateServer[ITestBaseAgent](m, 1, time.Second, 2)
+	server := infra.CreateServer(m, 1, time.Second, 2)
 	server.Initialise()
 	msg := NewTestMessage()
 	agentMap := server.GetAgentMap()
@@ -278,12 +276,6 @@ func TestAgentChannelsClosed(t *testing.T) {
 		}
 	}
 }
-
-
-
-
-
-
 
 // func TestNumIterationsInServer(t *testing.T) {
 // 	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
