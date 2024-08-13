@@ -41,7 +41,7 @@ func (server *BaseServer[T]) HandleStartOfTurn(iter, round int) {
 
 }
 
-func (serv *BaseServer[T]) waitForMessagingToEnd() {
+func (serv *BaseServer[T]) endAgentListeningSession() {
 	i := 0
 	timeoutChannel := time.After(serv.maxMessagingDuration)
 
@@ -63,7 +63,7 @@ agentMessaging:
 			case uuid := <-serv.agentServerChannel:
 				fmt.Println(uuid, "has stopped talking")
 				i = i + 1
-				fmt.Println(i)
+				fmt.Println("number of stopped listening", i)
 				serv.agentStoppedTalkingMap[uuid] = struct{}{}
 			default:
 				continue
@@ -74,8 +74,8 @@ agentMessaging:
 }
 
 func (server *BaseServer[T]) HandleEndOfTurn(iter, round int) {
-	server.waitForMessagingToEnd()
 	server.endAgentListeningSession()
+	//server.endAgentListeningSession()
 	fmt.Printf("Iteration %d, Round %d finished.\n", iter, round)
 }
 
@@ -165,14 +165,14 @@ func (serv *BaseServer[T]) beginAgentListeningSession() {
 	serv.listeningWaitGroup.Wait()
 }
 
-func (serv *BaseServer[T]) endAgentListeningSession() {
-	fmt.Println("agents stopping listening")
-	for id := range serv.agentMap {
-		serv.listeningWaitGroup.Add(1)
-		serv.sendServerNotification(id, EndListeningNotification)
-	}
-	serv.listeningWaitGroup.Wait()
-}
+// func (serv *BaseServer[T]) endAgentListeningSession() {
+// 	fmt.Println("agents stopping listening")
+// 	for id := range serv.agentMap {
+// 		serv.listeningWaitGroup.Add(1)
+// 		serv.sendServerNotification(id, EndListeningNotification)
+// 	}
+// 	serv.listeningWaitGroup.Wait()
+// }
 
 func (serv *BaseServer[T]) Initialise() {
 	serv.initialiseChannels()
@@ -377,7 +377,7 @@ func CreateServer[T IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iter
 		iterations:             iterations,
 	}
 	serv.initialiseAgents(generatorArray)
-	serv.agentServerChannel = make(chan uuid.UUID,len(serv.agentMap))
+	serv.agentServerChannel = make(chan uuid.UUID, len(serv.agentMap))
 	return serv
 }
 
@@ -391,6 +391,12 @@ func listenOnChannel[T IAgent[T]](a T, agentAgentchannel chan IMessage[T], serve
 
 listening:
 	for {
+		if a.GetListeningSpinnerFlag() {
+			fmt.Println("STOPPED SPINNER", a.GetID())
+			a.SetListeningSpinner(false)
+			break listening
+		}
+
 		select {
 		case serverMessage := <-serverAgentchannel:
 			//fmt.Println("server message", a.id, " ", serverMessage)
@@ -419,7 +425,7 @@ listening:
 			}
 		}
 	}
-	a.agentStoppedTalking(a.GetID())
+	//a.agentStoppedTalking(a.GetID())
 	go a.AcknowledgeClosure(a.GetID())
 	fmt.Println("stopped listening on channel")
 }

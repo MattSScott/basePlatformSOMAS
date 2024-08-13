@@ -37,14 +37,14 @@ func (serv *BaseServer[T]) BeginAgentListeningSession() {
 	serv.beginAgentListeningSession()
 }
 
-func (serv *BaseServer[T]) EndAgentListeningSession() {
-	serv.endAgentListeningSession()
-}
+// func (serv *BaseServer[T]) EndAgentListeningSession() {
+// 	serv.endAgentListeningSession()
+// }
 
 func (serv *BaseServer[T]) Cleanup() {
 	serv.cleanUp()
 }
 
-func (serv *BaseServer[T]) WaitForMessagingToEnd() {
-	serv.waitForMessagingToEnd()
+func (serv *BaseServer[T]) EndAgentListeningSession() {
+	serv.endAgentListeningSession()
 }

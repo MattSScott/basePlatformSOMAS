@@ -64,6 +64,7 @@ func NewTestAgent(serv infra.IExposedServerFunctions[ITestBaseAgent]) ITestBaseA
 func (ag *TestAgent) HandleTestMessage() {
 	ag.receivedMessage = true
 	ag.NotifyAgentFinishedMessaging()
+	ag.SetListeningSpinner(true)
 }
 
 func (ag *TestAgent) GetReceivedMessage() bool {
@@ -180,6 +181,40 @@ func TestAgentAgentMessage(t *testing.T) {
 	}
 }
 
+
+func TestAgentListeningSpinner(t *testing.T) {
+
+	const numAgents = 200
+	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
+	m[0] = infra.MakeAgentGeneratorCountPair(NewTestAgent, numAgents)
+	server := infra.CreateServer(m, 1, 5*time.Second)
+	server.Initialise()
+	msg := NewTestMessage()
+	agentMap := server.GetAgentMap()
+	arrayOfIDs := make([]uuid.UUID, numAgents)
+	i := 0
+	for id := range agentMap {
+		arrayOfIDs[i] = id
+		i++
+	}
+	server.BeginAgentListeningSession()
+	fmt.Println("ENDED BEGIN AGENT LISTENING")
+	//j = j + 1
+	server.SendMessage(msg, arrayOfIDs)
+	//time.Sleep(5*time.Second)
+	fmt.Println("FINISHED SENDING MESSAGES")
+	server.EndAgentListeningSession()
+	//server.WaitForMessagingToEnd()
+	//server.WaitForMessagingToEnd()
+	for id, ag := range agentMap {
+		if !ag.GetReceivedMessage() {
+			t.Errorf("agent %s did not receive a message\n", id)
+		}
+	}
+	//t.Errorf("ended function")
+}
+
+
 func TestAgentListeningSpinnerOpen(t *testing.T) {
 
 	const numAgents = 250
@@ -201,7 +236,7 @@ func TestAgentListeningSpinnerOpen(t *testing.T) {
 	server.SendMessage(msg, arrayOfIDs)
 	//time.Sleep(5*time.Second)
 	fmt.Println("FINISHED SENDING MESSAGES")
-	server.WaitForMessagingToEnd()
+	server.EndAgentListeningSession()
 	//server.WaitForMessagingToEnd()
 	//server.WaitForMessagingToEnd()
 	for id, ag := range agentMap {
@@ -209,7 +244,7 @@ func TestAgentListeningSpinnerOpen(t *testing.T) {
 			t.Errorf("agent %s did not receive a message\n", id)
 		}
 	}
-	//t.Errorf("ended function")
+	t.Errorf("ended function")
 }
 
 func TestAgentListeningSpinnerClosed(t *testing.T) {
