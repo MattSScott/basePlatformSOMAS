@@ -44,3 +44,7 @@ func (serv *BaseServer[T]) EndAgentListeningSession() {
 func (serv *BaseServer[T]) Cleanup() {
 	serv.cleanUp()
 }
+
+func (serv *BaseServer[T]) WaitForMessagingToEnd() {
+	serv.waitForMessagingToEnd()
+}

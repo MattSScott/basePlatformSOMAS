@@ -42,6 +42,7 @@ func (server *BaseServer[T]) HandleStartOfTurn(iter, round int) {
 }
 
 func (serv *BaseServer[T]) waitForMessagingToEnd() {
+	i := 0
 	timeoutChannel := time.After(serv.maxMessagingDuration)
 
 agentMessaging:
@@ -61,6 +62,8 @@ agentMessaging:
 			select {
 			case uuid := <-serv.agentServerChannel:
 				fmt.Println(uuid, "has stopped talking")
+				i = i + 1
+				fmt.Println(i)
 				serv.agentStoppedTalkingMap[uuid] = struct{}{}
 			default:
 				continue
@@ -358,7 +361,7 @@ func (bs *BaseServer[T]) initialiseAgents(m []AgentGeneratorCountPair[T]) {
 }
 
 // generate a server instance based on a mapping function and number of iterations
-func CreateServer[T IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iterations int, maxDuration time.Duration, agentServerChannelBufferSize int) *BaseServer[T] {
+func CreateServer[T IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iterations int, maxDuration time.Duration) *BaseServer[T] {
 	serv := &BaseServer[T]{
 		agentMap:               make(map[uuid.UUID]T),
 		agentIdSet:             make(map[uuid.UUID]struct{}),
@@ -368,12 +371,13 @@ func CreateServer[T IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iter
 		waitEnd:                &sync.WaitGroup{},
 		listeningWaitGroup:     &sync.WaitGroup{},
 		agentStoppedTalkingMap: make(map[uuid.UUID]struct{}),
-		agentServerChannel:     make(chan uuid.UUID, agentServerChannelBufferSize),
+		agentServerChannel:     nil,
 		maxMessagingDuration:   maxDuration,
 		roundRunner:            nil,
 		iterations:             iterations,
 	}
 	serv.initialiseAgents(generatorArray)
+	serv.agentServerChannel = make(chan uuid.UUID,len(serv.agentMap))
 	return serv
 }
 
@@ -383,7 +387,7 @@ func listenOnChannel[T IAgent[T]](a T, agentAgentchannel chan IMessage[T], serve
 	// checkMessageHandler()
 
 	listenAgentChannel := false
-	fmt.Println("started listening", a.GetID())
+	//fmt.Println("started listening", a.GetID())
 
 listening:
 	for {
@@ -392,13 +396,13 @@ listening:
 			//fmt.Println("server message", a.id, " ", serverMessage)
 			switch serverMessage {
 			case StartListeningNotification:
-				//fmt.Println("started listening", a.id)
+				fmt.Println("started listening", a.GetID())
 				listenAgentChannel = true
 			case EndListeningNotification:
-				//fmt.Println("stopped listening", a.id)
+				fmt.Println("stopped listening", a.GetID())
 				listenAgentChannel = false
 			case StopListeningSpinner:
-				//fmt.Println("stopping listening on channel", a.id)
+				fmt.Println("stopping listening on channel", a.GetID())
 				break listening
 			default:
 				//fmt.Println("unknown message type")
