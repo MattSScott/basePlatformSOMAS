@@ -45,7 +45,7 @@ func (server *BaseServer[T]) HandleStartOfTurn(iter, round int) {
 }
 
 func (serv *BaseServer[T]) endAgentListeningSession() {
-	i := 0
+	
 	timeoutChannel := time.After(serv.maxMessagingDuration)
 
 agentMessaging:
@@ -65,8 +65,8 @@ agentMessaging:
 			select {
 			case uuid := <-serv.agentServerChannel:
 				fmt.Println(uuid, "has stopped talking")
-				i = i + 1
-				fmt.Println("number of stopped listening", i)
+				// i = i + 1
+				// fmt.Println("number of stopped listening", i)
 				serv.agentStoppedTalkingMap[uuid] = struct{}{}
 			default:
 				continue
