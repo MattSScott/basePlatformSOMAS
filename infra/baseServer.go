@@ -14,17 +14,17 @@ type BaseServer[T IAgent[T]] struct {
 	// map of agentid -> empty struct so that agents cannot access each others agent structs
 	agentIdSet map[uuid.UUID]struct{}
 	// a map of agentid -> channel used by agents to send messages to agents
-	agentAgentChannelMap map[uuid.UUID]chan IMessage[T]
+	//agentAgentChannelMap map[uuid.UUID]chan IMessage[T]
 	// a map of agentid -> channel used by the server to send messages to agents
-	serverAgentChannelMap map[uuid.UUID]chan ServerNotification
+	//serverAgentChannelMap map[uuid.UUID]chan ServerNotification
 	//a channel that agents send their IDs to tell server they are ending messaging
-	closureChannel chan uuid.UUID
+	//closureChannel chan uuid.UUID
 	// waitground for server comms
-	waitEnd *sync.WaitGroup
+	//waitEnd *sync.WaitGroup
 	// waitgroup for agent comms
 	listeningWaitGroup *sync.WaitGroup
 	// channel for server<->agent communication
-	agentServerChannel chan uuid.UUID
+	//agentServerChannel chan uuid.UUID
 	// map of uuid ->struct{}{} which stores the ids of agents which have stopped messaging
 	agentStoppedTalkingMap map[uuid.UUID]struct{}
 	// duration after which messaging phase forcefully ends during rounds
@@ -34,14 +34,13 @@ type BaseServer[T IAgent[T]] struct {
 	//iterations
 	iterations int
 	//agentServerChannel buffer siize
-	agentAgentChanBufferSize int
-	serverAgentChanBufferSize int
+	//agentAgentChanBufferSize int
+	//serverAgentChanBufferSize int
 }
 
 func (server *BaseServer[T]) HandleStartOfTurn(iter, round int) {
 	fmt.Printf("Iteration %d, Round %d starting...\n", iter, round)
-	server.beginAgentListeningSession()
-
+	//server.beginAgentListeningSession()
 }
 
 func (serv *BaseServer[T]) endAgentListeningSession() {
@@ -51,7 +50,6 @@ func (serv *BaseServer[T]) endAgentListeningSession() {
 agentMessaging:
 	for {
 		select {
-
 		case <-timeoutChannel:
 			fmt.Println("len of stoppedtalkingmap:,", len(serv.agentStoppedTalkingMap))
 			fmt.Println("Stopped messaging at time limit", serv.maxMessagingDuration, "seconds")
@@ -62,15 +60,7 @@ agentMessaging:
 				fmt.Println("stopped messaging early", len(serv.agentStoppedTalkingMap), len(serv.agentMap))
 				break agentMessaging
 			}
-			select {
-			case uuid := <-serv.agentServerChannel:
-				fmt.Println(uuid, "has stopped talking")
-				// i = i + 1
-				// fmt.Println("number of stopped listening", i)
-				serv.agentStoppedTalkingMap[uuid] = struct{}{}
-			default:
-				continue
-			}
+
 		}
 	}
 	serv.agentStoppedTalkingMap = make(map[uuid.UUID]struct{})
@@ -78,37 +68,40 @@ agentMessaging:
 
 func (server *BaseServer[T]) HandleEndOfTurn(iter, round int) {
 	server.endAgentListeningSession()
-	//server.endAgentListeningSession()
 	fmt.Printf("Iteration %d, Round %d finished.\n", iter, round)
 }
 
 func (server *BaseServer[T]) RunAgentLoop() {}
 
 func (server *BaseServer[T]) SendMessage(msg IMessage[T], receivers []uuid.UUID) {
+	//defer server.listeningWaitGroup.Done()
 	for _, receiver := range receivers {
-		select {
-		case server.agentAgentChannelMap[receiver] <- msg:
-		default:
-		}
+	// 	select {
+	// 	case server.agentAgentChannelMap[receiver] <- msg:
+	// 	default:
+	// 	}
+	// }
+	msg.InvokeMessageHandler(server.agentMap[receiver])
 	}
+	//fmt.Printf("sent messages")
 }
 
-func (serv *BaseServer[T]) AcknowledgeServerMessageReceived() {
-	serv.listeningWaitGroup.Done()
-}
+// func (serv *BaseServer[T]) AcknowledgeServerMessageReceived() {
+// 	serv.listeningWaitGroup.Done()
+// }
 
-func (server *BaseServer[T]) ReadChannel(agentID uuid.UUID) <-chan IMessage[T] {
-	return server.agentAgentChannelMap[agentID]
-}
+// func (server *BaseServer[T]) ReadChannel(agentID uuid.UUID) <-chan IMessage[T] {
+// 	return server.agentAgentChannelMap[agentID]
+// }
 
-func (server *BaseServer[T]) initialiseChannels(agentAgentChannelSize, serverAgentChannelSize int) {
-	for _, agent := range server.agentMap {
-		agentAgentChannel := make(chan IMessage[T], agentAgentChannelSize)
-		serverAgentChannel := make(chan ServerNotification, serverAgentChannelSize)
-		server.agentAgentChannelMap[agent.GetID()] = agentAgentChannel
-		server.serverAgentChannelMap[agent.GetID()] = serverAgentChannel
-	}
-}
+// func (server *BaseServer[T]) initialiseChannels(agentAgentChannelSize, serverAgentChannelSize int) {
+// 	for _, agent := range server.agentMap {
+// 		agentAgentChannel := make(chan IMessage[T], agentAgentChannelSize)
+// 		serverAgentChannel := make(chan ServerNotification, serverAgentChannelSize)
+// 		server.agentAgentChannelMap[agent.GetID()] = agentAgentChannel
+// 		server.serverAgentChannelMap[agent.GetID()] = serverAgentChannel
+// 	}
+// }
 
 func (serv *BaseServer[T]) ViewAgentMap() map[uuid.UUID]T {
 	return serv.agentMap
@@ -123,14 +116,14 @@ func (serv *BaseServer[T]) ViewAgentIdSet() map[uuid.UUID]struct{} {
 	return serv.agentIdSet
 }
 
-func (serv *BaseServer[T]) agentBeginSpin() {
-	for _, agent := range serv.agentMap {
-		serv.waitEnd.Add(1)
-		agentAgentChannel := serv.agentAgentChannelMap[agent.GetID()]
-		serverAgentChannel := serv.serverAgentChannelMap[agent.GetID()]
-		go listenOnChannel(agent, agentAgentChannel, serverAgentChannel, serv.waitEnd)
-	}
-}
+// func (serv *BaseServer[T]) agentBeginSpin() {
+// 	for _, agent := range serv.agentMap {
+// 		serv.waitEnd.Add(1)
+// 		agentAgentChannel := serv.agentAgentChannelMap[agent.GetID()]
+// 		serverAgentChannel := serv.serverAgentChannelMap[agent.GetID()]
+// 		go listenOnChannel(agent, agentAgentChannel, serverAgentChannel, serv.waitEnd)
+// 	}
+// }
 
 func (serv *BaseServer[T]) AccessAgentByID(id uuid.UUID) T {
 	return serv.agentMap[id]
@@ -152,21 +145,21 @@ func (serv *BaseServer[T]) AccessAgentByID(id uuid.UUID) T {
 // 	}
 // }
 
-func (serv *BaseServer[T]) sendServerNotification(id uuid.UUID, serverNotification ServerNotification) {
-	select {
-	case serv.serverAgentChannelMap[id] <- serverNotification:
-	default:
-	}
-}
+// func (serv *BaseServer[T]) sendServerNotification(id uuid.UUID, serverNotification ServerNotification) {
+// 	select {
+// 	case serv.serverAgentChannelMap[id] <- serverNotification:
+// 	default:
+// 	}
+// }
 
-func (serv *BaseServer[T]) beginAgentListeningSession() {
-	fmt.Println("agents beginning to listen")
-	for id := range serv.agentMap {
-		serv.listeningWaitGroup.Add(1)
-		serv.sendServerNotification(id, StartListeningNotification)
-	}
-	serv.listeningWaitGroup.Wait()
-}
+// func (serv *BaseServer[T]) beginAgentListeningSession() {
+// 	fmt.Println("agents beginning to listen")
+// 	for id := range serv.agentMap {
+// 		serv.listeningWaitGroup.Add(1)
+// 		serv.sendServerNotification(id, StartListeningNotification)
+// 	}
+// 	serv.listeningWaitGroup.Wait()
+// }
 
 // func (serv *BaseServer[T]) endAgentListeningSession() {
 // 	fmt.Println("agents stopping listening")
@@ -178,13 +171,13 @@ func (serv *BaseServer[T]) beginAgentListeningSession() {
 // }
 
 func (serv *BaseServer[T]) Initialise() {
-	serv.initialiseChannels(serv.agentAgentChanBufferSize,serv.serverAgentChanBufferSize)
-	serv.agentBeginSpin()
+	//serv.initialiseChannels(serv.agentAgentChanBufferSize,serv.serverAgentChanBufferSize)
+	//serv.agentBeginSpin()
 }
 
-func (serv *BaseServer[T]) AgentsStartListening() {
-	serv.agentBeginSpin()
-}
+// func (serv *BaseServer[T]) AgentsStartListening() {
+// 	serv.agentBeginSpin()
+// }
 
 func (serv *BaseServer[T]) Start() {
 	serv.checkHandler()
@@ -197,53 +190,53 @@ func (serv *BaseServer[T]) Start() {
 			serv.HandleEndOfTurn(i+1, j+1)
 		}
 	}
-	serv.cleanUp()
+	//serv.cleanUp()
 }
 
-func (serv *BaseServer[T]) cleanUp() {
-	fmt.Println("Starting cleanup")
-	for id := range serv.agentMap {
-		serv.listeningWaitGroup.Add(1)
-		select {
-		case serv.serverAgentChannelMap[id] <- StopListeningSpinner:
-		default:
-		}
-	}
-	fmt.Println("Closure messages...")
-	serv.awaitClosureMessages()
-	serv.waitEnd.Wait()
-	fmt.Println("closing channels")
-	serv.closeChannels()
-}
+// func (serv *BaseServer[T]) cleanUp() {
+// 	fmt.Println("Starting cleanup")
+// 	for id := range serv.agentMap {
+// 		serv.listeningWaitGroup.Add(1)
+// 		select {
+// 		case serv.serverAgentChannelMap[id] <- StopListeningSpinner:
+// 		default:
+// 		}
+// 	}
+// 	fmt.Println("Closure messages...")
+// 	serv.awaitClosureMessages()
+// 	serv.waitEnd.Wait()
+// 	fmt.Println("closing channels")
+// 	serv.closeChannels()
+// }
 
-func (serv *BaseServer[T]) AcknowledgeClosure(id uuid.UUID) {
-	//fmt.Println("sending id")
-	serv.closureChannel <- id
-}
+// func (serv *BaseServer[T]) AcknowledgeClosure(id uuid.UUID) {
+// 	//fmt.Println("sending id")
+// 	serv.closureChannel <- id
+// }
 
-func (serv *BaseServer[T]) closeChannels() {
-	for _, channel := range serv.agentAgentChannelMap {
-		close(channel)
-	}
-	for _, channel := range serv.serverAgentChannelMap {
-		close(channel)
-	}
-	close(serv.closureChannel)
-}
+// func (serv *BaseServer[T]) closeChannels() {
+// 	for _, channel := range serv.agentAgentChannelMap {
+// 		close(channel)
+// 	}
+// 	for _, channel := range serv.serverAgentChannelMap {
+// 		close(channel)
+// 	}
+// 	close(serv.closureChannel)
+// }
 
-func (serv *BaseServer[T]) awaitClosureMessages() {
-	fmt.Println("waiting for closures")
-	closedAgents := make(map[uuid.UUID]struct{})
-	for len(closedAgents) != len(serv.agentIdSet) {
-		select {
-		case id := <-serv.closureChannel:
-			closedAgents[id] = struct{}{}
-			fmt.Println("recieved")
-		default:
-			continue
-		}
-	}
-}
+// func (serv *BaseServer[T]) awaitClosureMessages() {
+// 	fmt.Println("waiting for closures")
+// 	closedAgents := make(map[uuid.UUID]struct{})
+// 	for len(closedAgents) != len(serv.agentIdSet) {
+// 		select {
+// 		case id := <-serv.closureChannel:
+// 			closedAgents[id] = struct{}{}
+// 			fmt.Println("recieved")
+// 		default:
+// 			continue
+// 		}
+// 	}
+// }
 
 func (serv *BaseServer[T]) GetAgentMap() map[uuid.UUID]T {
 	return serv.agentMap
@@ -251,10 +244,11 @@ func (serv *BaseServer[T]) GetAgentMap() map[uuid.UUID]T {
 
 func (serv *BaseServer[T]) agentStoppedTalking(id uuid.UUID) {
 	fmt.Println("sending stop talking request,id:", id)
-	select {
-	case serv.agentServerChannel <- id:
-	default:
-	}
+	// select {
+	// case serv.agentServerChannel <- id:
+	// default:
+	// }
+	serv.agentStoppedTalkingMap[id] = struct{}{}
 }
 
 func (serv *BaseServer[T]) SetRunHandler(handler RoundRunner) {
@@ -368,73 +362,73 @@ func (bs *BaseServer[T]) initialiseAgents(m []AgentGeneratorCountPair[T]) {
 }
 
 // generate a server instance based on a mapping function and number of iterations
-func CreateServer[T IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iterations int, maxDuration time.Duration,agentAgentChanBuffer,serverAgentChanBuffer int) *BaseServer[T] {
+func CreateServer[T IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iterations int, maxDuration time.Duration) *BaseServer[T] {
 	serv := &BaseServer[T]{
 		agentMap:               make(map[uuid.UUID]T),
 		agentIdSet:             make(map[uuid.UUID]struct{}),
-		agentAgentChannelMap:   make(map[uuid.UUID]chan IMessage[T]),
-		serverAgentChannelMap:  make(map[uuid.UUID]chan ServerNotification),
-		closureChannel:         make(chan uuid.UUID),
-		waitEnd:                &sync.WaitGroup{},
+		//agentAgentChannelMap:   make(map[uuid.UUID]chan IMessage[T]),
+		//serverAgentChannelMap:  make(map[uuid.UUID]chan ServerNotification),
+		//closureChannel:         make(chan uuid.UUID),
+		//waitEnd:                &sync.WaitGroup{},
 		listeningWaitGroup:     &sync.WaitGroup{},
 		agentStoppedTalkingMap: make(map[uuid.UUID]struct{}),
-		agentServerChannel:     nil,
+		//agentServerChannel:     nil,
 		maxMessagingDuration:   maxDuration,
 		roundRunner:            nil,
 		iterations:             iterations,
-		agentAgentChanBufferSize: agentAgentChanBuffer,
-		serverAgentChanBufferSize: serverAgentChanBuffer,
+		//agentAgentChanBufferSize: agentAgentChanBuffer,
+		//serverAgentChanBufferSize: serverAgentChanBuffer,
 	}
 	serv.initialiseAgents(generatorArray)
-	serv.agentServerChannel = make(chan uuid.UUID, len(serv.agentMap))
+	//serv.agentServerChannel = make(chan uuid.UUID, len(serv.agentMap))
 	return serv
 }
 
-func listenOnChannel[T IAgent[T]](a T, agentAgentchannel chan IMessage[T], serverAgentchannel chan ServerNotification, wait *sync.WaitGroup) {
-	defer wait.Done()
+// func listenOnChannel[T IAgent[T]](a T, agentAgentchannel chan IMessage[T], serverAgentchannel chan ServerNotification, wait *sync.WaitGroup) {
+// 	defer wait.Done()
 
-	// checkMessageHandler()
+// 	// checkMessageHandler()
 
-	listenAgentChannel := false
-	//fmt.Println("started listening", a.GetID())
+// 	listenAgentChannel := false
+// 	//fmt.Println("started listening", a.GetID())
 
-listening:
-	for {
-		if a.GetListeningSpinnerFlag() {
-			fmt.Println("STOPPED SPINNER", a.GetID())
-			a.SetListeningSpinner(false)
-			break listening
-		}
+// listening:
+// 	for {
+// 		if a.GetListeningSpinnerFlag() {
+// 			fmt.Println("STOPPED SPINNER", a.GetID())
+// 			a.SetListeningSpinner(false)
+// 			break listening
+// 		}
 
-		select {
-		case serverMessage := <-serverAgentchannel:
-			//fmt.Println("server message", a.id, " ", serverMessage)
-			switch serverMessage {
-			case StartListeningNotification:
-				fmt.Println("started listening", a.GetID())
-				listenAgentChannel = true
-			case EndListeningNotification:
-				fmt.Println("stopped listening", a.GetID())
-				listenAgentChannel = false
-			case StopListeningSpinner:
-				fmt.Println("stopping listening on channel", a.GetID())
-				break listening
-			default:
-				//fmt.Println("unknown message type")
-			}
-			a.AcknowledgeServerMessageReceived()
-		default:
-			if listenAgentChannel {
-				select {
-				case msg := <-agentAgentchannel:
-					msg.Print()
-					msg.InvokeMessageHandler(a)
-				default:
-				}
-			}
-		}
-	}
-	//a.agentStoppedTalking(a.GetID())
-	go a.AcknowledgeClosure(a.GetID())
-	fmt.Println("stopped listening on channel")
-}
+// 		select {
+// 		case serverMessage := <-serverAgentchannel:
+// 			//fmt.Println("server message", a.id, " ", serverMessage)
+// 			switch serverMessage {
+// 			case StartListeningNotification:
+// 				fmt.Println("started listening", a.GetID())
+// 				listenAgentChannel = true
+// 			case EndListeningNotification:
+// 				fmt.Println("stopped listening", a.GetID())
+// 				listenAgentChannel = false
+// 			case StopListeningSpinner:
+// 				fmt.Println("stopping listening on channel", a.GetID())
+// 				break listening
+// 			default:
+// 				//fmt.Println("unknown message type")
+// 			}
+// 			a.AcknowledgeServerMessageReceived()
+// 		default:
+// 			if listenAgentChannel {
+// 				select {
+// 				case msg := <-agentAgentchannel:
+// 					msg.Print()
+// 					msg.InvokeMessageHandler(a)
+// 				default:
+// 				}
+// 			}
+// 		}
+// 	}
+// 	//a.agentStoppedTalking(a.GetID())
+// 	go a.AcknowledgeClosure(a.GetID())
+// 	fmt.Println("stopped listening on channel")
+// }

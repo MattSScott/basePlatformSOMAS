@@ -33,9 +33,9 @@ type IServer[T IAgent[T]] interface {
 type IMessagingProtocol[T any] interface {
 	SendSynchronousMessage(IMessage[T], []uuid.UUID)
 	SendMessage(IMessage[T], []uuid.UUID)
-	ReadChannel(uuid.UUID) <-chan IMessage[T]
-	AcknowledgeClosure(uuid.UUID)
-	AcknowledgeServerMessageReceived()
+	//ReadChannel(uuid.UUID) <-chan IMessage[T]
+	//AcknowledgeClosure(uuid.UUID)
+	//AcknowledgeServerMessageReceived()
 	// send notification that agent stopped talking session
 	agentStoppedTalking(uuid.UUID)
 }
