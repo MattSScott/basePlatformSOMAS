@@ -91,7 +91,7 @@ func NewTestAgent2(serv infra.IExposedServerFunctions[ITestBaseAgent]) ITestBase
 func (ag *TestAgent) HandleTestMessage() {
 	ag.receivedMessage = true
 	ag.NotifyAgentFinishedMessaging()
-	ag.SetListeningSpinner(true)
+	//ag.SetListeningSpinner(true)
 }
 
 func (a *TestAgent2) setLimit(limit int) {
@@ -209,36 +209,28 @@ func TestHandlerInitialiser(t *testing.T) {
 // }
 
 func TestAgentAgentMessage(t *testing.T) {
-	//server := infra.GenerateServer[ITestBaseAgent](time.Second, 2)
 	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
-	m[0] = infra.MakeAgentGeneratorCountPair(NewTestAgent, 3)
+	m[0] = infra.MakeAgentGeneratorCountPair(NewTestAgent, 1)
 	server := infra.CreateServer(m, 1, time.Second)
-
-	arbitraryAgentID := uuid.New()
-
-	//server.SetAgentAgentChannel(arbitraryAgentID, make(chan infra.IMessage[ITestBaseAgent]))
-
 	agent1 := NewTestAgent(server)
 	testMessage := agent1.CreateTestMessage()
-	server.AddAgent(agent1)
+
 	arrayReceivers := make([]uuid.UUID, 1)
-	arrayReceivers[0] = arbitraryAgentID
-	//server.SendMessage(testMessage,arrayReceivers)
+	i :=0
+	for id := range server.GetAgentMap() {
+		arrayReceivers[i] = id
+		i+= 1
+	}
+
 	server.Initialise()
-	go func() {
+	go server.SendMessage(testMessage,arrayReceivers)
+	server.EndAgentListeningSession()
+	for _,ag := range server.GetAgentMap() {
+		if !ag.ReceivedMessage() {
+			t.Error("Didn't Receive Message")
+		}
 
-		//defer waitGroup.Done()
-		agent1.SendMessage(testMessage, arrayReceivers)
-	}()
-
-	//waitGroup.Wait()
-	// msg := <-server.GetAgentAgentChannel(arbitraryAgentID)
-	// if _, ok := msg.(TestMessage); ok {
-	// 	t.Logf("Message sent")
-	// } else {
-	// 	t.Errorf("message not sent")
-	// }
-}
+}}
 
 func TestAgentListeningSpinner(t *testing.T) {
 	numberOfMessages := 10099
@@ -314,35 +306,33 @@ func TestAgentListeningSpinnerOpen(t *testing.T) {
 	//t.Errorf("ended function")
 }
 
-func TestAgentListeningSpinnerClosed(t *testing.T) {
-	const numAgents = 3
-	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
-	m[0] = infra.MakeAgentGeneratorCountPair(NewTestAgent, numAgents)
-	server := infra.CreateServer(m, 1, time.Second)
-	server.Initialise()
-	msg := NewTestMessage()
-	agentMap := server.GetAgentMap()
-	arrayOfIDs := make([]uuid.UUID, numAgents)
-	i := 0
-	for id := range agentMap {
-		arrayOfIDs[i] = id
-		i++
-	}
-	//server.BeginAgentListeningSession()
-	for _, ag := range agentMap {
-		ag.SetListeningSpinner(true)
-	}
-	server.SendMessage(msg, arrayOfIDs)
-	fmt.Println(arrayOfIDs)
-	//time.Sleep(10*time.Second)
+// func TestAgentListeningSpinnerClosed(t *testing.T) {
+// 	const numAgents = 3
+// 	m := make([]infra.AgentGeneratorCountPair[ITestBaseAgent], 1)
+// 	m[0] = infra.MakeAgentGeneratorCountPair(NewTestAgent, numAgents)
+// 	server := infra.CreateServer(m, 1, time.Second)
+// 	server.Initialise()
+// 	msg := NewTestMessage()
+// 	agentMap := server.GetAgentMap()
+// 	arrayOfIDs := make([]uuid.UUID, numAgents)
+// 	i := 0
+// 	for id := range agentMap {
+// 		arrayOfIDs[i] = id
+// 		i++
+// 	}
+// 	//server.BeginAgentListeningSession()
 
-	for _, ag := range agentMap {
-		testAgent := ag.(*TestAgent)
-		if testAgent.receivedMessage != false {
-			t.Errorf("agent did not stop listening")
-		}
-	}
-}
+// 	server.SendMessage(msg, arrayOfIDs)
+// 	fmt.Println(arrayOfIDs)
+// 	//time.Sleep(10*time.Second)
+
+// 	for _, ag := range agentMap {
+// 		testAgent := ag.(*TestAgent)
+// 		if testAgent.receivedMessage != false {
+// 			t.Errorf("agent did not stop listening")
+// 		}
+// 	}
+// }
 
 // func TestAgentChannelsClosed(t *testing.T) {
 

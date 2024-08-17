@@ -15,6 +15,4 @@ type IAgent[T any] interface {
 	NotifyAgentFinishedMessaging()
 	// allows for synchronous messaging to be run
 	RunSynchronousMessaging()
-	GetListeningSpinnerFlag() bool
-	SetListeningSpinner(bool)
 }

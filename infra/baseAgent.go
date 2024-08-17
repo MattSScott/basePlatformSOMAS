@@ -6,8 +6,7 @@ import (
 
 type BaseAgent[T IAgent[T]] struct {
 	IExposedServerFunctions[T]
-	id                   uuid.UUID
-	stopListeningSpinner bool
+	id uuid.UUID
 }
 
 func (ba *BaseAgent[T]) GetID() uuid.UUID {
@@ -18,7 +17,6 @@ func CreateBaseAgent[T IAgent[T]](serv IExposedServerFunctions[T]) *BaseAgent[T]
 	return &BaseAgent[T]{
 		IExposedServerFunctions: serv,
 		id:                      uuid.New(),
-		stopListeningSpinner:    false,
 	}
 }
 
@@ -31,11 +29,3 @@ func (a *BaseAgent[T]) NotifyAgentFinishedMessaging() {
 func (a *BaseAgent[T]) RunSynchronousMessaging() {}
 
 func (a *BaseAgent[T]) GetAllMessages([]T) []IMessage[T] { return nil }
-
-func (a *BaseAgent[T]) SetListeningSpinner(value bool) {
-	a.stopListeningSpinner = value
-}
-
-func (a *BaseAgent[T]) GetListeningSpinnerFlag() bool {
-	return a.stopListeningSpinner
-}
