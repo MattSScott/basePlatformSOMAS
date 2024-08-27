@@ -1,7 +1,6 @@
 package basePlatformSOMAS_test
 
 import (
-	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -17,6 +16,7 @@ type ITestBaseAgent interface {
 	ReceivedMessage() bool
 	GetCounter() int
 	SetCounter(int)
+	GetGoal() int
 	SetGoal(int)
 }
 
@@ -28,7 +28,6 @@ type ITestServer interface {
 type TestAgent struct {
 	*basePlatformSOMAS.BaseAgent[ITestBaseAgent]
 	counter int
-	limit   int
 	goal    int
 	mu      *sync.Mutex
 }
@@ -61,7 +60,9 @@ func (tba *TestAgent) SetCounter(count int) {
 func (tba *TestAgent) SetGoal(goal int) {
 	tba.goal = goal
 }
-
+func (tba *TestAgent) GetGoal() int {
+	return tba.goal
+}
 func NewTestMessage() TestMessage {
 	return TestMessage{
 		basePlatformSOMAS.BaseMessage{},
@@ -105,7 +106,6 @@ func (ag *TestAgent) RunSynchronousMessaging() {
 		i += 1
 	}
 	newMsg := ag.NewTestMessage()
-	fmt.Println(newMsg.GetSender())
 	ag.SendSynchronousMessage(newMsg, recipientArr)
 }
 
@@ -113,9 +113,6 @@ func (ts *TestServer) RunTurn() {
 	ts.roundCounter += 1
 }
 
-func (a *TestAgent) setLimit(limit int) {
-	a.limit = limit
-}
 
 func (ag *TestAgent) HandleTestMessage() {
 	ag.mu.Lock()
@@ -179,7 +176,6 @@ func TestHandlerInitialiser(t *testing.T) {
 }
 
 func TestGenerateArrayFromMap(t *testing.T) {
-	//count := 0
 	mapFound := make(map[uuid.UUID]int)
 	m := make([]basePlatformSOMAS.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = basePlatformSOMAS.MakeAgentGeneratorCountPair(NewTestAgent, 3)
@@ -236,7 +232,6 @@ func TestAgentRecievesMessage(t *testing.T) {
 		if !ag.ReceivedMessage() {
 			t.Error("Didn't Receive Message")
 		}
-
 	}
 }
 
@@ -254,21 +249,20 @@ func TestWaitForMessagingToEnd(t *testing.T) {
 	for id, ag := range agentMap {
 		arrayOfIDs[i] = id
 		i++
-		agent := ag.(*TestAgent)
-		agent.setLimit(numberOfMessages)
-		agent.goal = numberOfMessages
+		ag.SetGoal(numberOfMessages *(numAgents))
 	}
 
 	for j := 0; j < numberOfMessages; j++ {
-		msg := NewTestMessage()
-		server.IncrementWaitGroup()
-		go server.SendMessage(msg, arrayOfIDs)
-	}
+		for _,ag := range server.GetAgentMap() {
+		msg := ag.NewTestMessage()
+		//server.IncrementWaitGroup()
+		go ag.SendMessage(msg, arrayOfIDs)
+	}}
 	server.EndAgentListeningSession()
 	for _, ag := range agentMap {
-		agent := ag.(*TestAgent)
-		if !agent.ReceivedMessage() {
-			t.Errorf("agent %s recieved %d messages, expected %d\n", agent.GetID(), agent.counter, agent.goal)
+
+		if !ag.ReceivedMessage() {
+			t.Errorf("agent %s recieved %d messages, expected %d\n", ag.GetID(), ag.GetCounter(), ag.GetGoal())
 		}
 	}
 
