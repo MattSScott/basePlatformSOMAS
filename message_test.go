@@ -1,37 +1,37 @@
-package infra_test
+package basePlatformSOMAS_test
 
 import (
 	"fmt"
 	"testing"
 
-	"github.com/MattSScott/basePlatformSOMAS/infra"
+	"github.com/MattSScott/basePlatformSOMAS"
 )
 
 type Message1 struct {
-	infra.BaseMessage
+	basePlatformSOMAS.BaseMessage
 	messageField1 int
 }
 
 type Message2 struct {
-	infra.BaseMessage
+	basePlatformSOMAS.BaseMessage
 	messageField2 int
 }
 
 type NullMessage struct {
-	infra.BaseMessage
+	basePlatformSOMAS.BaseMessage
 }
 
 type IExtendedAgent interface {
-	infra.IAgent[IExtendedAgent]
+	basePlatformSOMAS.IAgent[IExtendedAgent]
 	GetAgentField() int
-	GetAllMessages([]IExtendedAgent) []infra.IMessage[IExtendedAgent]
+	//GetAllMessages([]IExtendedAgent) []infra.IMessage[IExtendedAgent]
 	HandleMessage1(msg Message1)
 	HandleMessage2(msg Message2)
 	HandleNullMessage(msg NullMessage)
 }
 
 type ExtendedAgent struct {
-	infra.BaseAgent[IExtendedAgent]
+	basePlatformSOMAS.BaseAgent[IExtendedAgent]
 	agentField int
 }
 
@@ -69,21 +69,21 @@ func (ea *ExtendedAgent) GetAgentField() int {
 
 func (ea *ExtendedAgent) GetMessage1() Message1 {
 	return Message1{
-		infra.CreateBaseMessage(ea.GetID()),
+		basePlatformSOMAS.CreateBaseMessage(ea.GetID()),
 		5,
 	}
 }
 
 func (ea *ExtendedAgent) GetMessage2() Message2 {
 	return Message2{
-		infra.CreateBaseMessage(ea.GetID()),
+		basePlatformSOMAS.CreateBaseMessage(ea.GetID()),
 		10,
 	}
 }
 
 func (ea *ExtendedAgent) GetNullMessage() NullMessage {
 	return NullMessage{
-		infra.CreateBaseMessage(ea.GetID()),
+		basePlatformSOMAS.CreateBaseMessage(ea.GetID()),
 	}
 }
 
@@ -129,7 +129,7 @@ func TestMultipleMessagesGetHandled(t *testing.T) {
 	a1 := &ExtendedAgent{agentField: 0}
 	a2 := &ExtendedAgent{agentField: 0}
 
-	allMessages := []infra.IMessage[IExtendedAgent]{a1.GetMessage1(), a1.GetMessage1(), a1.GetMessage2()}
+	allMessages := []basePlatformSOMAS.IMessage[IExtendedAgent]{a1.GetMessage1(), a1.GetMessage1(), a1.GetMessage2()}
 
 	for _, msg := range allMessages {
 		msg.InvokeMessageHandler(a2)

@@ -1,4 +1,4 @@
-package infra
+package basePlatformSOMAS
 
 import (
 	"github.com/google/uuid"
@@ -23,7 +23,6 @@ type IServer[T IAgent[T]] interface {
 	// gives access to number of iteration in simulator
 	GetIterations() int
 	// the set of functions defining how a 'game loop' should run
-	RunGameLoop()
 	// starts the agents' messaging session
 	// RunMessagingSession()
 	// begins simulator

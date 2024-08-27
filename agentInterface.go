@@ -1,4 +1,4 @@
-package infra
+package basePlatformSOMAS
 
 import (
 	"github.com/google/uuid"

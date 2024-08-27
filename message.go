@@ -1,4 +1,4 @@
-package infra
+package basePlatformSOMAS
 
 import (
 	"fmt"
@@ -42,6 +42,4 @@ func (bm BaseMessage) GetSender() uuid.UUID {
 	return bm.sender
 }
 
-// func (bm BaseMessage) InvokeMessageHandler(agent IAgent[any]) {
-//
-// }
+

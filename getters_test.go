@@ -1,4 +1,4 @@
-package infra
+package basePlatformSOMAS
 
 type PrivateServerFields[T IAgent[T]] interface {
 	EndAgentListeningSession()

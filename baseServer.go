@@ -1,4 +1,4 @@
-package infra
+package basePlatformSOMAS
 
 import (
 	"fmt"
@@ -23,6 +23,7 @@ type BaseServer[T IAgent[T]] struct {
 	roundRunner RoundRunner
 	//iterations
 	iterations int
+	turns      int
 }
 
 func (server *BaseServer[T]) HandleStartOfTurn(iter, round int) {
@@ -68,10 +69,6 @@ func (server *BaseServer[T]) SendMessage(msg IMessage[T], receivers []uuid.UUID)
 
 }
 
-func (serv *BaseServer[T]) ViewAgentMap() map[uuid.UUID]T {
-	return serv.agentMap
-}
-
 func (serv *BaseServer[T]) AddAgent(agent T) {
 	serv.agentMap[agent.GetID()] = agent
 	serv.agentIdSet[agent.GetID()] = struct{}{}
@@ -89,8 +86,8 @@ func (serv *BaseServer[T]) Initialise() {}
 
 func (serv *BaseServer[T]) Start() {
 	serv.checkHandler()
-	turns := 5
-	iterations := 1
+	turns := serv.turns
+	iterations := serv.iterations
 	for i := 0; i < iterations; i++ {
 		for j := 0; j < turns; j++ {
 			serv.HandleStartOfTurn(i+1, j+1)
@@ -106,10 +103,6 @@ func (serv *BaseServer[T]) GetAgentMap() map[uuid.UUID]T {
 
 func (serv *BaseServer[T]) agentStoppedTalking(id uuid.UUID) {
 	fmt.Println("sending stop talking request,id:", id)
-	// select {
-	// case serv.agentServerChannel <- id:
-	// default:
-	// }
 	serv.agentStoppedTalkingMap[id] = struct{}{}
 }
 
@@ -119,37 +112,18 @@ func (serv *BaseServer[T]) SetRunHandler(handler RoundRunner) {
 
 func (serv *BaseServer[T]) checkHandler() {
 	if serv.roundRunner == nil {
-		panic("handler has not been set. Have you run SetRunHandler?")
+		panic("round running handler has not been set. Have you run SetRunHandler?")
 	}
 }
 
 func (serv *BaseServer[T]) RunTurn() {}
 
-// func (bs *BaseServer[T]) GetAgentMap() map[uuid.UUID]T {
-// 	return bs.agentMap
-// }
-
-// func (bs *BaseServer[T]) AddAgent(agentToAdd T) {
-// 	bs.agentMap[agentToAdd.GetID()] = agentToAdd
-// }
-
-func (bs *BaseServer[T]) RemoveAgent(agentToAdd T) {
-	delete(bs.agentMap, agentToAdd.GetID())
+func (bs *BaseServer[T]) RemoveAgent(agentToRemove T) {
+	delete(bs.agentMap, agentToRemove.GetID())
 }
 
 func (bs *BaseServer[T]) GetIterations() int {
 	return bs.iterations
-}
-
-func (bs *BaseServer[T]) RunGameLoop() {
-	if bs.roundRunner == nil {
-		panic("roundRunner has not been set.")
-
-	}
-	for id, agent := range bs.agentMap {
-		fmt.Printf("Agent %s updating state \n", id)
-		agent.UpdateAgentInternalState()
-	}
 }
 
 func (bs *BaseServer[T]) RunRound() {}
@@ -182,10 +156,11 @@ func (bs *BaseServer[T]) GenerateAgentArrayFromMap() []T {
 
 func (bs *BaseServer[T]) SendSynchronousMessage(msg IMessage[T], recipients []uuid.UUID) {
 	for _, recip := range recipients {
+		fmt.Println(recip, msg.GetSender())
 		if msg.GetSender() == recip {
 			continue
-		}
-		msg.InvokeMessageHandler(bs.agentMap[recip])
+		}else{
+		msg.InvokeMessageHandler(bs.agentMap[recip])}
 	}
 
 }
@@ -208,7 +183,7 @@ func (bs *BaseServer[T]) initialiseAgents(m []AgentGeneratorCountPair[T]) {
 }
 
 // generate a server instance based on a mapping function and number of iterations
-func CreateServer[T IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iterations int, maxDuration time.Duration) *BaseServer[T] {
+func CreateServer[T IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iterations, turns int, maxDuration time.Duration) *BaseServer[T] {
 	serv := &BaseServer[T]{
 		agentMap:               make(map[uuid.UUID]T),
 		agentIdSet:             make(map[uuid.UUID]struct{}),
@@ -217,6 +192,7 @@ func CreateServer[T IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iter
 		maxMessagingDuration:   maxDuration,
 		roundRunner:            nil,
 		iterations:             iterations,
+		turns:                  turns,
 	}
 	serv.initialiseAgents(generatorArray)
 	return serv
