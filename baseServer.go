@@ -39,8 +39,8 @@ agentMessaging:
 	for {
 		select {
 		case <-timeoutChannel:
-			fmt.Println("len of stoppedtalkingmap:,", len(serv.agentStoppedTalkingMap))
-			fmt.Println("Stopped messaging at time limit", serv.maxMessagingDuration, "seconds")
+			// fmt.Println("len of stoppedtalkingmap:,", len(serv.agentStoppedTalkingMap))
+			// fmt.Println("Stopped messaging at time limit", serv.maxMessagingDuration, "seconds")
 			break agentMessaging
 
 		default:
@@ -64,7 +64,7 @@ func (server *BaseServer[T]) RunAgentLoop() {}
 func (server *BaseServer[T]) SendMessage(msg IMessage[T], receivers []uuid.UUID) {
 	//defer server.listeningWaitGroup.Done()
 	for _, receiver := range receivers {
-		msg.InvokeMessageHandler(server.agentMap[receiver])
+		go msg.InvokeMessageHandler(server.agentMap[receiver])
 	}
 
 }
