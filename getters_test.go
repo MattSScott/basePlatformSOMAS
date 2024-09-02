@@ -1,13 +1,15 @@
 package basePlatformSOMAS
 
+import "github.com/google/uuid"
+
 type PrivateServerFields[T IAgent[T]] interface {
 	EndAgentListeningSession()
 	IncrementWaitGroup()
 	WaitWaitGroup()
 }
 
-func (serv *BaseServer[T]) EndAgentListeningSession() {
-	serv.endAgentListeningSession()
+func (serv *BaseServer[T]) EndAgentListeningSession() (string, bool) {
+	return serv.endAgentListeningSession()
 }
 
 func (serv *BaseServer[T]) IncrementWaitGroup() {
@@ -16,4 +18,8 @@ func (serv *BaseServer[T]) IncrementWaitGroup() {
 
 func (serv *BaseServer[T]) WaitWaitGroup() {
 	serv.listeningWaitGroup.Wait()
+}
+
+func (server *BaseServer[T]) MessageHandlerLimiter(msg IMessage[T], receiver uuid.UUID) {
+	server.messageHandlerLimiter(msg, receiver)
 }

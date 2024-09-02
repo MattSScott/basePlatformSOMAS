@@ -1,6 +1,7 @@
 package basePlatformSOMAS
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -17,8 +18,10 @@ type BaseServer[T IAgent[T]] struct {
 	listeningWaitGroup *sync.WaitGroup
 	// map of uuid ->struct{}{} which stores the ids of agents which have stopped messaging
 	agentStoppedTalkingMap map[uuid.UUID]struct{}
+	messagingFinished      chan struct{}
 	// duration after which messaging phase forcefully ends during rounds
-	maxMessagingDuration time.Duration
+	turnTimeout           time.Duration
+	messageHandlerTimeout time.Duration
 	// run single round
 	roundRunner RoundRunner
 	//iterations
@@ -31,27 +34,17 @@ func (server *BaseServer[T]) HandleStartOfTurn(iter, round int) {
 
 }
 
-func (serv *BaseServer[T]) endAgentListeningSession() {
+func (serv *BaseServer[T]) endAgentListeningSession() (string, bool) {
+	
+	ctx, cancel := context.WithTimeout(context.Background(), serv.turnTimeout)
+	defer cancel()
+	select {
+	case <-serv.messagingFinished:
+		return "finished messaging", true
 
-	timeoutChannel := time.After(serv.maxMessagingDuration)
-
-agentMessaging:
-	for {
-		select {
-		case <-timeoutChannel:
-			// fmt.Println("len of stoppedtalkingmap:,", len(serv.agentStoppedTalkingMap))
-			// fmt.Println("Stopped messaging at time limit", serv.maxMessagingDuration, "seconds")
-			break agentMessaging
-
-		default:
-			if len(serv.agentStoppedTalkingMap) == len(serv.agentMap) {
-				fmt.Println("stopped messaging early", len(serv.agentStoppedTalkingMap), len(serv.agentMap))
-				break agentMessaging
-			}
-
-		}
+	case <-ctx.Done():
+		return "timed out before all messages sent", false
 	}
-	serv.agentStoppedTalkingMap = make(map[uuid.UUID]struct{})
 }
 
 func (server *BaseServer[T]) HandleEndOfTurn(iter, round int) {
@@ -61,10 +54,17 @@ func (server *BaseServer[T]) HandleEndOfTurn(iter, round int) {
 
 func (server *BaseServer[T]) RunAgentLoop() {}
 
+func (server *BaseServer[T]) messageHandlerLimiter(msg IMessage[T], receiver uuid.UUID) {
+	ctx, cancel := context.WithTimeout(context.Background(), server.messageHandlerTimeout)
+	defer cancel()
+	go msg.InvokeMessageHandler(server.agentMap[receiver])
+	<-ctx.Done()
+
+}
+
 func (server *BaseServer[T]) SendMessage(msg IMessage[T], receivers []uuid.UUID) {
-	//defer server.listeningWaitGroup.Done()
 	for _, receiver := range receivers {
-		go msg.InvokeMessageHandler(server.agentMap[receiver])
+		go server.messageHandlerLimiter(msg, receiver)
 	}
 
 }
@@ -104,6 +104,12 @@ func (serv *BaseServer[T]) GetAgentMap() map[uuid.UUID]T {
 func (serv *BaseServer[T]) agentStoppedTalking(id uuid.UUID) {
 	fmt.Println("sending stop talking request,id:", id)
 	serv.agentStoppedTalkingMap[id] = struct{}{}
+	if len(serv.agentStoppedTalkingMap) == len(serv.agentMap) {
+		select {
+		case serv.messagingFinished <- struct{}{}:
+		default:
+		}
+	}
 }
 
 func (serv *BaseServer[T]) SetRunHandler(handler RoundRunner) {
@@ -159,8 +165,9 @@ func (bs *BaseServer[T]) SendSynchronousMessage(msg IMessage[T], recipients []uu
 		fmt.Println(recip, msg.GetSender())
 		if msg.GetSender() == recip {
 			continue
-		}else{
-		msg.InvokeMessageHandler(bs.agentMap[recip])}
+		} else {
+			msg.InvokeMessageHandler(bs.agentMap[recip])
+		}
 	}
 
 }
@@ -183,16 +190,18 @@ func (bs *BaseServer[T]) initialiseAgents(m []AgentGeneratorCountPair[T]) {
 }
 
 // generate a server instance based on a mapping function and number of iterations
-func CreateServer[T IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iterations, turns int, maxDuration time.Duration) *BaseServer[T] {
+func CreateServer[T IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iterations, turns int, turnMaxDuration, messageHandlerTimeout time.Duration) *BaseServer[T] {
 	serv := &BaseServer[T]{
 		agentMap:               make(map[uuid.UUID]T),
 		agentIdSet:             make(map[uuid.UUID]struct{}),
 		listeningWaitGroup:     &sync.WaitGroup{},
 		agentStoppedTalkingMap: make(map[uuid.UUID]struct{}),
-		maxMessagingDuration:   maxDuration,
+		turnTimeout:            turnMaxDuration,
+		messageHandlerTimeout:  messageHandlerTimeout,
 		roundRunner:            nil,
 		iterations:             iterations,
 		turns:                  turns,
+		messagingFinished:      make(chan struct{}, 1),
 	}
 	serv.initialiseAgents(generatorArray)
 	return serv
