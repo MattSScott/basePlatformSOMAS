@@ -18,32 +18,41 @@ type BaseServer[T IAgent[T]] struct {
 	listeningWaitGroup *sync.WaitGroup
 	// map of uuid ->struct{}{} which stores the ids of agents which have stopped messaging
 	agentStoppedTalkingMap map[uuid.UUID]struct{}
+	//channel a server goroutine will send to in order to signal messaging completion
 	messagingFinished      chan struct{}
 	// duration after which messaging phase forcefully ends during rounds
-	turnTimeout           time.Duration
-	messageHandlerTimeout time.Duration
+	turnTimeout time.Duration
 	// run single round
 	roundRunner RoundRunner
 	//iterations
 	iterations int
-	turns      int
+	//turns
+	turns int
+	//lock which stops race conditions when updating agentStoppedTalkingMap 
+	agentMapRWMutex sync.RWMutex
+	//stops multiple sends to messagingFinished during a round
+	doneChannelOnce sync.Once
 }
 
 func (server *BaseServer[T]) HandleStartOfTurn(iter, round int) {
+	server.doneChannelOnce = sync.Once{}
+	server.messagingFinished = make(chan struct{}, 1)
 	fmt.Printf("Iteration %d, Round %d starting...\n", iter, round)
 
 }
 
-func (serv *BaseServer[T]) endAgentListeningSession() (string, bool) {
-	
+func (serv *BaseServer[T]) endAgentListeningSession() bool {
+
 	ctx, cancel := context.WithTimeout(context.Background(), serv.turnTimeout)
 	defer cancel()
 	select {
 	case <-serv.messagingFinished:
-		return "finished messaging", true
+		serv.agentStoppedTalkingMap = make(map[uuid.UUID]struct{})
+		return true
 
 	case <-ctx.Done():
-		return "timed out before all messages sent", false
+		serv.agentStoppedTalkingMap = make(map[uuid.UUID]struct{})
+		return false
 	}
 }
 
@@ -54,17 +63,9 @@ func (server *BaseServer[T]) HandleEndOfTurn(iter, round int) {
 
 func (server *BaseServer[T]) RunAgentLoop() {}
 
-func (server *BaseServer[T]) messageHandlerLimiter(msg IMessage[T], receiver uuid.UUID) {
-	ctx, cancel := context.WithTimeout(context.Background(), server.messageHandlerTimeout)
-	defer cancel()
-	go msg.InvokeMessageHandler(server.agentMap[receiver])
-	<-ctx.Done()
-
-}
-
 func (server *BaseServer[T]) SendMessage(msg IMessage[T], receivers []uuid.UUID) {
 	for _, receiver := range receivers {
-		go server.messageHandlerLimiter(msg, receiver)
+		go msg.InvokeMessageHandler(server.agentMap[receiver])
 	}
 
 }
@@ -102,14 +103,20 @@ func (serv *BaseServer[T]) GetAgentMap() map[uuid.UUID]T {
 }
 
 func (serv *BaseServer[T]) agentStoppedTalking(id uuid.UUID) {
+	serv.agentMapRWMutex.Lock()
 	fmt.Println("sending stop talking request,id:", id)
 	serv.agentStoppedTalkingMap[id] = struct{}{}
+
 	if len(serv.agentStoppedTalkingMap) == len(serv.agentMap) {
-		select {
-		case serv.messagingFinished <- struct{}{}:
-		default:
-		}
+		serv.doneChannelOnce.Do(func() {
+			select {
+			case serv.messagingFinished <- struct{}{}:
+				close(serv.messagingFinished)
+			default:
+			}
+		})
 	}
+	serv.agentMapRWMutex.Unlock()
 }
 
 func (serv *BaseServer[T]) SetRunHandler(handler RoundRunner) {
@@ -190,18 +197,19 @@ func (bs *BaseServer[T]) initialiseAgents(m []AgentGeneratorCountPair[T]) {
 }
 
 // generate a server instance based on a mapping function and number of iterations
-func CreateServer[T IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iterations, turns int, turnMaxDuration, messageHandlerTimeout time.Duration) *BaseServer[T] {
+func CreateServer[T IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iterations, turns int, turnMaxDuration time.Duration) *BaseServer[T] {
 	serv := &BaseServer[T]{
 		agentMap:               make(map[uuid.UUID]T),
 		agentIdSet:             make(map[uuid.UUID]struct{}),
 		listeningWaitGroup:     &sync.WaitGroup{},
 		agentStoppedTalkingMap: make(map[uuid.UUID]struct{}),
 		turnTimeout:            turnMaxDuration,
-		messageHandlerTimeout:  messageHandlerTimeout,
 		roundRunner:            nil,
 		iterations:             iterations,
 		turns:                  turns,
 		messagingFinished:      make(chan struct{}, 1),
+		agentMapRWMutex:        sync.RWMutex{},
+		doneChannelOnce:        sync.Once{},
 	}
 	serv.initialiseAgents(generatorArray)
 	return serv

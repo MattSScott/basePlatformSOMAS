@@ -20,6 +20,12 @@ func CreateBaseAgent[T IAgent[T]](serv IExposedServerFunctions[T]) *BaseAgent[T]
 	}
 }
 
+func (a *BaseAgent[T]) CreateBaseMessage() BaseMessage {
+	return BaseMessage{
+		sender: a.id,
+	}
+}
+
 func (a *BaseAgent[T]) UpdateAgentInternalState() {}
 
 func (a *BaseAgent[T]) NotifyAgentFinishedMessaging() {

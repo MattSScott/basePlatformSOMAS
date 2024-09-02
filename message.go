@@ -28,11 +28,7 @@ type BaseMessage struct {
 }
 
 // create read-only message instance
-func CreateBaseMessage(sender uuid.UUID) BaseMessage {
-	return BaseMessage{
-		sender: sender,
-	}
-}
+
 
 func (bm BaseMessage) Print() {
 	fmt.Printf("message received from %s\n", bm.sender)

@@ -1,9 +1,8 @@
 package basePlatformSOMAS_test
 
 import (
-	"context"
 	"fmt"
-	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -15,12 +14,11 @@ type ITestBaseAgent interface {
 	basePlatformSOMAS.IAgent[ITestBaseAgent]
 	NewTestMessage() TestMessage
 	HandleTestMessage()
-	
 	ReceivedMessage() bool
-	GetCounter() int
-	SetCounter(int)
-	GetGoal() int
-	SetGoal(int)
+	GetCounter() int64
+	SetCounter(int64)
+	GetGoal() int64
+	SetGoal(int64)
 }
 
 type IBadAgent interface {
@@ -33,10 +31,9 @@ type ITestServer interface {
 }
 
 type TestAgent struct {
+	counter int64
+	goal    int64
 	*basePlatformSOMAS.BaseAgent[ITestBaseAgent]
-	counter int
-	goal    int
-	mu      *sync.Mutex
 }
 
 type TestServer struct {
@@ -83,14 +80,14 @@ func InfLoop() {
 		time.Sleep(1000 * time.Millisecond)
 	}
 }
-func (tba *TestAgent) SetCounter(count int) {
+func (tba *TestAgent) SetCounter(count int64) {
 	tba.counter = count
 }
 
-func (tba *TestAgent) SetGoal(goal int) {
+func (tba *TestAgent) SetGoal(goal int64) {
 	tba.goal = goal
 }
-func (tba *TestAgent) GetGoal() int {
+func (tba *TestAgent) GetGoal() int64 {
 	return tba.goal
 }
 func NewTestMessage() TestMessage {
@@ -100,32 +97,30 @@ func NewTestMessage() TestMessage {
 	}
 }
 
-func NewTestServer(generatorArray []basePlatformSOMAS.AgentGeneratorCountPair[ITestBaseAgent], iterations, turns int, maxDuration, turnDuration time.Duration) *TestServer {
+func NewTestServer(generatorArray []basePlatformSOMAS.AgentGeneratorCountPair[ITestBaseAgent], iterations, turns int, maxDuration time.Duration) *TestServer {
 	return &TestServer{
-		BaseServer:   basePlatformSOMAS.CreateServer(generatorArray, iterations, turns, maxDuration, turnDuration),
+		BaseServer:   basePlatformSOMAS.CreateServer(generatorArray, iterations, turns, maxDuration),
 		roundCounter: 0,
 	}
 }
 
 func NewTestAgent(serv basePlatformSOMAS.IExposedServerFunctions[ITestBaseAgent]) ITestBaseAgent {
-	mu := &sync.Mutex{}
 	return &TestAgent{
 		BaseAgent: basePlatformSOMAS.CreateBaseAgent(serv),
 		counter:   0,
 		goal:      0,
-		mu:        mu,
 	}
 }
 
-func (ta2 *TestAgent) NewTestMessage() TestMessage {
+func (ta *TestAgent) NewTestMessage() TestMessage {
 	return TestMessage{
-		basePlatformSOMAS.CreateBaseMessage(ta2.GetID()),
+		ta.CreateBaseMessage(),
 		5,
 	}
 }
 
-func (ta2 *TestAgent) GetCounter() int {
-	return ta2.counter
+func (ta *TestAgent) GetCounter() int64 {
+	return ta.counter
 }
 func (ag *TestAgent) RunSynchronousMessaging() {
 	recipients := ag.ViewAgentIdSet()
@@ -144,20 +139,14 @@ func (ts *TestServer) RunTurn() {
 }
 
 func (ag *TestAgent) HandleTestMessage() {
-	ag.mu.Lock()
-	ag.counter += 1
-	if ag.counter == ag.goal {
+	newCounterValue := atomic.AddInt64(&ag.counter, 1)
+	if newCounterValue == atomic.LoadInt64(&ag.goal) {
 		ag.NotifyAgentFinishedMessaging()
 	}
-	ag.mu.Unlock()
 }
 
 func (ag *TestAgent) ReceivedMessage() bool {
-	if ag.counter == ag.goal {
-		return true
-	} else {
-		return false
-	}
+	return ag.counter == ag.goal
 
 }
 
@@ -171,24 +160,27 @@ func (server *TestServer) HandleTurn() {
 
 func TestGenerateServer(t *testing.T) {
 	m := make([]basePlatformSOMAS.AgentGeneratorCountPair[ITestBaseAgent], 1)
-	m[0] = basePlatformSOMAS.MakeAgentGeneratorCountPair(NewTestAgent, 3)
-	server := basePlatformSOMAS.CreateServer(m, 1, 1, time.Second, time.Millisecond)
-	if len(server.GetAgentMap()) != 3 {
-		t.Error("len of agentmap is ", len(server.GetAgentMap()))
+	numAgents := 3
+	m[0] = basePlatformSOMAS.MakeAgentGeneratorCountPair(NewTestAgent, numAgents)
+	server := basePlatformSOMAS.CreateServer(m, 1, 1, time.Second)
+	lenAgentMap := len(server.GetAgentMap())
+	if lenAgentMap != numAgents {
+		t.Error(lenAgentMap, "agents initialised,expected", numAgents)
 	}
 }
 
 func TestAgentsCorrectlyInstantiated(t *testing.T) {
+	numAgents := 3
 	m := make([]basePlatformSOMAS.AgentGeneratorCountPair[ITestBaseAgent], 1)
-	m[0] = basePlatformSOMAS.MakeAgentGeneratorCountPair(NewTestAgent, 3)
+	m[0] = basePlatformSOMAS.MakeAgentGeneratorCountPair(NewTestAgent, numAgents)
 
-	server := basePlatformSOMAS.CreateServer(m, 1, 1, time.Second, time.Millisecond)
+	server := basePlatformSOMAS.CreateServer(m, 1, 1, time.Second)
 
 	ag := NewTestAgent(server)
 	ag.NotifyAgentFinishedMessaging()
 	lenAgentMap := len(server.GetAgentMap())
-	if lenAgentMap != 3 {
-		t.Error("Incorrect number of agents added to server", lenAgentMap)
+	if lenAgentMap != numAgents {
+		t.Error("Incorrect number of agents added to server,got", lenAgentMap, "expected", numAgents)
 	}
 }
 func TestHandlerInitialiser(t *testing.T) {
@@ -199,21 +191,22 @@ func TestHandlerInitialiser(t *testing.T) {
 	}()
 	m := make([]basePlatformSOMAS.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = basePlatformSOMAS.MakeAgentGeneratorCountPair(NewTestAgent, 3)
-	server := basePlatformSOMAS.CreateServer(m, 1, 1, time.Second, time.Millisecond)
+	server := basePlatformSOMAS.CreateServer(m, 1, 1, time.Second)
 	server.Initialise()
 	server.Start()
 }
 
 func TestGenerateArrayFromMap(t *testing.T) {
 	mapFound := make(map[uuid.UUID]int)
+	numAgents := 10
 	m := make([]basePlatformSOMAS.AgentGeneratorCountPair[ITestBaseAgent], 1)
-	m[0] = basePlatformSOMAS.MakeAgentGeneratorCountPair(NewTestAgent, 3)
-	server := basePlatformSOMAS.CreateServer(m, 1, 1, time.Second, time.Millisecond)
+	m[0] = basePlatformSOMAS.MakeAgentGeneratorCountPair(NewTestAgent, numAgents)
+	server := basePlatformSOMAS.CreateServer(m, 1, 1, time.Second)
 	agentArray := server.GenerateAgentArrayFromMap()
 	for _, agent := range agentArray {
 		_, exists := mapFound[agent.GetID()]
 		if exists {
-			t.Error("Duplicate")
+			t.Error("Duplicate of", agent.GetID(), "found in output array")
 		} else {
 			mapFound[agent.GetID()] = 1
 		}
@@ -221,7 +214,7 @@ func TestGenerateArrayFromMap(t *testing.T) {
 	for id := range server.GetAgentMap() {
 		_, exists := mapFound[id]
 		if !exists {
-			t.Error("Value not in array")
+			t.Error(id, "in agentMap but not in array")
 		}
 	}
 }
@@ -231,19 +224,18 @@ func TestRunTurn(t *testing.T) {
 	m[0] = basePlatformSOMAS.MakeAgentGeneratorCountPair(NewTestAgent, 1)
 	iterations := 1
 	rounds := 1
-	server := NewTestServer(m, iterations, rounds, time.Millisecond, time.Millisecond)
+	server := NewTestServer(m, iterations, rounds, time.Millisecond)
 	server.SetRunHandler(server)
 	server.Start()
-	//server.RunTurn()
 	if server.roundCounter != (iterations * rounds) {
-		t.Error("wrong number of rounds", server.roundCounter, "expected", iterations*rounds)
+		t.Error("wrong number of iterations executed", server.roundCounter, "expected", iterations*rounds)
 	}
 }
 
 func TestAgentRecievesMessage(t *testing.T) {
 	m := make([]basePlatformSOMAS.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = basePlatformSOMAS.MakeAgentGeneratorCountPair(NewTestAgent, 1)
-	server := basePlatformSOMAS.CreateServer(m, 1, 1, time.Second, time.Millisecond)
+	server := basePlatformSOMAS.CreateServer(m, 1, 1, time.Second)
 	agent1 := NewTestAgent(server)
 	testMessage := agent1.NewTestMessage()
 
@@ -257,8 +249,7 @@ func TestAgentRecievesMessage(t *testing.T) {
 
 	server.Initialise()
 	go server.SendMessage(testMessage, arrayReceivers)
-	a, b := server.EndAgentListeningSession()
-	fmt.Println(a, b)
+	_ = server.EndAgentListeningSession()
 	for _, ag := range server.GetAgentMap() {
 		fmt.Println()
 		if !ag.ReceivedMessage() {
@@ -274,14 +265,14 @@ func TestWaitForMessagingToEnd(t *testing.T) {
 	const numAgents = 10
 	m := make([]basePlatformSOMAS.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = basePlatformSOMAS.MakeAgentGeneratorCountPair(NewTestAgent, numAgents)
-	server := basePlatformSOMAS.CreateServer(m, 1, 1, time.Second, time.Millisecond)
+	server := basePlatformSOMAS.CreateServer(m, 1, 1, time.Second)
 	agentMap := server.GetAgentMap()
 	arrayOfIDs := make([]uuid.UUID, numAgents)
 	i := 0
 	for id, ag := range agentMap {
 		arrayOfIDs[i] = id
 		i++
-		ag.SetGoal(numberOfMessages * (numAgents))
+		ag.SetGoal(int64(numberOfMessages * numAgents))
 	}
 
 	for j := 0; j < numberOfMessages; j++ {
@@ -290,11 +281,11 @@ func TestWaitForMessagingToEnd(t *testing.T) {
 			go ag.SendMessage(msg, arrayOfIDs)
 		}
 	}
-	a, b := server.EndAgentListeningSession()
-	if !b {
-		t.Error(a)
+	a := server.EndAgentListeningSession()
+	if !a {
+		t.Error("Messaging ended early")
 	}
-	//fmt.Println(a,b)
+
 	for _, ag := range agentMap {
 		if !ag.ReceivedMessage() {
 			t.Errorf("agent %s recieved %d messages, expected %d\n", ag.GetID(), ag.GetCounter(), ag.GetGoal())
@@ -309,13 +300,14 @@ func TestAddAgent(t *testing.T) {
 	const numAgents = 10000
 	m := make([]basePlatformSOMAS.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = basePlatformSOMAS.MakeAgentGeneratorCountPair(NewTestAgent, numAgents)
-	server := basePlatformSOMAS.CreateServer(m, 1, 1, time.Second, time.Millisecond)
+	server := basePlatformSOMAS.CreateServer(m, 1, 1, time.Second)
 	agent := NewTestAgent(server)
 	server.AddAgent(agent)
 	agMap := server.GetAgentMap()
-
-	if len(agMap) != numAgents+1 {
-		t.Error("Adding Agent Failed")
+	lenAgMap := len(agMap)
+	expectedNumAgents := numAgents + 1
+	if lenAgMap != expectedNumAgents {
+		t.Error("Removing Agents Failed,expected number of agents:", expectedNumAgents, ",got:", lenAgMap)
 	}
 }
 
@@ -323,24 +315,25 @@ func TestRemoveAgent(t *testing.T) {
 	const numAgents = 10000
 	m := make([]basePlatformSOMAS.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = basePlatformSOMAS.MakeAgentGeneratorCountPair(NewTestAgent, numAgents)
-	server := basePlatformSOMAS.CreateServer(m, 1, 1, time.Second, time.Millisecond)
+	server := basePlatformSOMAS.CreateServer(m, 1, 1, time.Second)
 	agMap := server.GetAgentMap()
 	for _, ag := range agMap {
 		server.RemoveAgent(ag)
 	}
-
-	if len(agMap) != 0 {
-		t.Error("Removing Agent Failed")
+	lenAgMap := len(agMap)
+	if lenAgMap != 0 {
+		t.Error("Removing Agents Failed,expected number of agents: 0,got:", lenAgMap)
 	}
 }
 
 func TestNumIterationsInServer(t *testing.T) {
 	m := make([]basePlatformSOMAS.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = basePlatformSOMAS.MakeAgentGeneratorCountPair(NewTestAgent, 3)
-	server := basePlatformSOMAS.CreateServer(m, 1, 1, time.Second, time.Millisecond)
-
-	if server.GetIterations() != 1 {
-		t.Error("Incorrect number of iterations instantiated")
+	iterations := 1
+	server := basePlatformSOMAS.CreateServer(m, 1, 1, time.Second)
+	getIterationsValue := server.GetIterations()
+	if getIterationsValue != iterations {
+		t.Error("Incorrect number of iterations instantiated, expected:", iterations, "got:", getIterationsValue)
 	}
 }
 
@@ -348,7 +341,7 @@ func TestSendSynchronousMessage(t *testing.T) {
 
 	m := make([]basePlatformSOMAS.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = basePlatformSOMAS.MakeAgentGeneratorCountPair(NewTestAgent, 1)
-	server := basePlatformSOMAS.CreateServer(m, 1, 1, time.Second, time.Millisecond)
+	server := basePlatformSOMAS.CreateServer(m, 1, 1, time.Second)
 	agent1 := NewTestAgent(server)
 	testMessage := agent1.NewTestMessage()
 
@@ -374,22 +367,22 @@ func TestSynchronousMessagingSession(t *testing.T) {
 	numberAgents := 5
 	m := make([]basePlatformSOMAS.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = basePlatformSOMAS.MakeAgentGeneratorCountPair(NewTestAgent, numberAgents)
-	server := basePlatformSOMAS.CreateServer(m, 1, 1, time.Second, time.Millisecond)
+	server := basePlatformSOMAS.CreateServer(m, 1, 1, time.Second)
 	server.RunSynchronousMessagingSession()
 	for _, ag := range server.GetAgentMap() {
 
-		if ag.GetCounter() != numberAgents-1 {
-			t.Error("All messages did not pass", ag.GetCounter())
+		if ag.GetCounter() != int64(numberAgents-1) {
+			t.Error("All messages did not pass, got:", ag.GetCounter(), "expected:", numberAgents-1)
 		}
 	}
 }
 
 func TestAccessAgentByID(t *testing.T) {
 	numberAgents := 10
-	randNum := 2347
+	var randNum int64 = 2357
 	m := make([]basePlatformSOMAS.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = basePlatformSOMAS.MakeAgentGeneratorCountPair(NewTestAgent, numberAgents)
-	server := basePlatformSOMAS.CreateServer(m, 1, 1, time.Second, time.Millisecond)
+	server := basePlatformSOMAS.CreateServer(m, 1, 1, time.Second)
 
 	for _, ag := range server.GetAgentMap() {
 
@@ -397,8 +390,9 @@ func TestAccessAgentByID(t *testing.T) {
 
 	}
 	for id := range server.GetAgentMap() {
-		if server.AccessAgentByID(id).GetCounter() != randNum {
-			t.Error("Access Agent By ID is not working (incorrect struct value in test agent)")
+		accessedAgentID := server.AccessAgentByID(id).GetCounter()
+		if accessedAgentID != randNum {
+			t.Error("Access Agent By ID is not working (incorrect struct value in test agent),expected:", randNum, "got:", accessedAgentID)
 		}
 
 	}
@@ -407,32 +401,37 @@ func TestAccessAgentByID(t *testing.T) {
 func TestMessagePrint(t *testing.T) {
 	m := make([]basePlatformSOMAS.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = basePlatformSOMAS.MakeAgentGeneratorCountPair(NewTestAgent, 1)
-	server := basePlatformSOMAS.CreateServer(m, 1, 1, time.Second, time.Millisecond)
+	server := basePlatformSOMAS.CreateServer(m, 1, 1, time.Second)
 	ag := NewTestAgent(server)
 	newMsg := ag.NewTestMessage()
 	newMsg.Print()
 }
 
-func (tba *TestServer) haltedMessageHandler(newMsg InfiniteLoopMessage, receiver uuid.UUID, done chan struct{}) {
-	tba.MessageHandlerLimiter(newMsg, receiver)
+func (tba *TestServer) infMessageSend(newMsg InfiniteLoopMessage, receiver []uuid.UUID, done chan struct{}) {
+	go tba.SendMessage(newMsg, receiver)
+	tba.EndAgentListeningSession()
 	done <- struct{}{}
 }
 
-func TestMessageHandlerProtection(t *testing.T) {
+func TestInfLoopProtection(t *testing.T) {
 	m := make([]basePlatformSOMAS.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = basePlatformSOMAS.MakeAgentGeneratorCountPair(NewTestAgent, 1)
-	server := NewTestServer(m, 1, 1, time.Second, 200*time.Millisecond)
+	timeLimit := 100 * time.Millisecond
+	server := NewTestServer(m, 1, 1, timeLimit)
 	ag1 := NewTestAgent(server)
 	newMsg := CreateInfiniteLoopMessage()
 	done := make(chan struct{}, 1)
-	ctx, cancel := context.WithTimeout(context.Background(), 400*time.Millisecond)
-	defer cancel()
-	go server.haltedMessageHandler(newMsg, ag1.GetID(), done)
+	receiver := make([]uuid.UUID, 1)
+	receiver[0] = ag1.GetID()
+	go server.infMessageSend(newMsg, receiver, done)
+	startTime := time.Now()
+	time.Sleep(300 * time.Millisecond)
 	select {
-	case <-ctx.Done():
-		t.Error("didnt timeout early")
 	case <-done:
-
+		return
+	default:
+		timeTaken := time.Since(startTime)
+		t.Error("Function did not terminate early on time limit. Time taken:", timeTaken, "expected:", timeLimit)
 	}
 
 }

@@ -69,21 +69,21 @@ func (ea *ExtendedAgent) GetAgentField() int {
 
 func (ea *ExtendedAgent) GetMessage1() Message1 {
 	return Message1{
-		basePlatformSOMAS.CreateBaseMessage(ea.GetID()),
+		ea.CreateBaseMessage(),
 		5,
 	}
 }
 
 func (ea *ExtendedAgent) GetMessage2() Message2 {
 	return Message2{
-		basePlatformSOMAS.CreateBaseMessage(ea.GetID()),
+		ea.CreateBaseMessage(),
 		10,
 	}
 }
 
 func (ea *ExtendedAgent) GetNullMessage() NullMessage {
 	return NullMessage{
-		basePlatformSOMAS.CreateBaseMessage(ea.GetID()),
+		ea.CreateBaseMessage(),
 	}
 }
 
