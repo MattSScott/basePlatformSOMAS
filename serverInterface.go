@@ -40,7 +40,7 @@ type IExposedServerFunctions[T any] interface {
 	// return hashset of all agent IDs
 	ViewAgentIdSet() map[uuid.UUID]struct{}
 	// return exposed functions for agent
-	// AccessAgentByID(uuid.UUID) T
+	AccessAgentByID(uuid.UUID) T
 }
 
 type RoundRunner interface {
