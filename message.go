@@ -18,6 +18,7 @@ type IMessage[T any] interface {
 	GetSender() uuid.UUID
 	// calls the appropriate messsage handler method on the receiving agent
 	InvokeMessageHandler(T)
+	InvokeSyncMessageHandler(T)
 	// prints message to console
 	Print()
 }
@@ -37,5 +38,4 @@ func (bm BaseMessage) Print() {
 func (bm BaseMessage) GetSender() uuid.UUID {
 	return bm.sender
 }
-
 

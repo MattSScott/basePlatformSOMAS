@@ -24,7 +24,6 @@ type NullMessage struct {
 type IExtendedAgent interface {
 	basePlatformSOMAS.IAgent[IExtendedAgent]
 	GetAgentField() int
-	//GetAllMessages([]IExtendedAgent) []infra.IMessage[IExtendedAgent]
 	HandleMessage1(msg Message1)
 	HandleMessage2(msg Message2)
 	HandleNullMessage(msg NullMessage)
@@ -59,6 +58,19 @@ func (m2 Message2) InvokeMessageHandler(agent IExtendedAgent) {
 }
 
 func (nm NullMessage) InvokeMessageHandler(agent IExtendedAgent) {
+	fmt.Println("Handling!")
+	agent.HandleNullMessage(nm)
+}
+
+func (m1 Message1) InvokeSyncMessageHandler(agent IExtendedAgent) {
+	agent.HandleMessage1(m1)
+}
+
+func (m2 Message2) InvokeSyncMessageHandler(agent IExtendedAgent) {
+	agent.HandleMessage2(m2)
+}
+
+func (nm NullMessage) InvokeSyncMessageHandler(agent IExtendedAgent) {
 	fmt.Println("Handling!")
 	agent.HandleNullMessage(nm)
 }

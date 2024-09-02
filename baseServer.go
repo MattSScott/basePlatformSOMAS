@@ -14,21 +14,19 @@ type BaseServer[T IAgent[T]] struct {
 	agentMap map[uuid.UUID]T
 	// map of agentid -> empty struct so that agents cannot access each others agent structs
 	agentIdSet map[uuid.UUID]struct{}
-	// waitgroup for message synchronisation
-	listeningWaitGroup *sync.WaitGroup
 	// map of uuid ->struct{}{} which stores the ids of agents which have stopped messaging
 	agentStoppedTalkingMap map[uuid.UUID]struct{}
 	//channel a server goroutine will send to in order to signal messaging completion
-	messagingFinished      chan struct{}
+	messagingFinished chan struct{}
 	// duration after which messaging phase forcefully ends during rounds
 	turnTimeout time.Duration
-	// run single round
+	// interface which holds extended methods for round running and turn running
 	roundRunner RoundRunner
 	//iterations
 	iterations int
 	//turns
 	turns int
-	//lock which stops race conditions when updating agentStoppedTalkingMap 
+	//lock which stops race conditions when updating agentStoppedTalkingMap
 	agentMapRWMutex sync.RWMutex
 	//stops multiple sends to messagingFinished during a round
 	doneChannelOnce sync.Once
@@ -36,7 +34,7 @@ type BaseServer[T IAgent[T]] struct {
 
 func (server *BaseServer[T]) HandleStartOfTurn(iter, round int) {
 	server.doneChannelOnce = sync.Once{}
-	server.messagingFinished = make(chan struct{}, 1)
+	server.messagingFinished = make(chan struct{})
 	fmt.Printf("Iteration %d, Round %d starting...\n", iter, round)
 
 }
@@ -60,8 +58,6 @@ func (server *BaseServer[T]) HandleEndOfTurn(iter, round int) {
 	server.endAgentListeningSession()
 	fmt.Printf("Iteration %d, Round %d finished.\n", iter, round)
 }
-
-func (server *BaseServer[T]) RunAgentLoop() {}
 
 func (server *BaseServer[T]) SendMessage(msg IMessage[T], receivers []uuid.UUID) {
 	for _, receiver := range receivers {
@@ -104,16 +100,12 @@ func (serv *BaseServer[T]) GetAgentMap() map[uuid.UUID]T {
 
 func (serv *BaseServer[T]) agentStoppedTalking(id uuid.UUID) {
 	serv.agentMapRWMutex.Lock()
-	fmt.Println("sending stop talking request,id:", id)
 	serv.agentStoppedTalkingMap[id] = struct{}{}
 
 	if len(serv.agentStoppedTalkingMap) == len(serv.agentMap) {
 		serv.doneChannelOnce.Do(func() {
-			select {
-			case serv.messagingFinished <- struct{}{}:
-				close(serv.messagingFinished)
-			default:
-			}
+			serv.messagingFinished <- struct{}{}
+			close(serv.messagingFinished)
 		})
 	}
 	serv.agentMapRWMutex.Unlock()
@@ -139,7 +131,9 @@ func (bs *BaseServer[T]) GetIterations() int {
 	return bs.iterations
 }
 
-func (bs *BaseServer[T]) RunRound() {}
+func (bs *BaseServer[T]) RunRound() {
+	//bs.roundRunner.RunRound()
+}
 
 type AgentGenerator[T IAgent[T]] func(IExposedServerFunctions[T]) T
 
@@ -169,11 +163,10 @@ func (bs *BaseServer[T]) GenerateAgentArrayFromMap() []T {
 
 func (bs *BaseServer[T]) SendSynchronousMessage(msg IMessage[T], recipients []uuid.UUID) {
 	for _, recip := range recipients {
-		fmt.Println(recip, msg.GetSender())
 		if msg.GetSender() == recip {
 			continue
 		} else {
-			msg.InvokeMessageHandler(bs.agentMap[recip])
+			msg.InvokeSyncMessageHandler(bs.agentMap[recip])
 		}
 	}
 
@@ -201,13 +194,12 @@ func CreateServer[T IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iter
 	serv := &BaseServer[T]{
 		agentMap:               make(map[uuid.UUID]T),
 		agentIdSet:             make(map[uuid.UUID]struct{}),
-		listeningWaitGroup:     &sync.WaitGroup{},
 		agentStoppedTalkingMap: make(map[uuid.UUID]struct{}),
 		turnTimeout:            turnMaxDuration,
 		roundRunner:            nil,
 		iterations:             iterations,
 		turns:                  turns,
-		messagingFinished:      make(chan struct{}, 1),
+		messagingFinished:      make(chan struct{}),
 		agentMapRWMutex:        sync.RWMutex{},
 		doneChannelOnce:        sync.Once{},
 	}
