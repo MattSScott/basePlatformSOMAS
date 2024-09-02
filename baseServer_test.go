@@ -1,7 +1,10 @@
 package basePlatformSOMAS_test
 
 import (
+	"bytes"
 	"fmt"
+	"io"
+	"os"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -14,7 +17,6 @@ type ITestBaseAgent interface {
 	basePlatformSOMAS.IAgent[ITestBaseAgent]
 	NewTestMessage() TestMessage
 	HandleTestMessage()
-	HandleSyncTestMessage()
 	ReceivedMessage() bool
 	GetCounter() int64
 	SetCounter(int64)
@@ -62,10 +64,6 @@ func (infM InfiniteLoopMessage) InvokeSyncMessageHandler(ag ITestBaseAgent) {
 
 func (tm TestMessage) InvokeMessageHandler(ag ITestBaseAgent) {
 	ag.HandleTestMessage()
-}
-
-func (tm TestMessage) InvokeSyncMessageHandler(ag ITestBaseAgent) {
-	ag.HandleSyncTestMessage()
 }
 
 func (tba *TestAgent) CreateTestMessage() TestMessage {
@@ -160,13 +158,8 @@ func (ag *TestAgent) HandleTestMessage() {
 	}
 }
 
-func (ag *TestAgent) HandleSyncTestMessage() {
-	ag.counter += 1
-}
-
 func (ag *TestAgent) ReceivedMessage() bool {
 	return ag.counter == ag.goal
-
 }
 
 func (ag *TestAgent) UpdateAgentInternalState() {
@@ -387,7 +380,7 @@ func TestSendSynchronousMessage(t *testing.T) {
 	}
 
 	server.Initialise()
-	fmt.Println("sending")
+	server.EndAsyncMessaging()
 	server.SendSynchronousMessage(testMessage, arrayReceivers)
 	for _, ag := range server.GetAgentMap() {
 		if !ag.ReceivedMessage() {
@@ -402,6 +395,7 @@ func TestSynchronousMessagingSession(t *testing.T) {
 	m := make([]basePlatformSOMAS.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = basePlatformSOMAS.MakeAgentGeneratorCountPair(NewTestAgent, numberAgents)
 	server := basePlatformSOMAS.CreateServer(m, 1, 1, time.Second)
+	server.EndAsyncMessaging()
 	server.RunSynchronousMessagingSession()
 	for _, ag := range server.GetAgentMap() {
 
@@ -439,6 +433,20 @@ func TestMessagePrint(t *testing.T) {
 	ag := NewTestAgent(server)
 	newMsg := ag.NewTestMessage()
 	newMsg.Print()
+	originalStdout := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+	newMsg.Print()
+	w.Close()
+	var buf bytes.Buffer
+	io.Copy(&buf, r)
+	output := buf.String()
+	os.Stdout = originalStdout
+	expected := "message received from " + ag.GetID().String() + "\n"
+	if string(output) != string(expected) {
+		t.Error("Expected", expected, "but got", output)
+	}
+
 }
 
 func (tba *TestServer) infMessageSend(newMsg InfiniteLoopMessage, receiver []uuid.UUID, done chan struct{}) {

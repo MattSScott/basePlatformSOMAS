@@ -62,19 +62,6 @@ func (nm NullMessage) InvokeMessageHandler(agent IExtendedAgent) {
 	agent.HandleNullMessage(nm)
 }
 
-func (m1 Message1) InvokeSyncMessageHandler(agent IExtendedAgent) {
-	agent.HandleMessage1(m1)
-}
-
-func (m2 Message2) InvokeSyncMessageHandler(agent IExtendedAgent) {
-	agent.HandleMessage2(m2)
-}
-
-func (nm NullMessage) InvokeSyncMessageHandler(agent IExtendedAgent) {
-	fmt.Println("Handling!")
-	agent.HandleNullMessage(nm)
-}
-
 func (ea *ExtendedAgent) GetAgentField() int {
 	return ea.agentField
 }

@@ -29,7 +29,8 @@ type BaseServer[T IAgent[T]] struct {
 	//lock which stops race conditions when updating agentStoppedTalkingMap
 	agentMapRWMutex sync.RWMutex
 	//stops multiple sends to messagingFinished during a round
-	doneChannelOnce sync.Once
+	doneChannelOnce    sync.Once
+	asyncMessagingFlag bool
 }
 
 func (server *BaseServer[T]) HandleStartOfTurn(iter, round int) {
@@ -99,16 +100,19 @@ func (serv *BaseServer[T]) GetAgentMap() map[uuid.UUID]T {
 }
 
 func (serv *BaseServer[T]) agentStoppedTalking(id uuid.UUID) {
-	serv.agentMapRWMutex.Lock()
-	serv.agentStoppedTalkingMap[id] = struct{}{}
+	if serv.asyncMessagingFlag {
+		serv.agentMapRWMutex.Lock()
+		serv.agentStoppedTalkingMap[id] = struct{}{}
 
-	if len(serv.agentStoppedTalkingMap) == len(serv.agentMap) {
-		serv.doneChannelOnce.Do(func() {
-			serv.messagingFinished <- struct{}{}
-			close(serv.messagingFinished)
-		})
+		if len(serv.agentStoppedTalkingMap) == len(serv.agentMap) {
+			serv.doneChannelOnce.Do(func() {
+				serv.messagingFinished <- struct{}{}
+				serv.asyncMessagingFlag = false
+				close(serv.messagingFinished)
+			})
+		}
+		serv.agentMapRWMutex.Unlock()
 	}
-	serv.agentMapRWMutex.Unlock()
 }
 
 func (serv *BaseServer[T]) SetRunHandler(handler RoundRunner) {
@@ -166,7 +170,7 @@ func (bs *BaseServer[T]) SendSynchronousMessage(msg IMessage[T], recipients []uu
 		if msg.GetSender() == recip {
 			continue
 		} else {
-			msg.InvokeSyncMessageHandler(bs.agentMap[recip])
+			msg.InvokeMessageHandler(bs.agentMap[recip])
 		}
 	}
 
@@ -202,6 +206,7 @@ func CreateServer[T IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iter
 		messagingFinished:      make(chan struct{}),
 		agentMapRWMutex:        sync.RWMutex{},
 		doneChannelOnce:        sync.Once{},
+		asyncMessagingFlag:     true,
 	}
 	serv.initialiseAgents(generatorArray)
 	return serv

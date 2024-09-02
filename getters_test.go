@@ -10,3 +10,6 @@ func (serv *BaseServer[T]) EndAgentListeningSession() bool {
 	return serv.endAgentListeningSession()
 }
 
+func (serv *BaseServer[T]) EndAsyncMessaging() {
+	serv.asyncMessagingFlag = false
+}
