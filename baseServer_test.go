@@ -186,7 +186,9 @@ func TestAgentsCorrectlyInstantiated(t *testing.T) {
 	server := basePlatformSOMAS.CreateServer(m, 1, 1, time.Second)
 
 	ag := NewTestAgent(server)
-	ag.NotifyAgentFinishedMessaging()
+	server.EndAgentListeningSession()
+	go ag.NotifyAgentFinishedMessaging()
+
 	lenAgentMap := len(server.GetAgentMap())
 	if lenAgentMap != numAgents {
 		t.Error("Incorrect number of agents added to server,got", lenAgentMap, "expected", numAgents)
@@ -312,9 +314,6 @@ func TestWaitForMessagingToEnd(t *testing.T) {
 	for _, ag := range agentMap {
 		if !ag.ReceivedMessage() {
 			t.Errorf("agent %s recieved %d messages, expected %d\n", ag.GetID(), ag.GetCounter(), ag.GetGoal())
-		} else {
-			fmt.Printf("agent %s recieved %d messages, expected %d\n", ag.GetID(), ag.GetCounter(), ag.GetGoal())
-
 		}
 	}
 }
@@ -361,7 +360,6 @@ func TestNumIterationsInServer(t *testing.T) {
 }
 
 func TestSendSynchronousMessage(t *testing.T) {
-
 	m := make([]basePlatformSOMAS.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = basePlatformSOMAS.MakeAgentGeneratorCountPair(NewTestAgent, 1)
 	server := basePlatformSOMAS.CreateServer(m, 1, 1, time.Second)
@@ -383,7 +381,6 @@ func TestSendSynchronousMessage(t *testing.T) {
 		if !ag.ReceivedMessage() {
 			t.Error("Didn't Receive Message")
 		}
-
 	}
 }
 
@@ -477,5 +474,34 @@ func TestInfLoopProtection(t *testing.T) {
 	default:
 		timeTaken := time.Since(startTime)
 		t.Error("Function did not terminate early on time limit. Time taken:", timeTaken, "expected:", timeLimit)
+	}
+}
+
+type RunHandler struct {
+	iters int
+	turns int
+}
+
+func (r *RunHandler) RunRound() {
+	r.iters += 1
+}
+func (r *RunHandler) RunTurn() {
+	r.turns += 1
+}
+
+func TestGameRunner(t *testing.T) {
+	m := make([]basePlatformSOMAS.AgentGeneratorCountPair[ITestBaseAgent], 1)
+	m[0] = basePlatformSOMAS.MakeAgentGeneratorCountPair(NewTestAgent, 1)
+	timeLimit := 100 * time.Millisecond
+	server := NewTestServer(m, 1, 1, timeLimit)
+	runHandler := RunHandler{iters: 0, turns: 0}
+	server.SetRunHandler(&runHandler)
+	server.BaseServer.RunRound()
+	server.BaseServer.RunTurn()
+	if runHandler.iters != 1 {
+		t.Errorf("Server unable to run round: have round value %d, expected %d", runHandler.iters, 1)
+	}
+	if runHandler.turns != 1 {
+		t.Errorf("Server unable to run turn: have turn value %d, expected %d", runHandler.turns, 1)
 	}
 }

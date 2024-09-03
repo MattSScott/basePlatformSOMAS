@@ -14,10 +14,8 @@ type BaseServer[T IAgent[T]] struct {
 	agentMap map[uuid.UUID]T
 	// map of agentid -> empty struct so that agents cannot access each others agent structs
 	agentIdSet map[uuid.UUID]struct{}
-	// map of uuid -> struct{}{} which stores the ids of agents which have stopped messaging
-	agentStoppedTalkingMap map[uuid.UUID]struct{}
 	// channel a server goroutine will send to in order to signal messaging completion
-	messagingFinished chan struct{}
+	agentFinishedMessaging chan uuid.UUID
 	// duration after which messaging phase forcefully ends during rounds
 	turnTimeout time.Duration
 	// interface which holds extended methods for round running and turn running
@@ -36,7 +34,7 @@ type BaseServer[T IAgent[T]] struct {
 
 func (server *BaseServer[T]) HandleStartOfTurn(iter, round int) {
 	server.doneChannelOnce = sync.Once{}
-	server.messagingFinished = make(chan struct{})
+	server.agentFinishedMessaging = make(chan uuid.UUID)
 	fmt.Printf("Iteration %d, Round %d starting...\n", iter, round)
 
 }
@@ -45,19 +43,23 @@ func (serv *BaseServer[T]) endAgentListeningSession() bool {
 	ctx, cancel := context.WithTimeout(context.Background(), serv.turnTimeout)
 	defer cancel()
 
-	select {
-	case <-serv.messagingFinished:
-		serv.agentStoppedTalkingMap = make(map[uuid.UUID]struct{})
-		serv.shouldRunAsyncMessaging = false
-		close(serv.messagingFinished)
-		return true
+	agentStoppedTalkingMap := make(map[uuid.UUID]struct{})
 
-	case <-ctx.Done():
-		serv.agentStoppedTalkingMap = make(map[uuid.UUID]struct{})
-		serv.shouldRunAsyncMessaging = false
-		close(serv.messagingFinished)
-		return false
+	for len(agentStoppedTalkingMap) != len(serv.agentMap) {
+		select {
+		case id := <-serv.agentFinishedMessaging:
+			agentStoppedTalkingMap[id] = struct{}{}
+
+		case <-ctx.Done():
+			serv.shouldRunAsyncMessaging = false
+			close(serv.agentFinishedMessaging)
+			return false
+		}
 	}
+
+	serv.shouldRunAsyncMessaging = false
+	close(serv.agentFinishedMessaging)
+	return true
 }
 
 func (server *BaseServer[T]) HandleEndOfTurn(iter, round int) {
@@ -107,15 +109,7 @@ func (serv *BaseServer[T]) agentStoppedTalking(id uuid.UUID) {
 	if !serv.shouldRunAsyncMessaging {
 		return
 	}
-	serv.agentMapRWMutex.Lock()
-	serv.agentStoppedTalkingMap[id] = struct{}{}
-
-	if len(serv.agentStoppedTalkingMap) == len(serv.agentMap) {
-		serv.doneChannelOnce.Do(func() {
-			serv.messagingFinished <- struct{}{}
-		})
-	}
-	serv.agentMapRWMutex.Unlock()
+	serv.agentFinishedMessaging <- id
 }
 
 func (serv *BaseServer[T]) SetRunHandler(handler RoundRunner) {
@@ -185,12 +179,11 @@ func CreateServer[T IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iter
 	serv := &BaseServer[T]{
 		agentMap:                make(map[uuid.UUID]T),
 		agentIdSet:              make(map[uuid.UUID]struct{}),
-		agentStoppedTalkingMap:  make(map[uuid.UUID]struct{}),
 		turnTimeout:             turnMaxDuration,
 		roundRunner:             nil,
 		iterations:              iterations,
 		turns:                   turns,
-		messagingFinished:       make(chan struct{}),
+		agentFinishedMessaging:  make(chan uuid.UUID),
 		agentMapRWMutex:         sync.RWMutex{},
 		doneChannelOnce:         sync.Once{},
 		shouldRunAsyncMessaging: true,
