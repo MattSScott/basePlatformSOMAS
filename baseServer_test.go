@@ -183,11 +183,7 @@ func TestAgentsCorrectlyInstantiated(t *testing.T) {
 	m := make([]basePlatformSOMAS.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = basePlatformSOMAS.MakeAgentGeneratorCountPair(NewTestAgent, numAgents)
 
-	server := basePlatformSOMAS.CreateServer(m, 1, 1, time.Second)
-
-	ag := NewTestAgent(server)
-	server.EndAgentListeningSession()
-	go ag.NotifyAgentFinishedMessaging()
+	server := basePlatformSOMAS.CreateServer(m, 1, 1, 1*time.Second)
 
 	lenAgentMap := len(server.GetAgentMap())
 	if lenAgentMap != numAgents {
