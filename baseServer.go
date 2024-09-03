@@ -25,7 +25,7 @@ type BaseServer[T IAgent[T]] struct {
 	// number of turns for server
 	turns int
 	// mutex for agentStoppedTalkingMap access
-	agentMapRWMutex sync.RWMutex
+	//agentMapRWMutex sync.RWMutex
 	// stops multiple sends to messagingFinished during a round
 	doneChannelOnce sync.Once
 	// flag to disable async message propagation after timeout
@@ -182,7 +182,7 @@ func CreateServer[T IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iter
 		iterations:              iterations,
 		turns:                   turns,
 		agentFinishedMessaging:  make(chan uuid.UUID),
-		agentMapRWMutex:         sync.RWMutex{},
+		//agentMapRWMutex:         sync.RWMutex{},
 		doneChannelOnce:         sync.Once{},
 		shouldRunAsyncMessaging: true,
 	}

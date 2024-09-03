@@ -15,10 +15,10 @@ type ITestBaseAgent interface {
 	NewTestMessage() TestMessage
 	HandleTestMessage()
 	ReceivedMessage() bool
-	GetCounter() int64
-	SetCounter(int64)
-	GetGoal() int64
-	SetGoal(int64)
+	GetCounter() int32
+	SetCounter(int32)
+	GetGoal() int32
+	SetGoal(int32)
 }
 
 type IBadAgent interface {
@@ -31,9 +31,9 @@ type ITestServer interface {
 }
 
 type TestAgent struct {
+	counter int32
+	goal    int32
 	*basePlatformSOMAS.BaseAgent[ITestBaseAgent]
-	counter int64
-	goal    int64
 }
 
 type TestServer struct {
@@ -85,14 +85,14 @@ func InfLoop() {
 		time.Sleep(1000 * time.Millisecond)
 	}
 }
-func (tba *TestAgent) SetCounter(count int64) {
+func (tba *TestAgent) SetCounter(count int32) {
 	tba.counter = count
 }
 
-func (tba *TestAgent) SetGoal(goal int64) {
+func (tba *TestAgent) SetGoal(goal int32) {
 	tba.goal = goal
 }
-func (tba *TestAgent) GetGoal() int64 {
+func (tba *TestAgent) GetGoal() int32 {
 	return tba.goal
 }
 func NewTestMessage() TestMessage {
@@ -125,7 +125,7 @@ func (ta *TestAgent) NewTestMessage() TestMessage {
 	}
 }
 
-func (ta *TestAgent) GetCounter() int64 {
+func (ta *TestAgent) GetCounter() int32 {
 	return ta.counter
 }
 func (ag *TestAgent) RunSynchronousMessaging() {
@@ -149,8 +149,8 @@ func (ts *TestServer) RunRound() {
 }
 
 func (ag *TestAgent) HandleTestMessage() {
-	newCounterValue := atomic.AddInt64(&ag.counter, 1)
-	if newCounterValue == atomic.LoadInt64(&ag.goal) {
+	newCounterValue := atomic.AddInt32(&ag.counter, 1)
+	if newCounterValue == atomic.LoadInt32(&ag.goal) {
 		ag.NotifyAgentFinishedMessaging()
 	}
 }
@@ -293,7 +293,7 @@ func TestWaitForMessagingToEnd(t *testing.T) {
 	for id, ag := range agentMap {
 		arrayOfIDs[i] = id
 		i++
-		ag.SetGoal(int64(numberOfMessages * numAgents))
+		ag.SetGoal(int32(numberOfMessages * numAgents))
 	}
 
 	for j := 0; j < numberOfMessages; j++ {
@@ -389,7 +389,7 @@ func TestSynchronousMessagingSession(t *testing.T) {
 	server.RunSynchronousMessagingSession()
 	for _, ag := range server.GetAgentMap() {
 
-		if ag.GetCounter() != int64(numberAgents-1) {
+		if ag.GetCounter() != int32(numberAgents-1) {
 			t.Error("All messages did not pass, got:", ag.GetCounter(), "expected:", numberAgents-1)
 		}
 	}
@@ -397,7 +397,7 @@ func TestSynchronousMessagingSession(t *testing.T) {
 
 func TestAccessAgentByID(t *testing.T) {
 	numberAgents := 10
-	var randNum int64 = 2357
+	var randNum int32 = 2357
 	m := make([]basePlatformSOMAS.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = basePlatformSOMAS.MakeAgentGeneratorCountPair(NewTestAgent, numberAgents)
 	server := basePlatformSOMAS.CreateServer(m, 1, 1, time.Second)
