@@ -25,7 +25,7 @@ type BaseServer[T IAgent[T]] struct {
 	// number of turns for server
 	turns int
 	// mutex for agentStoppedTalkingMap access
-	//agentMapRWMutex sync.RWMutex
+	endMessagingTimeout <-chan struct{}
 	// stops multiple sends to messagingFinished during a round
 	doneChannelOnce sync.Once
 	// flag to disable async message propagation after timeout
@@ -41,6 +41,7 @@ func (server *BaseServer[T]) HandleStartOfTurn(iter, round int) {
 
 func (serv *BaseServer[T]) endAgentListeningSession() bool {
 	ctx, cancel := context.WithTimeout(context.Background(), serv.turnTimeout)
+	serv.endMessagingTimeout = ctx.Done()
 	defer cancel()
 
 	agentStoppedTalkingMap := make(map[uuid.UUID]struct{})
@@ -107,7 +108,10 @@ func (serv *BaseServer[T]) agentStoppedTalking(id uuid.UUID) {
 	if !serv.shouldRunAsyncMessaging {
 		return
 	}
-	serv.agentFinishedMessaging <- id
+	select {
+	case serv.agentFinishedMessaging <- id:
+	case <-serv.endMessagingTimeout:
+	}
 }
 
 func (serv *BaseServer[T]) SetRunHandler(handler RoundRunner) {
@@ -182,7 +186,7 @@ func CreateServer[T IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iter
 		iterations:              iterations,
 		turns:                   turns,
 		agentFinishedMessaging:  make(chan uuid.UUID),
-		//agentMapRWMutex:         sync.RWMutex{},
+		endMessagingTimeout:     make(<-chan struct{}),
 		doneChannelOnce:         sync.Once{},
 		shouldRunAsyncMessaging: true,
 	}
