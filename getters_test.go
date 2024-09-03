@@ -11,5 +11,5 @@ func (serv *BaseServer[T]) EndAgentListeningSession() bool {
 }
 
 func (serv *BaseServer[T]) EndAsyncMessaging() {
-	serv.asyncMessagingFlag = false
+	serv.shouldRunAsyncMessaging = false
 }

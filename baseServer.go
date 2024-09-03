@@ -29,8 +29,8 @@ type BaseServer[T IAgent[T]] struct {
 	//lock which stops race conditions when updating agentStoppedTalkingMap
 	agentMapRWMutex sync.RWMutex
 	//stops multiple sends to messagingFinished during a round
-	doneChannelOnce    sync.Once
-	asyncMessagingFlag bool
+	doneChannelOnce         sync.Once
+	shouldRunAsyncMessaging bool
 }
 
 func (server *BaseServer[T]) HandleStartOfTurn(iter, round int) {
@@ -47,10 +47,14 @@ func (serv *BaseServer[T]) endAgentListeningSession() bool {
 	select {
 	case <-serv.messagingFinished:
 		serv.agentStoppedTalkingMap = make(map[uuid.UUID]struct{})
+		serv.shouldRunAsyncMessaging = false
+		close(serv.messagingFinished)
 		return true
 
 	case <-ctx.Done():
 		serv.agentStoppedTalkingMap = make(map[uuid.UUID]struct{})
+		serv.shouldRunAsyncMessaging = false
+		close(serv.messagingFinished)
 		return false
 	}
 }
@@ -100,19 +104,19 @@ func (serv *BaseServer[T]) GetAgentMap() map[uuid.UUID]T {
 }
 
 func (serv *BaseServer[T]) agentStoppedTalking(id uuid.UUID) {
-	if serv.asyncMessagingFlag {
-		serv.agentMapRWMutex.Lock()
-		serv.agentStoppedTalkingMap[id] = struct{}{}
-
-		if len(serv.agentStoppedTalkingMap) == len(serv.agentMap) {
-			serv.doneChannelOnce.Do(func() {
-				serv.messagingFinished <- struct{}{}
-				serv.asyncMessagingFlag = false
-				close(serv.messagingFinished)
-			})
-		}
-		serv.agentMapRWMutex.Unlock()
+	if !serv.shouldRunAsyncMessaging {
+		return
 	}
+	serv.agentMapRWMutex.Lock()
+	serv.agentStoppedTalkingMap[id] = struct{}{}
+
+	if len(serv.agentStoppedTalkingMap) == len(serv.agentMap) {
+		serv.doneChannelOnce.Do(func() {
+			serv.messagingFinished <- struct{}{}
+		})
+	}
+	serv.agentMapRWMutex.Unlock()
+
 }
 
 func (serv *BaseServer[T]) SetRunHandler(handler RoundRunner) {
@@ -196,17 +200,17 @@ func (bs *BaseServer[T]) initialiseAgents(m []AgentGeneratorCountPair[T]) {
 // generate a server instance based on a mapping function and number of iterations
 func CreateServer[T IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iterations, turns int, turnMaxDuration time.Duration) *BaseServer[T] {
 	serv := &BaseServer[T]{
-		agentMap:               make(map[uuid.UUID]T),
-		agentIdSet:             make(map[uuid.UUID]struct{}),
-		agentStoppedTalkingMap: make(map[uuid.UUID]struct{}),
-		turnTimeout:            turnMaxDuration,
-		roundRunner:            nil,
-		iterations:             iterations,
-		turns:                  turns,
-		messagingFinished:      make(chan struct{}),
-		agentMapRWMutex:        sync.RWMutex{},
-		doneChannelOnce:        sync.Once{},
-		asyncMessagingFlag:     true,
+		agentMap:                make(map[uuid.UUID]T),
+		agentIdSet:              make(map[uuid.UUID]struct{}),
+		agentStoppedTalkingMap:  make(map[uuid.UUID]struct{}),
+		turnTimeout:             turnMaxDuration,
+		roundRunner:             nil,
+		iterations:              iterations,
+		turns:                   turns,
+		messagingFinished:       make(chan struct{}),
+		agentMapRWMutex:         sync.RWMutex{},
+		doneChannelOnce:         sync.Once{},
+		shouldRunAsyncMessaging: true,
 	}
 	serv.initialiseAgents(generatorArray)
 	return serv
