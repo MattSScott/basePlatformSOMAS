@@ -90,10 +90,8 @@ func (serv *BaseServer[T]) Initialise() {}
 
 func (serv *BaseServer[T]) Start() {
 	serv.checkHandler()
-	turns := serv.turns
-	iterations := serv.iterations
-	for i := 0; i < iterations; i++ {
-		for j := 0; j < turns; j++ {
+	for i := 0; i < serv.iterations; i++ {
+		for j := 0; j < serv.turns; j++ {
 			serv.HandleStartOfTurn(i+1, j+1)
 			serv.roundRunner.RunTurn()
 			serv.HandleEndOfTurn(i+1, j+1)
