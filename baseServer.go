@@ -60,7 +60,7 @@ awaitSessionEnd:
 			break awaitSessionEnd
 		}
 	}
-
+	serv.endNotifyAgentDone.cancelNotifyAgentDone()
 	serv.shouldRunAsyncMessaging = false
 	newCtx, newCancel := context.WithCancel(context.Background())
 	serv.endNotifyAgentDone.endNotifyAgentDoneContext = newCtx
