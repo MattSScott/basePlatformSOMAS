@@ -44,29 +44,29 @@ func (server *BaseServer[T]) HandleStartOfTurn(iter, round int) {
 }
 
 func (serv *BaseServer[T]) endAgentListeningSession() bool {
+	status := true
 	ctx, cancel := context.WithTimeout(context.Background(), serv.turnTimeout)
 	defer cancel()
 
 	agentStoppedTalkingMap := make(map[uuid.UUID]struct{})
-
+awaitSessionEnd:
 	for len(agentStoppedTalkingMap) != len(serv.agentMap) {
 		select {
 		case id := <-serv.agentFinishedMessaging:
 			agentStoppedTalkingMap[id] = struct{}{}
 
 		case <-ctx.Done():
-			serv.shouldRunAsyncMessaging = false
-			ctx, cancel := context.WithCancel(context.Background())
-			serv.endNotifyAgentDone.endNotifyAgentDoneContext = ctx
-			serv.endNotifyAgentDone.cancelNotifyAgentDone = cancel
-			close(serv.agentFinishedMessaging)
-			return false
+			status = false
+			break awaitSessionEnd
 		}
 	}
 
 	serv.shouldRunAsyncMessaging = false
+	newCtx, newCancel := context.WithCancel(context.Background())
+	serv.endNotifyAgentDone.endNotifyAgentDoneContext = newCtx
+	serv.endNotifyAgentDone.cancelNotifyAgentDone = newCancel
 	close(serv.agentFinishedMessaging)
-	return true
+	return status
 }
 
 func (server *BaseServer[T]) HandleEndOfTurn(iter, round int) {
