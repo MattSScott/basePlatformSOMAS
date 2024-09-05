@@ -9,5 +9,5 @@ func (serv *BaseServer[T]) EndAgentListeningSession() bool {
 }
 
 func (serv *BaseServer[T]) EndAsyncMessaging() {
-	serv.shouldRunAsyncMessaging = false
+	serv.shouldAllowStopTalking = false
 }
