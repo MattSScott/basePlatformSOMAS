@@ -501,3 +501,14 @@ func TestGameRunner(t *testing.T) {
 		t.Errorf("Server unable to run turn: have turn value %d, expected %d", runHandler.turns, 1)
 	}
 }
+
+func TestNotifyStoppedTalkingTimeout(t *testing.T) {
+	m := make([]basePlatformSOMAS.AgentGeneratorCountPair[ITestBaseAgent], 1)
+	m[0] = basePlatformSOMAS.MakeAgentGeneratorCountPair(NewTestAgent, 1)
+	timeLimit := 100 * time.Millisecond
+	server := NewTestServer(m, 1, 1, timeLimit)
+	server.EndAgentListeningSession()
+	for _,ag := range server.GetAgentMap() {
+		ag.NotifyAgentFinishedMessaging()
+	}
+}
