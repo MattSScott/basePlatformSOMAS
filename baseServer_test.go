@@ -491,11 +491,12 @@ func testNotify(goal int32, count *int32, ag ITestBaseAgent, finished chan struc
 	}
 }
 
-func sendNotifyMessages(agMap map[uuid.UUID]ITestBaseAgent, goal int32, count *int32, finished chan struct{}) {
-	for i := 0;i < 2 ; i++ {
+func sendNotifyMessages(agMap map[uuid.UUID]ITestBaseAgent, goal int32, count *int32, finished chan struct{}, iter int) {
 	for _, ag := range agMap {
-		go testNotify(goal, count, ag, finished)
-	}}
+		for i := 0; i < iter; i++ {
+			go testNotify(goal*int32(iter), count, ag, finished)
+		}
+	}
 }
 
 func waitForNotifyFinishedMessagingExit(finished chan struct{}) bool {
@@ -517,13 +518,13 @@ func TestNotifyStoppedTalkingTimeout(t *testing.T) {
 	finished := make(chan struct{})
 	server := GenerateTestServer(numAgents, 1, 1, timeLimit)
 	numAgentsInt32 := int32(numAgents)
-	sendNotifyMessages(server.GetAgentMap(), 2*numAgentsInt32, &counter, finished)
+	sendNotifyMessages(server.GetAgentMap(), numAgentsInt32, &counter, finished, 5)
 	if !waitForNotifyFinishedMessagingExit(finished) {
 		t.Error("timeout. Number of NotifyAgentFinishedMessaging functions exited:", counter, "expected:", numAgents)
 	}
 	server.EndAgentListeningSession()
 	counter = 0
-	sendNotifyMessages(server.GetAgentMap(), 2*numAgentsInt32, &counter, finished)
+	sendNotifyMessages(server.GetAgentMap(), numAgentsInt32, &counter, finished, 2)
 
 	if !waitForNotifyFinishedMessagingExit(finished) {
 		t.Error("timeout. Number of NotifyAgentFinishedMessaging functions exited:", counter, "expected:", numAgents)
