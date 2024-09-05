@@ -2,6 +2,7 @@ package basePlatformSOMAS_test
 
 import (
 	"fmt"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -19,6 +20,7 @@ type ITestBaseAgent interface {
 	SetCounter(int32)
 	GetGoal() int32
 	SetGoal(int32)
+	NotifyAgentFinishedMessagingUnthreaded(*sync.WaitGroup, *uint32)
 }
 
 type IBadAgent interface {
@@ -230,7 +232,6 @@ func TestRunTurn(t *testing.T) {
 	if server.turnCounter != (iterations * rounds) {
 		t.Error("wrong number of iterations executed", server.turnCounter, "expected", iterations*rounds)
 	}
-
 }
 
 func TestRunRound(t *testing.T) {
@@ -393,7 +394,6 @@ func TestAccessAgentByID(t *testing.T) {
 		if accessedAgentID != randNum {
 			t.Error("Access Agent By ID is not working (incorrect struct value in test agent),expected:", randNum, "got:", accessedAgentID)
 		}
-
 	}
 }
 
@@ -402,29 +402,6 @@ func TestMessagePrint(t *testing.T) {
 	msg := ag.CreateBaseMessage()
 	msg.Print()
 }
-
-// func TestMessagePrint(t *testing.T) {
-// 	m := make([]basePlatformSOMAS.AgentGeneratorCountPair[ITestBaseAgent], 1)
-// 	m[0] = basePlatformSOMAS.MakeAgentGeneratorCountPair(NewTestAgent, 1)
-// 	server := basePlatformSOMAS.CreateServer(m, 1, 1, time.Second)
-// 	ag := NewTestAgent(server)
-// 	newMsg := ag.NewTestMessage()
-// 	newMsg.Print()
-// 	originalStdout := os.Stdout
-// 	r, w, _ := os.Pipe()
-// 	os.Stdout = w
-// 	newMsg.Print()
-// 	w.Close()
-// 	var buf bytes.Buffer
-// 	io.Copy(&buf, r)
-// 	output := buf.String()
-// 	os.Stdout = originalStdout
-// 	expected := "message received from " + ag.GetID().String() + "\n"
-// 	if string(output) != string(expected) {
-// 		t.Error("Expected", expected, "but got", output)
-// 	}
-
-// }
 
 func (tba *TestServer) infMessageSend(newMsg InfiniteLoopMessage, receiver []uuid.UUID, done chan struct{}) {
 	go tba.SendMessage(newMsg, receiver)
@@ -481,53 +458,32 @@ func TestGameRunner(t *testing.T) {
 	}
 }
 
-func testNotify(goal int32, count *int32, ag ITestBaseAgent, finished chan struct{}) {
-	ag.NotifyAgentFinishedMessaging()
-	newCounter := atomic.AddInt32(count, 1)
-	fmt.Println(newCounter, *count)
-	if newCounter == goal {
-		fmt.Println("done")
-		finished <- struct{}{}
-	}
-}
-
-func sendNotifyMessages(agMap map[uuid.UUID]ITestBaseAgent, goal int32, count *int32, finished chan struct{}, iter int) {
+func sendNotifyMessages(agMap map[uuid.UUID]ITestBaseAgent, count *uint32, iter int, wg *sync.WaitGroup) {
 	for _, ag := range agMap {
 		for i := 0; i < iter; i++ {
-			go testNotify(goal*int32(iter), count, ag, finished)
+			fmt.Println("running")
+			wg.Add(1)
+			go ag.NotifyAgentFinishedMessagingUnthreaded(wg, count)
 		}
 	}
 }
 
-func waitForNotifyFinishedMessagingExit(finished chan struct{}) bool {
-	timeout := time.After(100 * time.Millisecond)
-	select {
-	case <-finished:
-		return true
-	case <-timeout:
-		return false
-	}
-
-}
-
 func TestNotifyStoppedTalkingTimeout(t *testing.T) {
-	var counter int32 = 0
+	var counter uint32 = 0
 	var numAgents int = 3
+	var numIters int = 5
+	wg := &sync.WaitGroup{}
 	timeLimit := 100 * time.Millisecond
 
-	finished := make(chan struct{})
 	server := GenerateTestServer(numAgents, 1, 1, timeLimit)
-	numAgentsInt32 := int32(numAgents)
-	sendNotifyMessages(server.GetAgentMap(), numAgentsInt32, &counter, finished, 5)
-	if !waitForNotifyFinishedMessagingExit(finished) {
-		t.Error("timeout. Number of NotifyAgentFinishedMessaging functions exited:", counter, "expected:", numAgents)
-	}
+	numAgentsInt32 := uint32(numAgents)
+	sendNotifyMessages(server.GetAgentMap(), &counter, numIters, wg)
 	server.EndAgentListeningSession()
-	counter = 0
-	sendNotifyMessages(server.GetAgentMap(), numAgentsInt32, &counter, finished, 2)
+	sendNotifyMessages(server.GetAgentMap(), &counter, numIters, wg)
 
-	if !waitForNotifyFinishedMessagingExit(finished) {
-		t.Error("timeout. Number of NotifyAgentFinishedMessaging functions exited:", counter, "expected:", numAgents)
+	wg.Wait()
+	goal := 2.0 * uint32(numIters) * numAgentsInt32
+	if counter != goal {
+		t.Error("error", counter, "goroutines have exited,", goal, "were spawned")
 	}
-
 }

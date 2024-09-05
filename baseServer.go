@@ -44,6 +44,17 @@ func (server *BaseServer[T]) HandleStartOfTurn(iter, round int) {
 	fmt.Printf("Iteration %d, Round %d starting...\n", iter, round)
 }
 
+func (serv *BaseServer[T]) resetServerAsyncHelpers() {
+
+	serv.endNotifyAgentDone.cancelNotifyAgentDone()
+	serv.shouldAllowStopTalking = false
+	newCtx, newCancel := context.WithCancel(context.Background())
+	serv.endNotifyAgentDone.endNotifyAgentDoneContext = newCtx
+	serv.endNotifyAgentDone.cancelNotifyAgentDone = newCancel
+	close(serv.agentFinishedMessaging)
+
+}
+
 func (serv *BaseServer[T]) endAgentListeningSession() bool {
 	status := true
 	ctx, cancel := context.WithTimeout(context.Background(), serv.turnTimeout)
@@ -61,12 +72,7 @@ awaitSessionEnd:
 			break awaitSessionEnd
 		}
 	}
-	serv.endNotifyAgentDone.cancelNotifyAgentDone()
-	serv.shouldAllowStopTalking = false
-	newCtx, newCancel := context.WithCancel(context.Background())
-	serv.endNotifyAgentDone.endNotifyAgentDoneContext = newCtx
-	serv.endNotifyAgentDone.cancelNotifyAgentDone = newCancel
-	close(serv.agentFinishedMessaging)
+	serv.resetServerAsyncHelpers()
 	return status
 }
 
