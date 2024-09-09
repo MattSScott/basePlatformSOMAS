@@ -29,8 +29,7 @@ func (a *BaseAgent[T]) CreateBaseMessage() BaseMessage {
 func (a *BaseAgent[T]) UpdateAgentInternalState() {}
 
 func (a *BaseAgent[T]) NotifyAgentFinishedMessaging() {
-	a.agentStoppedTalking(a.id)
+	go a.agentStoppedTalking(a.id)
 }
 
 func (a *BaseAgent[T]) RunSynchronousMessaging() {}
-

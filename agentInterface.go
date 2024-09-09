@@ -15,4 +15,6 @@ type IAgent[T any] interface {
 	NotifyAgentFinishedMessaging()
 	// allows for synchronous messaging to be run
 	RunSynchronousMessaging()
+	// allows for creation of a base message
+	CreateBaseMessage() BaseMessage
 }

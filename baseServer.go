@@ -14,49 +14,66 @@ type BaseServer[T IAgent[T]] struct {
 	agentMap map[uuid.UUID]T
 	// map of agentid -> empty struct so that agents cannot access each others agent structs
 	agentIdSet map[uuid.UUID]struct{}
-	// map of uuid ->struct{}{} which stores the ids of agents which have stopped messaging
-	agentStoppedTalkingMap map[uuid.UUID]struct{}
-	//channel a server goroutine will send to in order to signal messaging completion
-	messagingFinished chan struct{}
+	// channel a server goroutine will send to in order to signal messaging completion
+	agentFinishedMessaging chan uuid.UUID
 	// duration after which messaging phase forcefully ends during rounds
 	turnTimeout time.Duration
 	// interface which holds extended methods for round running and turn running
 	roundRunner RoundRunner
-	//iterations
+	// number of iterations for server
 	iterations int
-	//turns
+	// number of turns for server
 	turns int
-	//lock which stops race conditions when updating agentStoppedTalkingMap
-	agentMapRWMutex sync.RWMutex
-	//stops multiple sends to messagingFinished during a round
-	doneChannelOnce         sync.Once
-	shouldRunAsyncMessaging bool
+	// mutex for agentStoppedTalkingMap access
+	endNotifyAgentDone endNotifyAgentDone
+	// stops multiple sends to messagingFinished during a round
+	doneChannelOnce sync.Once
+	// flag to disable async message propagation after timeout
+	shouldAllowStopTalking bool
+}
+
+type endNotifyAgentDone struct {
+	endNotifyAgentDoneContext context.Context
+	cancelNotifyAgentDone     context.CancelFunc
 }
 
 func (server *BaseServer[T]) HandleStartOfTurn(iter, round int) {
 	server.doneChannelOnce = sync.Once{}
-	server.messagingFinished = make(chan struct{})
+	server.agentFinishedMessaging = make(chan uuid.UUID)
+
 	fmt.Printf("Iteration %d, Round %d starting...\n", iter, round)
+}
+
+func (serv *BaseServer[T]) resetServerAsyncHelpers() {
+
+	serv.endNotifyAgentDone.cancelNotifyAgentDone()
+	serv.shouldAllowStopTalking = false
+	newCtx, newCancel := context.WithCancel(context.Background())
+	serv.endNotifyAgentDone.endNotifyAgentDoneContext = newCtx
+	serv.endNotifyAgentDone.cancelNotifyAgentDone = newCancel
+	close(serv.agentFinishedMessaging)
 
 }
 
 func (serv *BaseServer[T]) endAgentListeningSession() bool {
-
+	status := true
 	ctx, cancel := context.WithTimeout(context.Background(), serv.turnTimeout)
 	defer cancel()
-	select {
-	case <-serv.messagingFinished:
-		serv.agentStoppedTalkingMap = make(map[uuid.UUID]struct{})
-		serv.shouldRunAsyncMessaging = false
-		close(serv.messagingFinished)
-		return true
 
-	case <-ctx.Done():
-		serv.agentStoppedTalkingMap = make(map[uuid.UUID]struct{})
-		serv.shouldRunAsyncMessaging = false
-		close(serv.messagingFinished)
-		return false
+	agentStoppedTalkingMap := make(map[uuid.UUID]struct{})
+awaitSessionEnd:
+	for len(agentStoppedTalkingMap) != len(serv.agentMap) {
+		select {
+		case id := <-serv.agentFinishedMessaging:
+			agentStoppedTalkingMap[id] = struct{}{}
+
+		case <-ctx.Done():
+			status = false
+			break awaitSessionEnd
+		}
 	}
+	serv.resetServerAsyncHelpers()
+	return status
 }
 
 func (server *BaseServer[T]) HandleEndOfTurn(iter, round int) {
@@ -68,7 +85,6 @@ func (server *BaseServer[T]) SendMessage(msg IMessage[T], receivers []uuid.UUID)
 	for _, receiver := range receivers {
 		go msg.InvokeMessageHandler(server.agentMap[receiver])
 	}
-
 }
 
 func (serv *BaseServer[T]) AddAgent(agent T) {
@@ -88,10 +104,8 @@ func (serv *BaseServer[T]) Initialise() {}
 
 func (serv *BaseServer[T]) Start() {
 	serv.checkHandler()
-	turns := serv.turns
-	iterations := serv.iterations
-	for i := 0; i < iterations; i++ {
-		for j := 0; j < turns; j++ {
+	for i := 0; i < serv.iterations; i++ {
+		for j := 0; j < serv.turns; j++ {
 			serv.HandleStartOfTurn(i+1, j+1)
 			serv.roundRunner.RunTurn()
 			serv.HandleEndOfTurn(i+1, j+1)
@@ -104,19 +118,13 @@ func (serv *BaseServer[T]) GetAgentMap() map[uuid.UUID]T {
 }
 
 func (serv *BaseServer[T]) agentStoppedTalking(id uuid.UUID) {
-	if !serv.shouldRunAsyncMessaging {
+	if !serv.shouldAllowStopTalking {
 		return
 	}
-	serv.agentMapRWMutex.Lock()
-	serv.agentStoppedTalkingMap[id] = struct{}{}
-
-	if len(serv.agentStoppedTalkingMap) == len(serv.agentMap) {
-		serv.doneChannelOnce.Do(func() {
-			serv.messagingFinished <- struct{}{}
-		})
+	select {
+	case serv.agentFinishedMessaging <- id:
+	case <-serv.endNotifyAgentDone.endNotifyAgentDoneContext.Done():
 	}
-	serv.agentMapRWMutex.Unlock()
-
 }
 
 func (serv *BaseServer[T]) SetRunHandler(handler RoundRunner) {
@@ -129,89 +137,77 @@ func (serv *BaseServer[T]) checkHandler() {
 	}
 }
 
-func (serv *BaseServer[T]) RunTurn() {}
-
-func (bs *BaseServer[T]) RemoveAgent(agentToRemove T) {
-	delete(bs.agentMap, agentToRemove.GetID())
+func (serv *BaseServer[T]) RunTurn() {
+	serv.roundRunner.RunTurn()
 }
 
-func (bs *BaseServer[T]) GetIterations() int {
-	return bs.iterations
+func (serv *BaseServer[T]) RemoveAgent(agentToRemove T) {
+	delete(serv.agentMap, agentToRemove.GetID())
+	delete(serv.agentIdSet, agentToRemove.GetID())
 }
 
-func (bs *BaseServer[T]) RunRound() {
-	//bs.roundRunner.RunRound()
+func (serv *BaseServer[T]) GetIterations() int {
+	return serv.iterations
 }
 
-type AgentGenerator[T IAgent[T]] func(IExposedServerFunctions[T]) T
-
-type AgentGeneratorCountPair[T IAgent[T]] struct {
-	generator AgentGenerator[T]
-	count     int
+func (serv *BaseServer[T]) RunRound() {
+	serv.roundRunner.RunRound()
 }
 
-func MakeAgentGeneratorCountPair[T IAgent[T]](generatorFunction AgentGenerator[T], count int) AgentGeneratorCountPair[T] {
-	return AgentGeneratorCountPair[T]{
-		generator: generatorFunction,
-		count:     count,
-	}
-}
-
-func (bs *BaseServer[T]) GenerateAgentArrayFromMap() []T {
-
-	agentMapToArray := make([]T, len(bs.agentMap))
+func (serv *BaseServer[T]) GenerateAgentArrayFromMap() []T {
+	agentMapToArray := make([]T, len(serv.agentMap))
 
 	i := 0
-	for _, ag := range bs.agentMap {
+	for _, ag := range serv.agentMap {
 		agentMapToArray[i] = ag
 		i++
 	}
 	return agentMapToArray
 }
 
-func (bs *BaseServer[T]) SendSynchronousMessage(msg IMessage[T], recipients []uuid.UUID) {
+func (serv *BaseServer[T]) SendSynchronousMessage(msg IMessage[T], recipients []uuid.UUID) {
 	for _, recip := range recipients {
 		if msg.GetSender() == recip {
 			continue
-		} else {
-			msg.InvokeMessageHandler(bs.agentMap[recip])
 		}
+		msg.InvokeMessageHandler(serv.agentMap[recip])
 	}
-
 }
 
-func (bs *BaseServer[T]) RunSynchronousMessagingSession() {
-	for _, agent := range bs.agentMap {
+func (serv *BaseServer[T]) RunSynchronousMessagingSession() {
+	serv.shouldAllowStopTalking = false
+	for _, agent := range serv.agentMap {
 		agent.RunSynchronousMessaging()
 	}
+	serv.shouldAllowStopTalking = true
 }
 
-func (bs *BaseServer[T]) initialiseAgents(m []AgentGeneratorCountPair[T]) {
-
+func (serv *BaseServer[T]) initialiseAgents(m []AgentGeneratorCountPair[T]) {
 	for _, pair := range m {
 		for i := 0; i < pair.count; i++ {
-			agent := pair.generator(bs)
-			bs.AddAgent(agent)
+			agent := pair.generator(serv)
+			serv.AddAgent(agent)
 		}
 	}
-
 }
 
 // generate a server instance based on a mapping function and number of iterations
 func CreateServer[T IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iterations, turns int, turnMaxDuration time.Duration) *BaseServer[T] {
 	serv := &BaseServer[T]{
-		agentMap:                make(map[uuid.UUID]T),
-		agentIdSet:              make(map[uuid.UUID]struct{}),
-		agentStoppedTalkingMap:  make(map[uuid.UUID]struct{}),
-		turnTimeout:             turnMaxDuration,
-		roundRunner:             nil,
-		iterations:              iterations,
-		turns:                   turns,
-		messagingFinished:       make(chan struct{}),
-		agentMapRWMutex:         sync.RWMutex{},
-		doneChannelOnce:         sync.Once{},
-		shouldRunAsyncMessaging: true,
+		agentMap:               make(map[uuid.UUID]T),
+		agentIdSet:             make(map[uuid.UUID]struct{}),
+		turnTimeout:            turnMaxDuration,
+		roundRunner:            nil,
+		iterations:             iterations,
+		turns:                  turns,
+		agentFinishedMessaging: make(chan uuid.UUID),
+		endNotifyAgentDone:     endNotifyAgentDone{},
+		doneChannelOnce:        sync.Once{},
+		shouldAllowStopTalking: true,
 	}
+	ctx, cancel := context.WithCancel(context.Background())
+	serv.endNotifyAgentDone.endNotifyAgentDoneContext = ctx
+	serv.endNotifyAgentDone.cancelNotifyAgentDone = cancel
 	serv.initialiseAgents(generatorArray)
 	return serv
 }

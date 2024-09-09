@@ -47,4 +47,3 @@ type RoundRunner interface {
 	RunRound()
 	RunTurn()
 }
-
