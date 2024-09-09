@@ -1,4 +1,4 @@
-package basePlatformSOMAS
+package server
 
 import (
 	"context"
@@ -6,10 +6,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/MattSScott/basePlatformSOMAS/pkg/agent"
+	"github.com/MattSScott/basePlatformSOMAS/pkg/message"
 	"github.com/google/uuid"
 )
 
-type BaseServer[T IAgent[T]] struct {
+type BaseServer[T agent.IAgent[T]] struct {
 	// map of agentid -> agent struct
 	agentMap map[uuid.UUID]T
 	// map of agentid -> empty struct so that agents cannot access each others agent structs
@@ -81,7 +83,7 @@ func (server *BaseServer[T]) HandleEndOfTurn(iter, round int) {
 	fmt.Printf("Iteration %d, Round %d finished.\n", iter, round)
 }
 
-func (server *BaseServer[T]) SendMessage(msg IMessage[T], receivers []uuid.UUID) {
+func (server *BaseServer[T]) SendMessage(msg message.IMessage[T], receivers []uuid.UUID) {
 	for _, receiver := range receivers {
 		go msg.InvokeMessageHandler(server.agentMap[receiver])
 	}
@@ -117,7 +119,7 @@ func (serv *BaseServer[T]) GetAgentMap() map[uuid.UUID]T {
 	return serv.agentMap
 }
 
-func (serv *BaseServer[T]) agentStoppedTalking(id uuid.UUID) {
+func (serv *BaseServer[T]) AgentStoppedTalking(id uuid.UUID) {
 	if !serv.shouldAllowStopTalking {
 		return
 	}
@@ -165,7 +167,7 @@ func (serv *BaseServer[T]) GenerateAgentArrayFromMap() []T {
 	return agentMapToArray
 }
 
-func (serv *BaseServer[T]) SendSynchronousMessage(msg IMessage[T], recipients []uuid.UUID) {
+func (serv *BaseServer[T]) SendSynchronousMessage(msg message.IMessage[T], recipients []uuid.UUID) {
 	for _, recip := range recipients {
 		if msg.GetSender() == recip {
 			continue
@@ -182,17 +184,17 @@ func (serv *BaseServer[T]) RunSynchronousMessagingSession() {
 	serv.shouldAllowStopTalking = true
 }
 
-func (serv *BaseServer[T]) initialiseAgents(m []AgentGeneratorCountPair[T]) {
+func (serv *BaseServer[T]) initialiseAgents(m []agent.AgentGeneratorCountPair[T]) {
 	for _, pair := range m {
-		for i := 0; i < pair.count; i++ {
-			agent := pair.generator(serv)
+		for i := 0; i < pair.Count; i++ {
+			agent := pair.Generator(serv)
 			serv.AddAgent(agent)
 		}
 	}
 }
 
 // generate a server instance based on a mapping function and number of iterations
-func CreateServer[T IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iterations, turns int, turnMaxDuration time.Duration) *BaseServer[T] {
+func CreateServer[T agent.IAgent[T]](generatorArray []agent.AgentGeneratorCountPair[T], iterations, turns int, turnMaxDuration time.Duration) *BaseServer[T] {
 	serv := &BaseServer[T]{
 		agentMap:               make(map[uuid.UUID]T),
 		agentIdSet:             make(map[uuid.UUID]struct{}),
@@ -210,4 +212,16 @@ func CreateServer[T IAgent[T]](generatorArray []AgentGeneratorCountPair[T], iter
 	serv.endNotifyAgentDone.cancelNotifyAgentDone = cancel
 	serv.initialiseAgents(generatorArray)
 	return serv
+}
+
+type PrivateServerFields[T agent.IAgent[T]] interface {
+	EndAgentListeningSession()
+}
+
+func (serv *BaseServer[T]) EndAgentListeningSession() bool {
+	return serv.endAgentListeningSession()
+}
+
+func (serv *BaseServer[T]) EndAsyncMessaging() {
+	serv.shouldAllowStopTalking = false
 }

@@ -1,4 +1,4 @@
-package basePlatformSOMAS_test
+package server_test
 
 import (
 	"fmt"
@@ -7,12 +7,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MattSScott/basePlatformSOMAS"
+	"github.com/MattSScott/basePlatformSOMAS/pkg/agent"
+	"github.com/MattSScott/basePlatformSOMAS/pkg/message"
+	"github.com/MattSScott/basePlatformSOMAS/pkg/server"
 	"github.com/google/uuid"
 )
 
 type ITestBaseAgent interface {
-	basePlatformSOMAS.IAgent[ITestBaseAgent]
+	agent.IAgent[ITestBaseAgent]
 	NewTestMessage() TestMessage
 	HandleTestMessage()
 	ReceivedMessage() bool
@@ -24,33 +26,33 @@ type ITestBaseAgent interface {
 }
 
 type IBadAgent interface {
-	basePlatformSOMAS.IAgent[IBadAgent]
+	agent.IAgent[IBadAgent]
 }
 
 type ITestServer interface {
-	basePlatformSOMAS.IServer[ITestBaseAgent]
-	basePlatformSOMAS.PrivateServerFields[ITestBaseAgent]
+	server.IServer[ITestBaseAgent]
+	server.PrivateServerFields[ITestBaseAgent]
 }
 
 type TestAgent struct {
 	counter int32
 	goal    int32
-	*basePlatformSOMAS.BaseAgent[ITestBaseAgent]
+	*agent.BaseAgent[ITestBaseAgent]
 }
 
 type TestServer struct {
-	*basePlatformSOMAS.BaseServer[ITestBaseAgent]
+	*server.BaseServer[ITestBaseAgent]
 	turnCounter  int
 	roundCounter int
 }
 
 type TestMessage struct {
-	basePlatformSOMAS.BaseMessage
+	message.BaseMessage
 	counter int
 }
 
 type InfiniteLoopMessage struct {
-	basePlatformSOMAS.BaseMessage
+	message.BaseMessage
 }
 
 func (infM InfiniteLoopMessage) InvokeMessageHandler(ag ITestBaseAgent) {
@@ -67,16 +69,16 @@ func (tm TestMessage) InvokeMessageHandler(ag ITestBaseAgent) {
 
 func (tba *TestAgent) CreateTestMessage() TestMessage {
 	return TestMessage{
-		basePlatformSOMAS.BaseMessage{},
+		message.BaseMessage{},
 		5,
 	}
 }
 
 func GenerateTestServer(numAgents, iterations, turns int, maxDuration time.Duration) *TestServer {
-	m := make([]basePlatformSOMAS.AgentGeneratorCountPair[ITestBaseAgent], 1)
-	m[0] = basePlatformSOMAS.MakeAgentGeneratorCountPair(NewTestAgent, numAgents)
+	m := make([]agent.AgentGeneratorCountPair[ITestBaseAgent], 1)
+	m[0] = agent.MakeAgentGeneratorCountPair(NewTestAgent, numAgents)
 	return &TestServer{
-		BaseServer:   basePlatformSOMAS.CreateServer(m, iterations, turns, maxDuration),
+		BaseServer:   server.CreateServer(m, iterations, turns, maxDuration),
 		turnCounter:  0,
 		roundCounter: 0,
 	}
@@ -84,7 +86,7 @@ func GenerateTestServer(numAgents, iterations, turns int, maxDuration time.Durat
 
 func CreateInfiniteLoopMessage() InfiniteLoopMessage {
 	return InfiniteLoopMessage{
-		basePlatformSOMAS.BaseMessage{},
+		message.BaseMessage{},
 	}
 }
 
@@ -109,14 +111,14 @@ func (tba *TestAgent) GetGoal() int32 {
 }
 func NewTestMessage() TestMessage {
 	return TestMessage{
-		basePlatformSOMAS.BaseMessage{},
+		message.BaseMessage{},
 		5,
 	}
 }
 
-func NewTestAgent(serv basePlatformSOMAS.IExposedServerFunctions[ITestBaseAgent]) ITestBaseAgent {
+func NewTestAgent(serv agent.IExposedServerFunctions[ITestBaseAgent]) ITestBaseAgent {
 	return &TestAgent{
-		BaseAgent: basePlatformSOMAS.CreateBaseAgent(serv),
+		BaseAgent: agent.CreateBaseAgent(serv),
 		counter:   0,
 		goal:      0,
 	}
@@ -141,7 +143,7 @@ func (ag *TestAgent) RunSynchronousMessaging() {
 		i += 1
 	}
 	newMsg := ag.NewTestMessage()
-	ag.SendSynchronousMessage(newMsg, recipientArr)
+	ag.SendSynchronousMessage(&newMsg, recipientArr)
 }
 
 func (ts *TestServer) RunTurn() {
@@ -263,7 +265,7 @@ func TestAgentRecievesMessage(t *testing.T) {
 	}
 
 	server.Initialise()
-	go server.SendMessage(testMessage, arrayReceivers)
+	go server.SendMessage(&testMessage, arrayReceivers)
 	_ = server.EndAgentListeningSession()
 	for _, ag := range server.GetAgentMap() {
 		fmt.Println()
@@ -291,7 +293,7 @@ func TestWaitForMessagingToEnd(t *testing.T) {
 	for j := 0; j < numberOfMessages; j++ {
 		for _, ag := range server.GetAgentMap() {
 			msg := ag.NewTestMessage()
-			go ag.SendMessage(msg, arrayOfIDs)
+			go ag.SendMessage(&msg, arrayOfIDs)
 		}
 	}
 	a := server.EndAgentListeningSession()
@@ -358,7 +360,7 @@ func TestSendSynchronousMessage(t *testing.T) {
 
 	server.Initialise()
 	server.EndAsyncMessaging()
-	server.SendSynchronousMessage(testMessage, arrayReceivers)
+	server.SendSynchronousMessage(&testMessage, arrayReceivers)
 	for _, ag := range server.GetAgentMap() {
 		if !ag.ReceivedMessage() {
 			t.Error("Didn't Receive Message")
@@ -404,7 +406,7 @@ func TestMessagePrint(t *testing.T) {
 }
 
 func (tba *TestServer) infMessageSend(newMsg InfiniteLoopMessage, receiver []uuid.UUID, done chan struct{}) {
-	go tba.SendMessage(newMsg, receiver)
+	go tba.SendMessage(&newMsg, receiver)
 	fmt.Println(tba.EndAgentListeningSession())
 	done <- struct{}{}
 }

@@ -1,28 +1,29 @@
-package basePlatformSOMAS_test
+package message_test
 
 import (
 	"fmt"
 	"testing"
 
-	"github.com/MattSScott/basePlatformSOMAS"
+	"github.com/MattSScott/basePlatformSOMAS/pkg/agent"
+	"github.com/MattSScott/basePlatformSOMAS/pkg/message"
 )
 
 type Message1 struct {
-	basePlatformSOMAS.BaseMessage
+	message.BaseMessage
 	messageField1 int
 }
 
 type Message2 struct {
-	basePlatformSOMAS.BaseMessage
+	message.BaseMessage
 	messageField2 int
 }
 
 type NullMessage struct {
-	basePlatformSOMAS.BaseMessage
+	message.BaseMessage
 }
 
 type IExtendedAgent interface {
-	basePlatformSOMAS.IAgent[IExtendedAgent]
+	agent.IAgent[IExtendedAgent]
 	GetAgentField() int
 	HandleMessage1(msg Message1)
 	HandleMessage2(msg Message2)
@@ -30,7 +31,7 @@ type IExtendedAgent interface {
 }
 
 type ExtendedAgent struct {
-	basePlatformSOMAS.BaseAgent[IExtendedAgent]
+	agent.BaseAgent[IExtendedAgent]
 	agentField int
 }
 
@@ -66,22 +67,22 @@ func (ea *ExtendedAgent) GetAgentField() int {
 	return ea.agentField
 }
 
-func (ea *ExtendedAgent) GetMessage1() Message1 {
-	return Message1{
+func (ea *ExtendedAgent) GetMessage1() *Message1 {
+	return &Message1{
 		ea.CreateBaseMessage(),
 		5,
 	}
 }
 
-func (ea *ExtendedAgent) GetMessage2() Message2 {
-	return Message2{
+func (ea *ExtendedAgent) GetMessage2() *Message2 {
+	return &Message2{
 		ea.CreateBaseMessage(),
 		10,
 	}
 }
 
-func (ea *ExtendedAgent) GetNullMessage() NullMessage {
-	return NullMessage{
+func (ea *ExtendedAgent) GetNullMessage() *NullMessage {
+	return &NullMessage{
 		ea.CreateBaseMessage(),
 	}
 }
@@ -128,7 +129,7 @@ func TestMultipleMessagesGetHandled(t *testing.T) {
 	a1 := &ExtendedAgent{agentField: 0}
 	a2 := &ExtendedAgent{agentField: 0}
 
-	allMessages := []basePlatformSOMAS.IMessage[IExtendedAgent]{a1.GetMessage1(), a1.GetMessage1(), a1.GetMessage2()}
+	allMessages := []message.IMessage[IExtendedAgent]{a1.GetMessage1(), a1.GetMessage1(), a1.GetMessage2()}
 
 	for _, msg := range allMessages {
 		msg.InvokeMessageHandler(a2)
