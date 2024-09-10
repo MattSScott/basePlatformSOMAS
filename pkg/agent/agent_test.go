@@ -2,53 +2,60 @@ package agent_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/MattSScott/basePlatformSOMAS/pkg/agent"
+	"github.com/MattSScott/basePlatformSOMAS/pkg/internal/testUtils"
 	"github.com/MattSScott/basePlatformSOMAS/pkg/server"
 	"github.com/google/uuid"
 )
 
-type IBaseAgent interface {
-	agent.IAgent[IBaseAgent]
-}
-
-type AgentTestServer struct {
-	*server.BaseServer[IBaseAgent]
-}
-
 func TestAgentIdOperations(t *testing.T) {
-	var testServ server.IServer[IBaseAgent] = AgentTestServer{}
-	baseAgent := agent.CreateBaseAgent[IBaseAgent](testServ)
+	var testServ server.IServer[testUtils.ITestBaseAgent] = testUtils.TestServer{}
+	baseAgent := agent.CreateBaseAgent[testUtils.ITestBaseAgent](testServ)
 
 	if baseAgent.GetID() == uuid.Nil {
 		t.Error("Agent not instantiated with valid ID")
 	}
 }
 
-type AgentWithState struct {
-	*agent.BaseAgent[IBaseAgent]
-	state int
-}
-
-func (aws *AgentWithState) UpdateAgentInternalState() {
-	aws.state += 1
-}
-
 func TestUpdateAgentInternalState(t *testing.T) {
-	var testServ server.IServer[IBaseAgent] = AgentTestServer{}
+	var testServ server.IServer[testUtils.ITestBaseAgent] = testUtils.TestServer{}
 
-	ag := AgentWithState{
-		agent.CreateBaseAgent[IBaseAgent](testServ),
-		0,
+	ag := testUtils.AgentWithState{
+		BaseAgent: agent.CreateBaseAgent[testUtils.ITestBaseAgent](testServ),
+		State:     0,
 	}
 
-	if ag.state != 0 {
+	if ag.State != 0 {
 		t.Error("Additional agent field not correctly instantiated")
 	}
 
 	ag.UpdateAgentInternalState()
 
-	if ag.state != 1 {
+	if ag.State != 1 {
 		t.Error("Agent state not correctly updated")
+	}
+}
+
+func TestCreateBaseMessage(t *testing.T) {
+	testServ := testUtils.GenerateTestServer(1, 1, 1, time.Second)
+
+	ag := testUtils.NewTestAgent(testServ)
+	newMsg := ag.CreateBaseMessage()
+	msgSenderID := newMsg.GetSender()
+	agID := ag.GetID()
+	if msgSenderID != agID {
+		t.Error("Incorrect Sender ID in Message. Expected:", agID, "got:", msgSenderID)
+	}
+}
+
+func TestNotifyAgentMessaging(t *testing.T) {
+	testServ := testUtils.GenerateTestServer(1, 1, 1, time.Second)
+	ag := testUtils.NewTestAgent(testServ)
+	ag.FinishedMessaging()
+	agentStoppedTalkingCalls:= ag.GetAgentStoppedTalking()
+	if agentStoppedTalkingCalls != 1 {
+		t.Error("expected 1 calls of agentStoppedTalking(), got:",agentStoppedTalkingCalls )
 	}
 }
