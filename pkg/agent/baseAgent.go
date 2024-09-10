@@ -1,9 +1,6 @@
 package agent
 
 import (
-	"sync"
-	"sync/atomic"
-
 	"github.com/MattSScott/basePlatformSOMAS/pkg/message"
 	"github.com/google/uuid"
 )
@@ -37,9 +34,3 @@ func (a *BaseAgent[T]) NotifyAgentFinishedMessaging() {
 }
 
 func (a *BaseAgent[T]) RunSynchronousMessaging() {}
-
-func (ag *BaseAgent[T]) NotifyAgentFinishedMessagingUnthreaded(wg *sync.WaitGroup, counter *uint32) {
-	defer wg.Done()
-	ag.AgentStoppedTalking(ag.id)
-	atomic.AddUint32(counter, 1)
-}

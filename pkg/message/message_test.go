@@ -141,3 +141,13 @@ func TestMultipleMessagesGetHandled(t *testing.T) {
 		t.Error("Agents unable to handle multiple message types")
 	}
 }
+
+func TestPrint(t *testing.T) {
+	a1 := &ExtendedAgent{agentField: 5}
+	newMsg := a1.GetMessage1()
+	newMsg.Print()
+}
+
+// func TestGetSender(t *testing.T) {
+
+// }

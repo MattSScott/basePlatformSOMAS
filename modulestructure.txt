@@ -1,12 +1,10 @@
 basePlatformSOMAS/
-├── internal/
-│   └── server/
-│       └── servershit.go
+
 ├── pkg/
-    └──shared/
-        └──shared.go
 │   └── server/
-│       └── etc.go          # all server files
     └── agent/
     └── messaging/
 ├── test/
+│   └── server/
+    └── agent/
+    └── messaging/

@@ -32,5 +32,4 @@ func (bm *BaseMessage) GetSender() uuid.UUID {
 
 func (bm *BaseMessage) SetSender(id uuid.UUID) {
 	bm.sender = id
-	//return bm
 }
