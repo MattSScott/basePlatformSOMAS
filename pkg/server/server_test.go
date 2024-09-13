@@ -15,7 +15,7 @@ func TestGenerateServer(t *testing.T) {
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second)
 	lenAgentMap := len(server.GetAgentMap())
 	if lenAgentMap != numAgents {
-		t.Error(lenAgentMap, "agents initialised,expected", numAgents)
+		t.Error(lenAgentMap, "agents initialised, expected:", numAgents)
 	}
 }
 
@@ -69,7 +69,7 @@ func TestRunTurn(t *testing.T) {
 	server.SetRunHandler(server)
 	server.Start()
 	if server.GetTurnCounter() != (iterations * rounds) {
-		t.Error("wrong number of iterations executed", server.GetTurnCounter(), "expected", iterations*rounds)
+		t.Error("wrong number of iterations executed, got:", server.GetTurnCounter(), "expected", iterations*rounds)
 	}
 }
 
@@ -262,7 +262,6 @@ func TestInfLoopProtection(t *testing.T) {
 	}
 }
 
-
 func TestGameRunner(t *testing.T) {
 
 	timeLimit := 100 * time.Millisecond
@@ -296,6 +295,6 @@ func TestNotifyStoppedTalkingTimeout(t *testing.T) {
 	wg.Wait()
 	goal := 2.0 * uint32(numIters) * numAgentsInt32
 	if counter != goal {
-		t.Error("error", counter, "goroutines have exited,", goal, "were spawned")
+		t.Error(counter, "goroutines have exited,", goal, "were spawned")
 	}
 }

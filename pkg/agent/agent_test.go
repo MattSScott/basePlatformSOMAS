@@ -22,18 +22,18 @@ func TestAgentIdOperations(t *testing.T) {
 func TestUpdateAgentInternalState(t *testing.T) {
 	var testServ server.IServer[testUtils.ITestBaseAgent] = testUtils.TestServer{}
 
-	ag := testUtils.AgentWithState{
+	ag := testUtils.TestServerFunctionsAgent{
 		BaseAgent: agent.CreateBaseAgent[testUtils.ITestBaseAgent](testServ),
-		State:     0,
+		Counter:   0,
 	}
 
-	if ag.State != 0 {
+	if ag.Counter != 0 {
 		t.Error("Additional agent field not correctly instantiated")
 	}
 
 	ag.UpdateAgentInternalState()
 
-	if ag.State != 1 {
+	if ag.Counter != 1 {
 		t.Error("Agent state not correctly updated")
 	}
 }
@@ -54,8 +54,8 @@ func TestNotifyAgentMessaging(t *testing.T) {
 	testServ := testUtils.GenerateTestServer(1, 1, 1, time.Second)
 	ag := testUtils.NewTestAgent(testServ)
 	ag.FinishedMessaging()
-	agentStoppedTalkingCalls:= ag.GetAgentStoppedTalking()
+	agentStoppedTalkingCalls := ag.GetAgentStoppedTalking()
 	if agentStoppedTalkingCalls != 1 {
-		t.Error("expected 1 calls of agentStoppedTalking(), got:",agentStoppedTalkingCalls )
+		t.Error("expected 1 calls of agentStoppedTalking(), got:", agentStoppedTalkingCalls)
 	}
 }

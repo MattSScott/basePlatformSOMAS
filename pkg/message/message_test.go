@@ -72,10 +72,10 @@ func TestPrint(t *testing.T) {
 
 func TestGetSender(t *testing.T) {
 	a1 := testUtils.NewExtendedAgent(nil)
-	msg:=a1.GetMessage1()
+	msg := a1.GetMessage1()
 	agID := a1.GetID()
 	msgSenderID := msg.GetSender()
 	if agID != msgSenderID {
-		t.Errorf("Message has sender ID: %s, expected: %s",msgSenderID, agID)
+		t.Errorf("Message has sender ID: %s, expected: %s", msgSenderID, agID)
 	}
 }

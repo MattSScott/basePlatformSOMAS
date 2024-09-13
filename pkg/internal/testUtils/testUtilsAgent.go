@@ -34,13 +34,8 @@ type IBadAgent interface {
 	agent.IAgent[IBadAgent]
 }
 
-type AgentWithState struct {
-	*agent.BaseAgent[ITestBaseAgent]
-	State int
-}
-
-func (aws *AgentWithState) UpdateAgentInternalState() {
-	aws.State += 1
+func (ta *TestServerFunctionsAgent) UpdateAgentInternalState() {
+	ta.Counter += 1
 }
 
 func (ta *TestServerFunctionsAgent) FinishedMessaging() {
@@ -48,16 +43,16 @@ func (ta *TestServerFunctionsAgent) FinishedMessaging() {
 	ta.NotifyAgentFinishedMessaging()
 }
 
-func (tba *TestServerFunctionsAgent) CreateTestMessage() TestMessage {
+func (ta *TestServerFunctionsAgent) CreateTestMessage() TestMessage {
 	return TestMessage{
 		message.BaseMessage{},
 		5,
 	}
 }
 
-func (ag *TestServerFunctionsAgent) NotifyAgentFinishedMessagingUnthreaded(wg *sync.WaitGroup, counter *uint32) {
+func (ta *TestServerFunctionsAgent) NotifyAgentFinishedMessagingUnthreaded(wg *sync.WaitGroup, counter *uint32) {
 	defer wg.Done()
-	ag.AgentStoppedTalking(ag.GetID())
+	ta.AgentStoppedTalking(ta.GetID())
 	atomic.AddUint32(counter, 1)
 }
 
@@ -65,19 +60,15 @@ func (ta TestServerFunctionsAgent) GetAgentStoppedTalking() int {
 	return ta.StoppedTalking
 }
 
-func (ag *TestServerFunctionsAgent) HandleTestMessage() {
-	newCounterValue := atomic.AddInt32(&ag.Counter, 1)
-	if newCounterValue == atomic.LoadInt32(&ag.Goal) {
-		ag.NotifyAgentFinishedMessaging()
+func (ta *TestServerFunctionsAgent) HandleTestMessage() {
+	newCounterValue := atomic.AddInt32(&ta.Counter, 1)
+	if newCounterValue == atomic.LoadInt32(&ta.Goal) {
+		ta.NotifyAgentFinishedMessaging()
 	}
 }
 
-func (ag *TestServerFunctionsAgent) ReceivedMessage() bool {
-	return ag.Counter == ag.Goal
-}
-
-func (ag *TestServerFunctionsAgent) UpdateAgentInternalState() {
-	ag.Counter += 1
+func (ta *TestServerFunctionsAgent) ReceivedMessage() bool {
+	return ta.Counter == ta.Goal
 }
 
 func NewTestAgent(serv agent.IExposedServerFunctions[ITestBaseAgent]) ITestBaseAgent {
@@ -99,25 +90,25 @@ func (ta *TestServerFunctionsAgent) NewTestMessage() TestMessage {
 func (ta *TestServerFunctionsAgent) GetCounter() int32 {
 	return ta.Counter
 }
-func (ag *TestServerFunctionsAgent) RunSynchronousMessaging() {
-	recipients := ag.ViewAgentIdSet()
+func (ta *TestServerFunctionsAgent) RunSynchronousMessaging() {
+	recipients := ta.ViewAgentIdSet()
 	recipientArr := make([]uuid.UUID, len(recipients))
 	i := 0
 	for recip := range recipients {
 		recipientArr[i] = recip
 		i += 1
 	}
-	newMsg := ag.NewTestMessage()
-	ag.SendSynchronousMessage(&newMsg, recipientArr)
+	newMsg := ta.NewTestMessage()
+	ta.SendSynchronousMessage(&newMsg, recipientArr)
 }
 
-func (tba *TestServerFunctionsAgent) SetCounter(count int32) {
-	tba.Counter = count
+func (ta *TestServerFunctionsAgent) SetCounter(count int32) {
+	ta.Counter = count
 }
 
-func (tba *TestServerFunctionsAgent) SetGoal(goal int32) {
-	tba.Goal = goal
+func (ta *TestServerFunctionsAgent) SetGoal(goal int32) {
+	ta.Goal = goal
 }
-func (tba *TestServerFunctionsAgent) GetGoal() int32 {
-	return tba.Goal
+func (ta *TestServerFunctionsAgent) GetGoal() int32 {
+	return ta.Goal
 }

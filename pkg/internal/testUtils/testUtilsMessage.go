@@ -94,30 +94,30 @@ func (nm NullMessage) InvokeMessageHandler(agent IExtendedAgent) {
 	agent.HandleNullMessage(nm)
 }
 
-func (ea *TestMessagingAgent) GetAgentField() int {
-	return ea.AgentField
+func (agent *TestMessagingAgent) GetAgentField() int {
+	return agent.AgentField
 }
 
-func (ea *TestMessagingAgent) GetMessage1() *Message1 {
+func (agent *TestMessagingAgent) GetMessage1() *Message1 {
 	return &Message1{
-		ea.CreateBaseMessage(),
+		agent.CreateBaseMessage(),
 		5,
 	}
 }
 
-func (ea *TestMessagingAgent) GetMessage2() *Message2 {
+func (agent *TestMessagingAgent) GetMessage2() *Message2 {
 	return &Message2{
-		ea.CreateBaseMessage(),
+		agent.CreateBaseMessage(),
 		10,
 	}
 }
 
-func (ea *TestMessagingAgent) GetNullMessage() *NullMessage {
+func (agent *TestMessagingAgent) GetNullMessage() *NullMessage {
 	return &NullMessage{
-		ea.CreateBaseMessage(),
+		agent.CreateBaseMessage(),
 	}
 }
 
-func (ea *TestMessagingAgent) SetAgentField(num int) {
-	ea.AgentField = num
+func (agent *TestMessagingAgent) SetAgentField(num int) {
+	agent.AgentField = num
 }

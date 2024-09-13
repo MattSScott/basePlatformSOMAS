@@ -10,8 +10,8 @@ type BaseAgent[T IAgent[T]] struct {
 	id uuid.UUID
 }
 
-func (ba *BaseAgent[T]) GetID() uuid.UUID {
-	return ba.id
+func (a *BaseAgent[T]) GetID() uuid.UUID {
+	return a.id
 }
 
 func CreateBaseAgent[T IAgent[T]](serv IExposedServerFunctions[T]) *BaseAgent[T] {

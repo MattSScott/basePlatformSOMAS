@@ -23,14 +23,11 @@ type IServer[T agent.IAgent[T]] interface {
 	agent.IExposedServerFunctions[T]
 	// gives access to number of iteration in simulator
 	GetIterations() int
-	// the set of functions defining how a 'game loop' should run
-	// starts the agents' messaging session
-	// RunMessagingSession()
 	// begins simulator
 	Start()
+	//Signals the end of a messaging session. Either all agents send a message indicating they finished or server forcefully moves on after a set time period
+	EndAgentListeningSession() bool
 }
-
-
 
 type RoundRunner interface {
 	RunRound()

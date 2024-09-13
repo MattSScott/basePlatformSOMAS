@@ -10,6 +10,7 @@ import (
 type IMessage[T any] interface {
 	// returns the sender of a message
 	GetSender() uuid.UUID
+	// Sets the sender struct member of a message
 	SetSender(uuid.UUID)
 	// calls the appropriate messsage handler method on the receiving agent
 	InvokeMessageHandler(T)

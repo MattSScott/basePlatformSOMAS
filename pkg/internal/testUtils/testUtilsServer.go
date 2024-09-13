@@ -13,7 +13,6 @@ import (
 
 type ITestServer interface {
 	server.IServer[ITestBaseAgent]
-	server.PrivateServerFields[ITestBaseAgent]
 }
 
 type TestServer struct {
@@ -63,22 +62,22 @@ func (ts *TestServer) RunRound() {
 	ts.RoundCounter += 1
 }
 
-func (server *TestServer) HandleTurn() {
-	server.TurnCounter += 1
+func (ts *TestServer) HandleTurn() {
+	ts.TurnCounter += 1
 }
 
-func (tba *TestServer) InfMessageSend(newMsg InfiniteLoopMessage, receiver []uuid.UUID, done chan struct{}) {
-	go tba.SendMessage(&newMsg, receiver)
-	fmt.Println(tba.EndAgentListeningSession())
+func (ts *TestServer) InfMessageSend(newMsg InfiniteLoopMessage, receiver []uuid.UUID, done chan struct{}) {
+	ts.SendMessage(&newMsg, receiver)
+	ts.EndAgentListeningSession()
 	done <- struct{}{}
 }
 
-func (tba *TestServer) GetTurnCounter() int {
-	return tba.TurnCounter
+func (ts *TestServer) GetTurnCounter() int {
+	return ts.TurnCounter
 }
 
-func (tba *TestServer) GetRoundCounter() int {
-	return tba.RoundCounter
+func (ts *TestServer) GetRoundCounter() int {
+	return ts.RoundCounter
 }
 
 func SendNotifyMessages(agMap map[uuid.UUID]ITestBaseAgent, count *uint32, iter int, wg *sync.WaitGroup) {

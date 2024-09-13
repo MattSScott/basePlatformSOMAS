@@ -57,7 +57,7 @@ func (serv *BaseServer[T]) resetServerAsyncHelpers() {
 
 }
 
-func (serv *BaseServer[T]) endAgentListeningSession() bool {
+func (serv *BaseServer[T]) EndAgentListeningSession() bool {
 	status := true
 	ctx, cancel := context.WithTimeout(context.Background(), serv.turnTimeout)
 	defer cancel()
@@ -79,7 +79,7 @@ awaitSessionEnd:
 }
 
 func (server *BaseServer[T]) HandleEndOfTurn(iter, round int) {
-	server.endAgentListeningSession()
+	server.EndAgentListeningSession()
 	fmt.Printf("Iteration %d, Round %d finished.\n", iter, round)
 }
 
@@ -212,14 +212,6 @@ func CreateServer[T agent.IAgent[T]](generatorArray []agent.AgentGeneratorCountP
 	serv.endNotifyAgentDone.cancelNotifyAgentDone = cancel
 	serv.initialiseAgents(generatorArray)
 	return serv
-}
-
-type PrivateServerFields[T agent.IAgent[T]] interface {
-	EndAgentListeningSession()
-}
-
-func (serv *BaseServer[T]) EndAgentListeningSession() bool {
-	return serv.endAgentListeningSession()
 }
 
 func (serv *BaseServer[T]) EndAsyncMessaging() {
