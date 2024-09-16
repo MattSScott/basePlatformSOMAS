@@ -58,10 +58,6 @@ func (infM InfiniteLoopMessage) InvokeMessageHandler(ag ITestBaseAgent) {
 	InfLoop()
 }
 
-func (infM InfiniteLoopMessage) InvokeSyncMessageHandler(ag ITestBaseAgent) {
-	InfLoop()
-}
-
 func (tm TestMessage) InvokeMessageHandler(ag ITestBaseAgent) {
 	ag.HandleTestMessage()
 }

@@ -21,7 +21,7 @@ type BaseServer[T agent.IAgent[T]] struct {
 	// duration after which messaging phase forcefully ends during rounds
 	turnTimeout time.Duration
 	// interface which holds extended methods for round running and turn running
-	roundRunner RoundRunner
+	gameRunner GameRunner
 	// number of iterations for server
 	iterations int
 	// number of turns for server
@@ -39,22 +39,18 @@ type endNotifyAgentDone struct {
 	cancelNotifyAgentDone     context.CancelFunc
 }
 
-func (server *BaseServer[T]) HandleStartOfTurn(iter, round int) {
+func (server *BaseServer[T]) HandleStartOfTurn(iter, turn int) {
 	server.doneChannelOnce = sync.Once{}
 	server.agentFinishedMessaging = make(chan uuid.UUID)
-
-	fmt.Printf("Iteration %d, Round %d starting...\n", iter, round)
+	fmt.Printf("Iteration %d, Turn %d starting...\n", iter, turn)
 }
 
 func (serv *BaseServer[T]) resetServerAsyncHelpers() {
-
 	serv.endNotifyAgentDone.cancelNotifyAgentDone()
 	serv.shouldAllowStopTalking = false
 	newCtx, newCancel := context.WithCancel(context.Background())
 	serv.endNotifyAgentDone.endNotifyAgentDoneContext = newCtx
 	serv.endNotifyAgentDone.cancelNotifyAgentDone = newCancel
-	close(serv.agentFinishedMessaging)
-
 }
 
 func (serv *BaseServer[T]) EndAgentListeningSession() bool {
@@ -68,7 +64,7 @@ awaitSessionEnd:
 		select {
 		case id := <-serv.agentFinishedMessaging:
 			agentStoppedTalkingMap[id] = struct{}{}
-
+			fmt.Println("Got!")
 		case <-ctx.Done():
 			status = false
 			break awaitSessionEnd
@@ -78,9 +74,9 @@ awaitSessionEnd:
 	return status
 }
 
-func (server *BaseServer[T]) HandleEndOfTurn(iter, round int) {
+func (server *BaseServer[T]) HandleEndOfTurn(iter, turn int) {
 	server.EndAgentListeningSession()
-	fmt.Printf("Iteration %d, Round %d finished.\n", iter, round)
+	fmt.Printf("Iteration %d, Turn %d finished.\n", iter, turn)
 }
 
 func (server *BaseServer[T]) SendMessage(msg message.IMessage[T], receivers []uuid.UUID) {
@@ -102,14 +98,12 @@ func (serv *BaseServer[T]) AccessAgentByID(id uuid.UUID) T {
 	return serv.agentMap[id]
 }
 
-func (serv *BaseServer[T]) Initialise() {}
-
 func (serv *BaseServer[T]) Start() {
 	serv.checkHandler()
 	for i := 0; i < serv.iterations; i++ {
 		for j := 0; j < serv.turns; j++ {
 			serv.HandleStartOfTurn(i+1, j+1)
-			serv.roundRunner.RunTurn()
+			serv.gameRunner.RunTurn()
 			serv.HandleEndOfTurn(i+1, j+1)
 		}
 	}
@@ -129,31 +123,35 @@ func (serv *BaseServer[T]) AgentStoppedTalking(id uuid.UUID) {
 	}
 }
 
-func (serv *BaseServer[T]) SetRunHandler(handler RoundRunner) {
-	serv.roundRunner = handler
+func (serv *BaseServer[T]) SetGameRunner(handler GameRunner) {
+	serv.gameRunner = handler
 }
 
 func (serv *BaseServer[T]) checkHandler() {
-	if serv.roundRunner == nil {
+	if serv.gameRunner == nil {
 		panic("round running handler has not been set. Have you run SetRunHandler?")
 	}
 }
 
 func (serv *BaseServer[T]) RunTurn() {
-	serv.roundRunner.RunTurn()
+	serv.gameRunner.RunTurn()
 }
 
-func (serv *BaseServer[T]) RemoveAgent(agentToRemove T) {
-	delete(serv.agentMap, agentToRemove.GetID())
-	delete(serv.agentIdSet, agentToRemove.GetID())
+func (serv *BaseServer[T]) GetTurns() int {
+	return serv.turns
+}
+
+func (serv *BaseServer[T]) RunIteration() {
+	serv.gameRunner.RunIteration()
 }
 
 func (serv *BaseServer[T]) GetIterations() int {
 	return serv.iterations
 }
 
-func (serv *BaseServer[T]) RunRound() {
-	serv.roundRunner.RunRound()
+func (serv *BaseServer[T]) RemoveAgent(agentToRemove T) {
+	delete(serv.agentMap, agentToRemove.GetID())
+	delete(serv.agentIdSet, agentToRemove.GetID())
 }
 
 func (serv *BaseServer[T]) GenerateAgentArrayFromMap() []T {
@@ -199,7 +197,7 @@ func CreateServer[T agent.IAgent[T]](generatorArray []agent.AgentGeneratorCountP
 		agentMap:               make(map[uuid.UUID]T),
 		agentIdSet:             make(map[uuid.UUID]struct{}),
 		turnTimeout:            turnMaxDuration,
-		roundRunner:            nil,
+		gameRunner:             nil,
 		iterations:             iterations,
 		turns:                  turns,
 		agentFinishedMessaging: make(chan uuid.UUID),

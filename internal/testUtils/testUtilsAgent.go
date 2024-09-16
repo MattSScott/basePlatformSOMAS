@@ -5,13 +5,12 @@ import (
 	"sync/atomic"
 
 	"github.com/MattSScott/basePlatformSOMAS/pkg/agent"
-	"github.com/MattSScott/basePlatformSOMAS/pkg/message"
 	"github.com/google/uuid"
 )
 
 type ITestBaseAgent interface {
 	agent.IAgent[ITestBaseAgent]
-	NewTestMessage() TestMessage
+	CreateTestMessage() *TestMessage
 	HandleTestMessage()
 	ReceivedMessage() bool
 	GetCounter() int32
@@ -43,9 +42,9 @@ func (ta *TestServerFunctionsAgent) FinishedMessaging() {
 	ta.NotifyAgentFinishedMessaging()
 }
 
-func (ta *TestServerFunctionsAgent) CreateTestMessage() TestMessage {
-	return TestMessage{
-		message.BaseMessage{},
+func (ta *TestServerFunctionsAgent) CreateTestMessage() *TestMessage {
+	return &TestMessage{
+		ta.CreateBaseMessage(),
 		5,
 	}
 }
@@ -80,13 +79,6 @@ func NewTestAgent(serv agent.IExposedServerFunctions[ITestBaseAgent]) ITestBaseA
 	}
 }
 
-func (ta *TestServerFunctionsAgent) NewTestMessage() TestMessage {
-	return TestMessage{
-		ta.CreateBaseMessage(),
-		5,
-	}
-}
-
 func (ta *TestServerFunctionsAgent) GetCounter() int32 {
 	return ta.Counter
 }
@@ -98,8 +90,8 @@ func (ta *TestServerFunctionsAgent) RunSynchronousMessaging() {
 		recipientArr[i] = recip
 		i += 1
 	}
-	newMsg := ta.NewTestMessage()
-	ta.SendSynchronousMessage(&newMsg, recipientArr)
+	newMsg := ta.CreateTestMessage()
+	ta.SendSynchronousMessage(newMsg, recipientArr)
 }
 
 func (ta *TestServerFunctionsAgent) SetCounter(count int32) {
