@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/MattSScott/basePlatformSOMAS/pkg/internal/testUtils"
+	"github.com/MattSScott/basePlatformSOMAS/internal/testUtils"
 	"github.com/MattSScott/basePlatformSOMAS/pkg/message"
 )
 

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/MattSScott/basePlatformSOMAS/pkg/agent"
-	"github.com/MattSScott/basePlatformSOMAS/pkg/internal/testUtils"
+	"github.com/MattSScott/basePlatformSOMAS/internal/testUtils"
 	"github.com/MattSScott/basePlatformSOMAS/pkg/server"
 	"github.com/google/uuid"
 )
