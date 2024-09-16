@@ -21,7 +21,7 @@ type ITestBaseAgent interface {
 	FinishedMessaging()
 	NotifyAgentFinishedMessagingUnthreaded(*sync.WaitGroup, *uint32)
 	GetAgentStoppedTalking() int
-	HandleTimeoutTestMessage(time.Duration)
+	HandleTimeoutTestMessage(msg TestTimeoutMessage)
 }
 
 type TestServerFunctionsAgent struct {
@@ -84,6 +84,7 @@ func NewTestAgent(serv agent.IExposedServerFunctions[ITestBaseAgent]) ITestBaseA
 func (ta *TestServerFunctionsAgent) GetCounter() int32 {
 	return ta.Counter
 }
+
 func (ta *TestServerFunctionsAgent) RunSynchronousMessaging() {
 	recipients := ta.ViewAgentIdSet()
 	recipientArr := make([]uuid.UUID, len(recipients))
@@ -107,7 +108,7 @@ func (ta *TestServerFunctionsAgent) GetGoal() int32 {
 	return ta.Goal
 }
 
-func (ta *TestServerFunctionsAgent) HandleTimeoutTestMessage(duration time.Duration) {
-	time.Sleep(duration)
+func (ta *TestServerFunctionsAgent) HandleTimeoutTestMessage(msg TestTimeoutMessage) {
+	time.Sleep(msg.Workload) // simulate long work
 	ta.NotifyAgentFinishedMessaging()
 }

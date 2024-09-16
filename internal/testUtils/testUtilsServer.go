@@ -31,15 +31,15 @@ func GenerateTestServer(numAgents, iterations, turns int, maxDuration time.Durat
 	}
 }
 
-func CreateTestTimeoutMessage(workLoad time.Duration) TestTimeoutMessage {
-	return TestTimeoutMessage{
+func CreateTestTimeoutMessage(workLoad time.Duration) *TestTimeoutMessage {
+	return &TestTimeoutMessage{
 		message.BaseMessage{},
 		workLoad,
 	}
 }
 
-func NewTestMessage() TestMessage {
-	return TestMessage{
+func NewTestMessage() *TestMessage {
+	return &TestMessage{
 		message.BaseMessage{},
 		5,
 	}
@@ -53,11 +53,11 @@ func (ts *TestServer) RunTurn() {
 	ts.TurnCounter += 1
 }
 
-func (ts *TestServer) InfMessageSend(newMsg TestTimeoutMessage, receiver []uuid.UUID, done chan struct{}) {
-	ts.SendMessage(&newMsg, receiver)
-	ts.EndAgentListeningSession()
-	done <- struct{}{}
-}
+// func (ts *TestServer) InfMessageSend(newMsg *TestTimeoutMessage, receiver []uuid.UUID, done chan struct{}) {
+// 	ts.SendMessage(newMsg, receiver)
+// 	ts.EndAgentListeningSession()
+// 	done <- struct{}{}
+// }
 
 func (ts *TestServer) GetTurnCounter() int {
 	return ts.TurnCounter

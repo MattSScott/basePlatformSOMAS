@@ -57,7 +57,7 @@ func NewExtendedAgent(serv agent.IExposedServerFunctions[IExtendedAgent]) IExten
 }
 
 func (timeoutM TestTimeoutMessage) InvokeMessageHandler(ag ITestBaseAgent) {
-	ag.HandleTimeoutTestMessage(timeoutM.Workload)
+	ag.HandleTimeoutTestMessage(timeoutM)
 }
 
 func (tm TestMessage) InvokeMessageHandler(ag ITestBaseAgent) {

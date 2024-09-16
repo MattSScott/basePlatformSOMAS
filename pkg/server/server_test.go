@@ -314,7 +314,6 @@ func TestRepeatedAsyncMessaging(t *testing.T) {
 	timeLimit := 100 * time.Millisecond
 
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit)
-	numAgentsInt32 := uint32(numAgents)
 	for i := 0; i < numIters; i++ {
 		wg := &sync.WaitGroup{}
 		server.HandleStartOfTurn(0, i)
@@ -326,7 +325,7 @@ func TestRepeatedAsyncMessaging(t *testing.T) {
 		wg.Wait()
 	}
 
-	goal := uint32(numIters) * numAgentsInt32
+	goal := uint32(numIters * numAgents)
 	if counter != goal {
 		t.Error(counter, "goroutines have exited,", goal, "were spawned")
 	}
@@ -338,9 +337,9 @@ func TestTimeoutExit(t *testing.T) {
 
 	agentWorkload := 150 * time.Millisecond
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit)
-	server.HandleStartOfTurn(0,0)
+	server.HandleStartOfTurn(0, 0)
 	timeoutMsg := testUtils.CreateTestTimeoutMessage(agentWorkload)
-	server.BroadcastMessage(&timeoutMsg)
+	server.BroadcastMessage(timeoutMsg)
 	status := server.EndAgentListeningSession()
 	if status && (agentWorkload > timeLimit) {
 		t.Error("Should have exited on timeout but did not")
@@ -354,9 +353,9 @@ func TestRepeatedTimeouts(t *testing.T) {
 	agentWorkload := 50 * time.Millisecond
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit)
 	for i := 0; i < numIters; i++ {
-		server.HandleStartOfTurn(0,i)
+		server.HandleStartOfTurn(0, i)
 		timeoutMsg := testUtils.CreateTestTimeoutMessage(agentWorkload)
-		server.BroadcastMessage(&timeoutMsg)
+		server.BroadcastMessage(timeoutMsg)
 		status := server.EndAgentListeningSession()
 		if status && (agentWorkload > timeLimit) {
 			t.Error("Should have exited on timeout but did not")

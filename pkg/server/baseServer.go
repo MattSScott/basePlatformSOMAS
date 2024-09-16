@@ -113,7 +113,7 @@ func (serv *BaseServer[T]) AgentStoppedTalking(id uuid.UUID) {
 	case <-serv.endNotifyAgentDone:
 		fmt.Println("Dropped!")
 		return
-	
+
 	}
 }
 
