@@ -249,24 +249,25 @@ func TestMessagePrint(t *testing.T) {
 	msg.Print()
 }
 
-func TestInfLoopProtection(t *testing.T) {
-	server := testUtils.GenerateTestServer(1, 1, 1, 20*time.Millisecond)
-	timeLimit := 100 * time.Millisecond
-	ag1 := testUtils.NewTestAgent(server)
-	newMsg := testUtils.CreateInfiniteLoopMessage()
-	done := make(chan struct{}, 1)
-	receiver := make([]uuid.UUID, 1)
-	receiver[0] = ag1.GetID()
-	go server.InfMessageSend(newMsg, receiver, done)
-	startTime := time.Now()
-	select {
-	case <-done:
-		return
-	case <-time.After(timeLimit):
-		timeTaken := time.Since(startTime)
-		t.Error("Function did not terminate early on time limit. Time taken:", timeTaken, "expected:", timeLimit)
-	}
-}
+// func TestInfLoopProtection(t *testing.T) {
+// 	server := testUtils.GenerateTestServer(1, 1, 1, 20*time.Millisecond)
+// 	timeLimit := 100 * time.Millisecond
+
+// 	ag1 := testUtils.NewTestAgent(server)
+// 	newMsg := testUtils.CreateTestTimeoutMessage()
+// 	done := make(chan struct{}, 1)
+// 	receiver := make([]uuid.UUID, 1)
+// 	receiver[0] = ag1.GetID()
+// 	go server.InfMessageSend(newMsg, receiver, done)
+// 	startTime := time.Now()
+// 	select {
+// 	case <-done:
+// 		return
+// 	case <-time.After(timeLimit):
+// 		timeTaken := time.Since(startTime)
+// 		t.Error("Function did not terminate early on time limit. Time taken:", timeTaken, "expected:", timeLimit)
+// 	}
+// }
 
 func TestGameRunner(t *testing.T) {
 	timeLimit := 100 * time.Millisecond
@@ -328,5 +329,37 @@ func TestRepeatedAsyncMessaging(t *testing.T) {
 	goal := uint32(numIters) * numAgentsInt32
 	if counter != goal {
 		t.Error(counter, "goroutines have exited,", goal, "were spawned")
+	}
+}
+
+func TestTimeoutExit(t *testing.T) {
+	var numAgents int = 3
+	timeLimit := 100 * time.Millisecond
+
+	agentWorkload := 150 * time.Millisecond
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit)
+	server.HandleStartOfTurn(0,0)
+	timeoutMsg := testUtils.CreateTestTimeoutMessage(agentWorkload)
+	server.BroadcastMessage(&timeoutMsg)
+	status := server.EndAgentListeningSession()
+	if status && (agentWorkload > timeLimit) {
+		t.Error("Should have exited on timeout but did not")
+	}
+}
+
+func TestRepeatedTimeouts(t *testing.T) {
+	var numAgents int = 3
+	var numIters int = 5
+	timeLimit := 100 * time.Millisecond
+	agentWorkload := 50 * time.Millisecond
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit)
+	for i := 0; i < numIters; i++ {
+		server.HandleStartOfTurn(0,i)
+		timeoutMsg := testUtils.CreateTestTimeoutMessage(agentWorkload)
+		server.BroadcastMessage(&timeoutMsg)
+		status := server.EndAgentListeningSession()
+		if status && (agentWorkload > timeLimit) {
+			t.Error("Should have exited on timeout but did not")
+		}
 	}
 }

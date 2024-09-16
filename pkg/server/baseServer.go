@@ -48,7 +48,6 @@ func (serv *BaseServer[T]) EndAgentListeningSession() bool {
 	status := true
 	ctx, cancel := context.WithTimeout(context.Background(), serv.turnTimeout)
 	defer cancel()
-
 	agentStoppedTalkingMap := make(map[uuid.UUID]struct{})
 awaitSessionEnd:
 	for len(agentStoppedTalkingMap) != len(serv.agentMap) {
@@ -57,11 +56,11 @@ awaitSessionEnd:
 			agentStoppedTalkingMap[id] = struct{}{}
 			fmt.Println("Got!")
 		case <-ctx.Done():
+			fmt.Println("Exiting due to timeout")
 			status = false
 			break awaitSessionEnd
 		}
 	}
-	// serv.resetServerAsyncHelpers()
 	close(serv.endNotifyAgentDone)
 	return status
 }
@@ -106,9 +105,7 @@ func (serv *BaseServer[T]) GetAgentMap() map[uuid.UUID]T {
 }
 
 func (serv *BaseServer[T]) AgentStoppedTalking(id uuid.UUID) {
-	if !serv.shouldAllowStopTalking {
-		return
-	}
+	fmt.Println("running stopped talking func")
 	select {
 	case serv.agentFinishedMessaging <- id:
 		fmt.Println("Trying!")
@@ -116,6 +113,7 @@ func (serv *BaseServer[T]) AgentStoppedTalking(id uuid.UUID) {
 	case <-serv.endNotifyAgentDone:
 		fmt.Println("Dropped!")
 		return
+	
 	}
 }
 

@@ -3,6 +3,7 @@ package testUtils
 import (
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/MattSScott/basePlatformSOMAS/pkg/agent"
 	"github.com/google/uuid"
@@ -20,6 +21,7 @@ type ITestBaseAgent interface {
 	FinishedMessaging()
 	NotifyAgentFinishedMessagingUnthreaded(*sync.WaitGroup, *uint32)
 	GetAgentStoppedTalking() int
+	HandleTimeoutTestMessage(time.Duration)
 }
 
 type TestServerFunctionsAgent struct {
@@ -103,4 +105,9 @@ func (ta *TestServerFunctionsAgent) SetGoal(goal int32) {
 }
 func (ta *TestServerFunctionsAgent) GetGoal() int32 {
 	return ta.Goal
+}
+
+func (ta *TestServerFunctionsAgent) HandleTimeoutTestMessage(duration time.Duration) {
+	time.Sleep(duration)
+	ta.NotifyAgentFinishedMessaging()
 }

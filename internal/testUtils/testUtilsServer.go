@@ -31,19 +31,10 @@ func GenerateTestServer(numAgents, iterations, turns int, maxDuration time.Durat
 	}
 }
 
-func CreateInfiniteLoopMessage() InfiniteLoopMessage {
-	return InfiniteLoopMessage{
+func CreateTestTimeoutMessage(workLoad time.Duration) TestTimeoutMessage {
+	return TestTimeoutMessage{
 		message.BaseMessage{},
-	}
-}
-
-func InfLoop() {
-	i := 0
-	for {
-		if i == -1 {
-			return
-		}
-		time.Sleep(1000 * time.Millisecond)
+		workLoad,
 	}
 }
 
@@ -62,7 +53,7 @@ func (ts *TestServer) RunTurn() {
 	ts.TurnCounter += 1
 }
 
-func (ts *TestServer) InfMessageSend(newMsg InfiniteLoopMessage, receiver []uuid.UUID, done chan struct{}) {
+func (ts *TestServer) InfMessageSend(newMsg TestTimeoutMessage, receiver []uuid.UUID, done chan struct{}) {
 	ts.SendMessage(&newMsg, receiver)
 	ts.EndAgentListeningSession()
 	done <- struct{}{}
@@ -82,4 +73,16 @@ func SendNotifyMessages(agMap map[uuid.UUID]ITestBaseAgent, count *uint32, wg *s
 		wg.Add(1)
 		go ag.NotifyAgentFinishedMessagingUnthreaded(wg, count)
 	}
+}
+
+func (t *TestServer) BroadcastMessage(msg message.IMessage[ITestBaseAgent]) {
+	agMap := t.GetAgentMap()
+	recipArr := make([]uuid.UUID, len(agMap))
+	i := 0
+	for id := range agMap {
+		recipArr[i] = id
+		i++
+	}
+	t.SendMessage(msg, recipArr)
+
 }
