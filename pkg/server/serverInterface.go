@@ -29,7 +29,7 @@ type IServer[T agent.IAgent[T]] interface {
 	EndAgentListeningSession() bool
 }
 
-type RoundRunner interface {
-	RunRound()
+type GameRunner interface {
+	RunIteration()
 	RunTurn()
 }

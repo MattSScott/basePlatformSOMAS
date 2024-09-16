@@ -3,15 +3,15 @@ package testUtils
 import (
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/MattSScott/basePlatformSOMAS/pkg/agent"
-	"github.com/MattSScott/basePlatformSOMAS/pkg/message"
 	"github.com/google/uuid"
 )
 
 type ITestBaseAgent interface {
 	agent.IAgent[ITestBaseAgent]
-	NewTestMessage() TestMessage
+	CreateTestMessage() *TestMessage
 	HandleTestMessage()
 	ReceivedMessage() bool
 	GetCounter() int32
@@ -21,6 +21,7 @@ type ITestBaseAgent interface {
 	FinishedMessaging()
 	NotifyAgentFinishedMessagingUnthreaded(*sync.WaitGroup, *uint32)
 	GetAgentStoppedTalking() int
+	HandleTimeoutTestMessage(msg TestTimeoutMessage)
 }
 
 type TestServerFunctionsAgent struct {
@@ -43,9 +44,9 @@ func (ta *TestServerFunctionsAgent) FinishedMessaging() {
 	ta.NotifyAgentFinishedMessaging()
 }
 
-func (ta *TestServerFunctionsAgent) CreateTestMessage() TestMessage {
-	return TestMessage{
-		message.BaseMessage{},
+func (ta *TestServerFunctionsAgent) CreateTestMessage() *TestMessage {
+	return &TestMessage{
+		ta.CreateBaseMessage(),
 		5,
 	}
 }
@@ -80,16 +81,10 @@ func NewTestAgent(serv agent.IExposedServerFunctions[ITestBaseAgent]) ITestBaseA
 	}
 }
 
-func (ta *TestServerFunctionsAgent) NewTestMessage() TestMessage {
-	return TestMessage{
-		ta.CreateBaseMessage(),
-		5,
-	}
-}
-
 func (ta *TestServerFunctionsAgent) GetCounter() int32 {
 	return ta.Counter
 }
+
 func (ta *TestServerFunctionsAgent) RunSynchronousMessaging() {
 	recipients := ta.ViewAgentIdSet()
 	recipientArr := make([]uuid.UUID, len(recipients))
@@ -98,8 +93,8 @@ func (ta *TestServerFunctionsAgent) RunSynchronousMessaging() {
 		recipientArr[i] = recip
 		i += 1
 	}
-	newMsg := ta.NewTestMessage()
-	ta.SendSynchronousMessage(&newMsg, recipientArr)
+	newMsg := ta.CreateTestMessage()
+	ta.SendSynchronousMessage(newMsg, recipientArr)
 }
 
 func (ta *TestServerFunctionsAgent) SetCounter(count int32) {
@@ -111,4 +106,9 @@ func (ta *TestServerFunctionsAgent) SetGoal(goal int32) {
 }
 func (ta *TestServerFunctionsAgent) GetGoal() int32 {
 	return ta.Goal
+}
+
+func (ta *TestServerFunctionsAgent) HandleTimeoutTestMessage(msg TestTimeoutMessage) {
+	time.Sleep(msg.Workload) // simulate long work
+	ta.NotifyAgentFinishedMessaging()
 }

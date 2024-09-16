@@ -2,6 +2,7 @@ package testUtils
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/MattSScott/basePlatformSOMAS/pkg/agent"
 	"github.com/MattSScott/basePlatformSOMAS/pkg/message"
@@ -43,8 +44,9 @@ type TestMessage struct {
 	Value int
 }
 
-type InfiniteLoopMessage struct {
+type TestTimeoutMessage struct {
 	message.BaseMessage
+	Workload time.Duration
 }
 
 func NewExtendedAgent(serv agent.IExposedServerFunctions[IExtendedAgent]) IExtendedAgent {
@@ -54,12 +56,8 @@ func NewExtendedAgent(serv agent.IExposedServerFunctions[IExtendedAgent]) IExten
 	}
 }
 
-func (infM InfiniteLoopMessage) InvokeMessageHandler(ag ITestBaseAgent) {
-	InfLoop()
-}
-
-func (infM InfiniteLoopMessage) InvokeSyncMessageHandler(ag ITestBaseAgent) {
-	InfLoop()
+func (timeoutM TestTimeoutMessage) InvokeMessageHandler(ag ITestBaseAgent) {
+	ag.HandleTimeoutTestMessage(timeoutM)
 }
 
 func (tm TestMessage) InvokeMessageHandler(ag ITestBaseAgent) {

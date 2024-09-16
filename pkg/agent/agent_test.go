@@ -4,35 +4,29 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MattSScott/basePlatformSOMAS/pkg/agent"
 	"github.com/MattSScott/basePlatformSOMAS/internal/testUtils"
-	"github.com/MattSScott/basePlatformSOMAS/pkg/server"
+	"github.com/MattSScott/basePlatformSOMAS/pkg/agent"
 	"github.com/google/uuid"
 )
 
 func TestAgentIdOperations(t *testing.T) {
-	var testServ server.IServer[testUtils.ITestBaseAgent] = testUtils.TestServer{}
-	baseAgent := agent.CreateBaseAgent[testUtils.ITestBaseAgent](testServ)
-
+	var testServ agent.IExposedServerFunctions[testUtils.ITestBaseAgent] = testUtils.TestServer{}
+	baseAgent := agent.CreateBaseAgent(testServ)
 	if baseAgent.GetID() == uuid.Nil {
 		t.Error("Agent not instantiated with valid ID")
 	}
 }
 
 func TestUpdateAgentInternalState(t *testing.T) {
-	var testServ server.IServer[testUtils.ITestBaseAgent] = testUtils.TestServer{}
-
+	var testServ agent.IExposedServerFunctions[testUtils.ITestBaseAgent] = testUtils.TestServer{}
 	ag := testUtils.TestServerFunctionsAgent{
-		BaseAgent: agent.CreateBaseAgent[testUtils.ITestBaseAgent](testServ),
+		BaseAgent: agent.CreateBaseAgent(testServ),
 		Counter:   0,
 	}
-
 	if ag.Counter != 0 {
 		t.Error("Additional agent field not correctly instantiated")
 	}
-
 	ag.UpdateAgentInternalState()
-
 	if ag.Counter != 1 {
 		t.Error("Agent state not correctly updated")
 	}
@@ -40,7 +34,6 @@ func TestUpdateAgentInternalState(t *testing.T) {
 
 func TestCreateBaseMessage(t *testing.T) {
 	testServ := testUtils.GenerateTestServer(1, 1, 1, time.Second)
-
 	ag := testUtils.NewTestAgent(testServ)
 	newMsg := ag.CreateBaseMessage()
 	msgSenderID := newMsg.GetSender()
