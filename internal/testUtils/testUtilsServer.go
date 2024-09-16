@@ -1,7 +1,6 @@
 package testUtils
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
@@ -53,12 +52,6 @@ func (ts *TestServer) RunTurn() {
 	ts.TurnCounter += 1
 }
 
-// func (ts *TestServer) InfMessageSend(newMsg *TestTimeoutMessage, receiver []uuid.UUID, done chan struct{}) {
-// 	ts.SendMessage(newMsg, receiver)
-// 	ts.EndAgentListeningSession()
-// 	done <- struct{}{}
-// }
-
 func (ts *TestServer) GetTurnCounter() int {
 	return ts.TurnCounter
 }
@@ -69,7 +62,6 @@ func (ts *TestServer) GetIterationCounter() int {
 
 func SendNotifyMessages(agMap map[uuid.UUID]ITestBaseAgent, count *uint32, wg *sync.WaitGroup) {
 	for _, ag := range agMap {
-		fmt.Println("running")
 		wg.Add(1)
 		go ag.NotifyAgentFinishedMessagingUnthreaded(wg, count)
 	}
@@ -84,5 +76,4 @@ func (t *TestServer) BroadcastMessage(msg message.IMessage[ITestBaseAgent]) {
 		i++
 	}
 	t.SendMessage(msg, recipArr)
-
 }

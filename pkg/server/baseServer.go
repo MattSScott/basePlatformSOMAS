@@ -27,8 +27,6 @@ type BaseServer[T agent.IAgent[T]] struct {
 	turns int
 	// closable channel to signify that messaging is complete
 	endNotifyAgentDone chan struct{}
-	// flag to disable async message propagation after timeout
-	shouldAllowStopTalking bool
 }
 
 func (server *BaseServer[T]) HandleStartOfTurn(iter, turn int) {
@@ -37,19 +35,12 @@ func (server *BaseServer[T]) HandleStartOfTurn(iter, turn int) {
 	fmt.Printf("Iteration %d, Turn %d starting...\n", iter, turn)
 }
 
-// func (serv *BaseServer[T]) resetServerAsyncHelpers() {
-// 	serv.endNotifyAgentDone.cancelNotifyAgentDone()
-// 	newCtx, newCancel := context.WithCancel(context.Background())
-// 	serv.endNotifyAgentDone.endNotifyAgentDoneContext = newCtx
-// 	serv.endNotifyAgentDone.cancelNotifyAgentDone = newCancel
-// }
-
 func (serv *BaseServer[T]) EndAgentListeningSession() bool {
 	status := true
 	ctx, cancel := context.WithTimeout(context.Background(), serv.turnTimeout)
 	defer cancel()
 	agentStoppedTalkingMap := make(map[uuid.UUID]struct{})
-awaitSessionEnd:
+	awaitSessionEnd:
 	for len(agentStoppedTalkingMap) != len(serv.agentMap) {
 		select {
 		case id := <-serv.agentFinishedMessaging:
@@ -105,7 +96,6 @@ func (serv *BaseServer[T]) GetAgentMap() map[uuid.UUID]T {
 }
 
 func (serv *BaseServer[T]) AgentStoppedTalking(id uuid.UUID) {
-	fmt.Println("running stopped talking func")
 	select {
 	case serv.agentFinishedMessaging <- id:
 		fmt.Println("Trying!")
@@ -169,11 +159,9 @@ func (serv *BaseServer[T]) SendSynchronousMessage(msg message.IMessage[T], recip
 }
 
 func (serv *BaseServer[T]) RunSynchronousMessagingSession() {
-	serv.shouldAllowStopTalking = false
 	for _, agent := range serv.agentMap {
 		agent.RunSynchronousMessaging()
 	}
-	serv.shouldAllowStopTalking = true
 }
 
 func (serv *BaseServer[T]) initialiseAgents(m []agent.AgentGeneratorCountPair[T]) {
@@ -195,17 +183,9 @@ func CreateServer[T agent.IAgent[T]](generatorArray []agent.AgentGeneratorCountP
 		iterations:             iterations,
 		turns:                  turns,
 		agentFinishedMessaging: make(chan uuid.UUID),
-		// endNotifyAgentDone:     endNotifyAgentDone{},
 		endNotifyAgentDone:     make(chan struct{}),
-		shouldAllowStopTalking: true,
+
 	}
-	// ctx, cancel := context.WithCancel(context.Background())
-	// serv.endNotifyAgentDone.endNotifyAgentDoneContext = ctx
-	// serv.endNotifyAgentDone.cancelNotifyAgentDone = cancel
 	serv.initialiseAgents(generatorArray)
 	return serv
-}
-
-func (serv *BaseServer[T]) EndAsyncMessaging() {
-	serv.shouldAllowStopTalking = false
 }

@@ -203,7 +203,7 @@ func TestSendSynchronousMessage(t *testing.T) {
 		ag.SetGoal(1)
 	}
 
-	server.EndAsyncMessaging()
+	
 	server.SendSynchronousMessage(testMessage, arrayReceivers)
 	for _, ag := range server.GetAgentMap() {
 		if !ag.ReceivedMessage() {
@@ -215,7 +215,6 @@ func TestSendSynchronousMessage(t *testing.T) {
 func TestSynchronousMessagingSession(t *testing.T) {
 	numAgents := 2
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second)
-	server.EndAsyncMessaging()
 	server.RunSynchronousMessagingSession()
 	for _, ag := range server.GetAgentMap() {
 
