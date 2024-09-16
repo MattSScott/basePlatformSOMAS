@@ -259,11 +259,10 @@ func TestInfLoopProtection(t *testing.T) {
 	receiver[0] = ag1.GetID()
 	go server.InfMessageSend(newMsg, receiver, done)
 	startTime := time.Now()
-	timeLimitChannel := time.After(timeLimit)
 	select {
 	case <-done:
 		return
-	case <-timeLimitChannel:
+	case <-time.After(timeLimit):
 		timeTaken := time.Since(startTime)
 		t.Error("Function did not terminate early on time limit. Time taken:", timeTaken, "expected:", timeLimit)
 	}
@@ -289,7 +288,25 @@ func TestGameRunner(t *testing.T) {
 	}
 }
 
-func TestNotifyStoppedTalkingTimeout(t *testing.T) {
+func TestGoroutineWontHangAsyncMessaging(t *testing.T) {
+	var counter uint32 = 0
+	var numAgents int = 3
+	timeLimit := 1000 * time.Millisecond
+
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit)
+	wg := &sync.WaitGroup{}
+	testUtils.SendNotifyMessages(server.GetAgentMap(), &counter, wg)
+	server.EndAgentListeningSession()
+	testUtils.SendNotifyMessages(server.GetAgentMap(), &counter, wg)
+	wg.Wait()
+
+	goal := uint32(2 * numAgents)
+	if counter != goal {
+		t.Error(counter, "goroutines have exited,", goal, "were spawned")
+	}
+}
+
+func TestRepeatedAsyncMessaging(t *testing.T) {
 	var counter uint32 = 0
 	var numAgents int = 3
 	var numIters int = 5
@@ -307,8 +324,6 @@ func TestNotifyStoppedTalkingTimeout(t *testing.T) {
 		}
 		wg.Wait()
 	}
-
-	t.Fail()
 
 	goal := uint32(numIters) * numAgentsInt32
 	if counter != goal {

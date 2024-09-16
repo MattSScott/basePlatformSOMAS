@@ -25,29 +25,24 @@ type BaseServer[T agent.IAgent[T]] struct {
 	iterations int
 	// number of turns for server
 	turns int
-	// mutex for agentStoppedTalkingMap access
-	endNotifyAgentDone endNotifyAgentDone
+	// closable channel to signify that messaging is complete
+	endNotifyAgentDone chan struct{}
 	// flag to disable async message propagation after timeout
 	shouldAllowStopTalking bool
 }
 
-type endNotifyAgentDone struct {
-	endNotifyAgentDoneContext context.Context
-	cancelNotifyAgentDone     context.CancelFunc
-}
-
 func (server *BaseServer[T]) HandleStartOfTurn(iter, turn int) {
 	server.agentFinishedMessaging = make(chan uuid.UUID)
+	server.endNotifyAgentDone = make(chan struct{})
 	fmt.Printf("Iteration %d, Turn %d starting...\n", iter, turn)
 }
 
-func (serv *BaseServer[T]) resetServerAsyncHelpers() {
-	serv.endNotifyAgentDone.cancelNotifyAgentDone()
-	serv.shouldAllowStopTalking = false
-	newCtx, newCancel := context.WithCancel(context.Background())
-	serv.endNotifyAgentDone.endNotifyAgentDoneContext = newCtx
-	serv.endNotifyAgentDone.cancelNotifyAgentDone = newCancel
-}
+// func (serv *BaseServer[T]) resetServerAsyncHelpers() {
+// 	serv.endNotifyAgentDone.cancelNotifyAgentDone()
+// 	newCtx, newCancel := context.WithCancel(context.Background())
+// 	serv.endNotifyAgentDone.endNotifyAgentDoneContext = newCtx
+// 	serv.endNotifyAgentDone.cancelNotifyAgentDone = newCancel
+// }
 
 func (serv *BaseServer[T]) EndAgentListeningSession() bool {
 	status := true
@@ -66,7 +61,8 @@ awaitSessionEnd:
 			break awaitSessionEnd
 		}
 	}
-	serv.resetServerAsyncHelpers()
+	// serv.resetServerAsyncHelpers()
+	close(serv.endNotifyAgentDone)
 	return status
 }
 
@@ -115,7 +111,11 @@ func (serv *BaseServer[T]) AgentStoppedTalking(id uuid.UUID) {
 	}
 	select {
 	case serv.agentFinishedMessaging <- id:
-	case <-serv.endNotifyAgentDone.endNotifyAgentDoneContext.Done():
+		fmt.Println("Trying!")
+		return
+	case <-serv.endNotifyAgentDone:
+		fmt.Println("Dropped!")
+		return
 	}
 }
 
@@ -197,12 +197,13 @@ func CreateServer[T agent.IAgent[T]](generatorArray []agent.AgentGeneratorCountP
 		iterations:             iterations,
 		turns:                  turns,
 		agentFinishedMessaging: make(chan uuid.UUID),
-		endNotifyAgentDone:     endNotifyAgentDone{},
+		// endNotifyAgentDone:     endNotifyAgentDone{},
+		endNotifyAgentDone:     make(chan struct{}),
 		shouldAllowStopTalking: true,
 	}
-	ctx, cancel := context.WithCancel(context.Background())
-	serv.endNotifyAgentDone.endNotifyAgentDoneContext = ctx
-	serv.endNotifyAgentDone.cancelNotifyAgentDone = cancel
+	// ctx, cancel := context.WithCancel(context.Background())
+	// serv.endNotifyAgentDone.endNotifyAgentDoneContext = ctx
+	// serv.endNotifyAgentDone.cancelNotifyAgentDone = cancel
 	serv.initialiseAgents(generatorArray)
 	return serv
 }
