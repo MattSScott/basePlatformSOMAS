@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/MattSScott/basePlatformSOMAS/pkg/agent"
@@ -28,8 +27,6 @@ type BaseServer[T agent.IAgent[T]] struct {
 	turns int
 	// mutex for agentStoppedTalkingMap access
 	endNotifyAgentDone endNotifyAgentDone
-	// stops multiple sends to messagingFinished during a round
-	doneChannelOnce sync.Once
 	// flag to disable async message propagation after timeout
 	shouldAllowStopTalking bool
 }
@@ -40,7 +37,6 @@ type endNotifyAgentDone struct {
 }
 
 func (server *BaseServer[T]) HandleStartOfTurn(iter, turn int) {
-	server.doneChannelOnce = sync.Once{}
 	server.agentFinishedMessaging = make(chan uuid.UUID)
 	fmt.Printf("Iteration %d, Turn %d starting...\n", iter, turn)
 }
@@ -202,7 +198,6 @@ func CreateServer[T agent.IAgent[T]](generatorArray []agent.AgentGeneratorCountP
 		turns:                  turns,
 		agentFinishedMessaging: make(chan uuid.UUID),
 		endNotifyAgentDone:     endNotifyAgentDone{},
-		doneChannelOnce:        sync.Once{},
 		shouldAllowStopTalking: true,
 	}
 	ctx, cancel := context.WithCancel(context.Background())
