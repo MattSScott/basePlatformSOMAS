@@ -40,7 +40,7 @@ func (serv *BaseServer[T]) EndAgentListeningSession() bool {
 	ctx, cancel := context.WithTimeout(context.Background(), serv.turnTimeout)
 	defer cancel()
 	agentStoppedTalkingMap := make(map[uuid.UUID]struct{})
-	awaitSessionEnd:
+awaitSessionEnd:
 	for len(agentStoppedTalkingMap) != len(serv.agentMap) {
 		select {
 		case id := <-serv.agentFinishedMessaging:
@@ -63,6 +63,7 @@ func (server *BaseServer[T]) HandleEndOfTurn(iter, turn int) {
 
 func (server *BaseServer[T]) SendMessage(msg message.IMessage[T], receivers []uuid.UUID) {
 	for _, receiver := range receivers {
+		//fmt.Println("sending message to", server.agentMap[receiver].GetID())
 		go msg.InvokeMessageHandler(server.agentMap[receiver])
 	}
 }
@@ -184,7 +185,6 @@ func CreateServer[T agent.IAgent[T]](generatorArray []agent.AgentGeneratorCountP
 		turns:                  turns,
 		agentFinishedMessaging: make(chan uuid.UUID),
 		endNotifyAgentDone:     make(chan struct{}),
-
 	}
 	serv.initialiseAgents(generatorArray)
 	return serv

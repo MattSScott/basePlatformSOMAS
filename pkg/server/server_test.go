@@ -234,7 +234,7 @@ func TestAccessAgentByID(t *testing.T) {
 		ag.SetCounter(randNum)
 
 	}
-	for id := range server.GetAgentMap() {
+	for id := range server.ViewAgentIdSet() {
 		accessedAgentID := server.AccessAgentByID(id).GetCounter()
 		if accessedAgentID != randNum {
 			t.Error("Access Agent By ID is not working (incorrect struct value in test agent),expected:", randNum, "got:", accessedAgentID)
