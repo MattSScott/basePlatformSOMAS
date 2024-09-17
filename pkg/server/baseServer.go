@@ -16,7 +16,7 @@ type BaseServer[T agent.IAgent[T]] struct {
 	// map of agentid -> empty struct so that agents cannot access each others agent structs
 	agentIdSet map[uuid.UUID]struct{}
 	// channel a server goroutine will send to in order to signal messaging completion
-	agentFinishedMessaging chan uuid.UUID
+	agentFinishedMessaging chan finishedMessagingNotification
 	// duration after which messaging phase forcefully ends during rounds
 	turnTimeout time.Duration
 	// interface which holds extended methods for round running and turn running
@@ -27,10 +27,20 @@ type BaseServer[T agent.IAgent[T]] struct {
 	turns int
 	// closable channel to signify that messaging is complete
 	endNotifyAgentDone chan struct{}
+	currentIteration int 
+	currentRound int
+}
+
+type finishedMessagingNotification struct {
+	id uuid.UUID
+	round int
+	iteration int
 }
 
 func (server *BaseServer[T]) HandleStartOfTurn(iter, turn int) {
-	server.agentFinishedMessaging = make(chan uuid.UUID)
+	server.currentIteration = iter
+	server.currentRound = turn
+	server.agentFinishedMessaging = make(chan finishedMessagingNotification)
 	server.endNotifyAgentDone = make(chan struct{})
 	fmt.Printf("Iteration %d, Turn %d starting...\n", iter, turn)
 }
@@ -43,9 +53,11 @@ func (serv *BaseServer[T]) EndAgentListeningSession() bool {
 	awaitSessionEnd:
 	for len(agentStoppedTalkingMap) != len(serv.agentMap) {
 		select {
-		case id := <-serv.agentFinishedMessaging:
-			agentStoppedTalkingMap[id] = struct{}{}
-			fmt.Println("Got!")
+		case finishedMessagingNotification := <-serv.agentFinishedMessaging:
+			if finishedMessagingNotification.iteration == serv.currentIteration && finishedMessagingNotification.round == serv.currentRound {
+				agentStoppedTalkingMap[finishedMessagingNotification.id] = struct{}{}
+				fmt.Print(finishedMessagingNotification.iteration,finishedMessagingNotification.round,serv.currentIteration,serv.currentRound)
+			}
 		case <-ctx.Done():
 			fmt.Println("Exiting due to timeout")
 			status = false
@@ -96,8 +108,13 @@ func (serv *BaseServer[T]) GetAgentMap() map[uuid.UUID]T {
 }
 
 func (serv *BaseServer[T]) AgentStoppedTalking(id uuid.UUID) {
+	msg := finishedMessagingNotification{
+		id: id,
+		round: serv.currentRound,
+		iteration: serv.currentIteration,
+	}
 	select {
-	case serv.agentFinishedMessaging <- id:
+	case serv.agentFinishedMessaging <- msg:
 		fmt.Println("Trying!")
 		return
 	case <-serv.endNotifyAgentDone:
@@ -182,8 +199,10 @@ func CreateServer[T agent.IAgent[T]](generatorArray []agent.AgentGeneratorCountP
 		gameRunner:             nil,
 		iterations:             iterations,
 		turns:                  turns,
-		agentFinishedMessaging: make(chan uuid.UUID),
+		agentFinishedMessaging: make(chan finishedMessagingNotification),
 		endNotifyAgentDone:     make(chan struct{}),
+		currentIteration: 0,
+		currentRound: 0,
 
 	}
 	serv.initialiseAgents(generatorArray)

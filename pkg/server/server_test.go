@@ -313,7 +313,7 @@ func TestRepeatedTimeouts(t *testing.T) {
 	var numAgents int = 3
 	var numIters int = 5
 	timeLimit := 100 * time.Millisecond
-	agentWorkload := 50 * time.Millisecond
+	agentWorkload := 300 * time.Millisecond
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit)
 	for i := 0; i < numIters; i++ {
 		server.HandleStartOfTurn(0, i)
@@ -321,7 +321,8 @@ func TestRepeatedTimeouts(t *testing.T) {
 		server.BroadcastMessage(timeoutMsg)
 		status := server.EndAgentListeningSession()
 		if status && (agentWorkload > timeLimit) {
-			t.Error("Should have exited on timeout but did not")
+
+			t.Error("Should have exited on timeout but did not",i)
 		}
 	}
 }
