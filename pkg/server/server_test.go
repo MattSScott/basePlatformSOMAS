@@ -184,20 +184,24 @@ func TestNumTurnsInServer(t *testing.T) {
 func TestBroadcastMessage(t *testing.T) {
 	numAgents := 2
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second)
-	agent1 := testUtils.NewTestAgent(server)
-	testMessage := agent1.CreateTestMessage()
 	i := 0
 	for _, ag := range server.GetAgentMap() {
 		i += 1
 		ag.SetGoal(1)
+		testMessage := ag.CreateTestMessage()
+
+		ag.BroadcastMessage(testMessage)
+
 	}
-	agent1.BroadcastMessage(testMessage)
+
 	_ = server.EndAgentListeningSession()
 	for _, ag := range server.GetAgentMap() {
+		//t.Error(ag.GetCounter())
 		if !ag.ReceivedMessage() {
 			t.Error(ag, "Didn't Receive Message")
 		}
 	}
+	//t.Error(" ")
 }
 
 func TestSendSynchronousMessage(t *testing.T) {
@@ -277,7 +281,7 @@ func TestGoroutineWontHangAsyncMessaging(t *testing.T) {
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit)
 	wg := &sync.WaitGroup{}
 	testUtils.SendNotifyMessages(server.GetAgentMap(), &counter, wg)
-	server.EndAgentListeningSession()
+	server.HandleEndOfTurn(0,0)
 	testUtils.SendNotifyMessages(server.GetAgentMap(), &counter, wg)
 	wg.Wait()
 	goal := uint32(2 * numAgents)
