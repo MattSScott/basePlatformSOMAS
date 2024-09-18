@@ -10,7 +10,7 @@ import (
 )
 
 func TestAgentIdOperations(t *testing.T) {
-	var testServ agent.IExposedServerFunctions[testUtils.ITestBaseAgent] = testUtils.TestServer{}
+	var testServ agent.IExposedServerFunctions[testUtils.ITestBaseAgent] = &testUtils.TestServer{}
 	baseAgent := agent.CreateBaseAgent(testServ)
 	if baseAgent.GetID() == uuid.Nil {
 		t.Error("Agent not instantiated with valid ID")
@@ -18,7 +18,7 @@ func TestAgentIdOperations(t *testing.T) {
 }
 
 func TestUpdateAgentInternalState(t *testing.T) {
-	var testServ agent.IExposedServerFunctions[testUtils.ITestBaseAgent] = testUtils.TestServer{}
+	var testServ agent.IExposedServerFunctions[testUtils.ITestBaseAgent] = &testUtils.TestServer{}
 	ag := testUtils.TestServerFunctionsAgent{
 		BaseAgent: agent.CreateBaseAgent(testServ),
 		Counter:   0,

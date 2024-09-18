@@ -45,9 +45,9 @@ awaitSessionEnd:
 		select {
 		case id := <-serv.agentFinishedMessaging:
 			agentStoppedTalkingMap[id] = struct{}{}
-			fmt.Println("Got!")
+	
 		case <-ctx.Done():
-			fmt.Println("Exiting due to timeout")
+			//fmt.Println("Exiting due to timeout")
 			status = false
 			break awaitSessionEnd
 		}
@@ -57,15 +57,31 @@ awaitSessionEnd:
 }
 
 func (server *BaseServer[T]) HandleEndOfTurn(iter, turn int) {
-	server.EndAgentListeningSession()
+	if server.EndAgentListeningSession() {
+		fmt.Println("All agents notified that they have finished messaging")
+	}else{
+		fmt.Println("All agents didn't notify that they have finished messaging, exited on timeout")
+	}
 	fmt.Printf("Iteration %d, Turn %d finished.\n", iter, turn)
 }
 
 func (server *BaseServer[T]) SendMessage(msg message.IMessage[T], receivers []uuid.UUID) {
 	for _, receiver := range receivers {
-		//fmt.Println("sending message to", server.agentMap[receiver].GetID())
 		go msg.InvokeMessageHandler(server.agentMap[receiver])
 	}
+}
+
+func (server *BaseServer[T]) BroadcastMessage(msg message.IMessage[T]) {
+	agSet := server.ViewAgentIdSet()
+	arrayRec := make([]uuid.UUID, len(agSet) - 1)
+	i := 0
+	for id := range agSet {
+		if id != msg.GetSender() {
+			arrayRec[i] = id
+			i++
+		}
+	}
+	server.SendMessage(msg,arrayRec)
 }
 
 func (serv *BaseServer[T]) AddAgent(agent T) {
@@ -99,10 +115,8 @@ func (serv *BaseServer[T]) GetAgentMap() map[uuid.UUID]T {
 func (serv *BaseServer[T]) AgentStoppedTalking(id uuid.UUID) {
 	select {
 	case serv.agentFinishedMessaging <- id:
-		fmt.Println("Trying!")
 		return
 	case <-serv.endNotifyAgentDone:
-		fmt.Println("Dropped!")
 		return
 
 	}
