@@ -81,7 +81,9 @@ func (server *BaseServer[T]) BroadcastMessage(msg message.IMessage[T]) {
 			i++
 		}
 	}
-	server.SendMessage(msg, arrayRec)
+	for _, receiver := range arrayRec {
+		go msg.InvokeMessageHandler(server.agentMap[receiver])
+	}
 }
 
 func (serv *BaseServer[T]) AddAgent(agent T) {
