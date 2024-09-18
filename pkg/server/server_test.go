@@ -182,26 +182,22 @@ func TestNumTurnsInServer(t *testing.T) {
 }
 
 func TestBroadcastMessage(t *testing.T) {
-	numAgents := 2
+	numAgents := 10
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second)
 	i := 0
+	var agentGoal int32 = int32(numAgents - 1)
 	for _, ag := range server.GetAgentMap() {
 		i += 1
-		ag.SetGoal(1)
+		ag.SetGoal(agentGoal)
 		testMessage := ag.CreateTestMessage()
-
 		ag.BroadcastMessage(testMessage)
-
 	}
-
 	_ = server.EndAgentListeningSession()
 	for _, ag := range server.GetAgentMap() {
-		//t.Error(ag.GetCounter())
 		if !ag.ReceivedMessage() {
 			t.Error(ag, "Didn't Receive Message")
 		}
 	}
-	//t.Error(" ")
 }
 
 func TestSendSynchronousMessage(t *testing.T) {
