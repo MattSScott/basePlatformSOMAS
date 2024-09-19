@@ -32,7 +32,7 @@ type BaseServer[T agent.IAgent[T]] struct {
 	endNotifyAgentDone chan struct{}
 	//map that stores channels which agents send messages to.
 	//Note that sending/recieving to a channel is a read op on the map itself so no need to use sync.Map
-	agentMessageChannels sync.Map
+	agentMessageChannels map[uuid.UUID]chan message.IMessage[T]
 	//map that holds counters that track number of messages sent by each agent. Map is concurrently read/written so need to use sync.Map
 	agentMessagesSent sync.Map
 	//WaitGroup which makes the main thread wait before setting up all agent listening spinners
@@ -78,19 +78,17 @@ func (server *BaseServer[T]) HandleEndOfTurn(iter, turn int) {
 }
 
 func (server *BaseServer[T]) SendMessage(msg message.IMessage[T], receivers []uuid.UUID) {
-	sentMsgsUncast, _ := server.agentMessagesSent.Load(msg.GetSender())
-	sentMessageCount := sentMsgsUncast.(*int)
-	if *sentMessageCount >= server.messageLimit {
-		return
-	}
+	// sentMsgsUncast, _ := server.agentMessagesSent.Load(msg.GetSender())
+	// sentMessageCount := sentMsgsUncast.(*int)
+	// if *sentMessageCount >= server.messageLimit {
+	// 	return
+	// }
 	for _, receiver := range receivers {
-		//server.allowMessageLock.RLock()
+		server.allowMessageLock.RLock()
 		if server.allowMessageSend {
-			mapValue, _ := server.agentMessageChannels.Load(receiver)
-			channel := mapValue.(chan message.IMessage[T])
-			channel <- msg
+			server.agentMessageChannels[receiver] <- msg
 		}
-		//server.allowMessageLock.RUnlock()
+		server.allowMessageLock.RUnlock()
 	}
 }
 
@@ -111,7 +109,7 @@ func (serv *BaseServer[T]) AddAgent(agent T) {
 	msgCounter := 0
 	serv.agentMap[agent.GetID()] = agent
 	serv.agentIdSet[agent.GetID()] = struct{}{}
-	serv.agentMessageChannels.Store(agent.GetID(), make(chan message.IMessage[T]))
+	serv.agentMessageChannels[agent.GetID()] = make(chan message.IMessage[T])
 	serv.agentMessagesSent.Store(agent.GetID(), &msgCounter)
 	serv.agentListenerSetupStaller.Add(1)
 	go serv.agentMessageListener(agent.GetID())
@@ -180,13 +178,12 @@ func (serv *BaseServer[T]) GetIterations() int {
 func (serv *BaseServer[T]) RemoveAgent(agentToRemove T) {
 	delete(serv.agentMap, agentToRemove.GetID())
 	delete(serv.agentIdSet, agentToRemove.GetID())
-	serv.agentMessageChannels.Delete(agentToRemove.GetID())
+	delete(serv.agentMessageChannels, agentToRemove.GetID())
 	serv.agentMessagesSent.Delete(agentToRemove.GetID())
 }
 
 func (serv *BaseServer[T]) GenerateAgentArrayFromMap() []T {
 	agentMapToArray := make([]T, len(serv.agentMap))
-
 	i := 0
 	for _, ag := range serv.agentMap {
 		agentMapToArray[i] = ag
@@ -230,7 +227,7 @@ func CreateServer[T agent.IAgent[T]](generatorArray []agent.AgentGeneratorCountP
 		turns:                  turns,
 		agentFinishedMessaging: make(chan uuid.UUID),
 		endNotifyAgentDone:     make(chan struct{}),
-		agentMessageChannels:   sync.Map{},
+		agentMessageChannels:   make(map[uuid.UUID]chan message.IMessage[T]),
 		messageLimit:           100,
 		allowMessageSend:       true,
 		allowMessageLock:       sync.RWMutex{},
@@ -243,9 +240,8 @@ func CreateServer[T agent.IAgent[T]](generatorArray []agent.AgentGeneratorCountP
 
 func (server *BaseServer[T]) agentMessageListener(id uuid.UUID) {
 	server.agentListenerSetupStaller.Done()
-	chanValueUncast, _ := server.agentMessageChannels.Load(id)
-	channel := chanValueUncast.(chan message.IMessage[T])
-	for msg := range channel {
+
+	for msg := range server.agentMessageChannels[id] {
 		msg.InvokeMessageHandler(server.AccessAgentByID(id))
 	}
 }
@@ -253,10 +249,8 @@ func (server *BaseServer[T]) agentMessageListener(id uuid.UUID) {
 func (server *BaseServer[T]) closeMessageChannels() {
 	server.allowMessageLock.Lock()
 	server.allowMessageSend = false
-	server.agentMessageChannels.Range(func(key, value any) bool {
-		channel := value.(chan message.IMessage[T])
+	for _, channel := range server.agentMessageChannels {
 		close(channel)
-		return true
-	})
+	}
 	server.allowMessageLock.Unlock()
 }

@@ -108,7 +108,7 @@ func TestAgentReceivesMessage(t *testing.T) {
 
 func TestWaitForMessagingToEnd(t *testing.T) {
 	numberOfMessages := 10
-	numAgents := 10
+	numAgents := 100
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, 10*time.Second)
 	agentMap := server.GetAgentMap()
 	arrayOfIDs := make([]uuid.UUID, numAgents)
