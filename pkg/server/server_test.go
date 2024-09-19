@@ -84,7 +84,7 @@ func TestRunIteration(t *testing.T) {
 	}
 }
 
-func TestAgentRecievesMessage(t *testing.T) {
+func TestAgentReceivesMessage(t *testing.T) {
 	numAgents := 2
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second)
 	agent1 := testUtils.NewTestAgent(server)
@@ -108,8 +108,8 @@ func TestAgentRecievesMessage(t *testing.T) {
 
 func TestWaitForMessagingToEnd(t *testing.T) {
 	numberOfMessages := 10
-	numAgents := 2
-	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second)
+	numAgents := 10
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, 10*time.Second)
 	agentMap := server.GetAgentMap()
 	arrayOfIDs := make([]uuid.UUID, numAgents)
 	i := 0
@@ -200,7 +200,8 @@ func TestBroadcastMessage(t *testing.T) {
 }
 
 func TestSendSynchronousMessage(t *testing.T) {
-	numAgents := 10
+	numAgents := 2
+	numMessages := 100
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second)
 	agent1 := testUtils.NewTestAgent(server)
 	testMessage := agent1.CreateTestMessage()
@@ -209,9 +210,11 @@ func TestSendSynchronousMessage(t *testing.T) {
 	for id, ag := range server.GetAgentMap() {
 		arrayReceivers[i] = id
 		i += 1
-		ag.SetGoal(1)
+		ag.SetGoal(int32(numMessages))
 	}
-	server.SendSynchronousMessage(testMessage, arrayReceivers)
+	for i = 0; i < numMessages; i++ {
+		server.SendSynchronousMessage(testMessage, arrayReceivers)
+	}
 	for _, ag := range server.GetAgentMap() {
 		if !ag.ReceivedMessage() {
 			t.Error("Didn't Receive Message")
@@ -276,7 +279,7 @@ func TestGoroutineWontHangAsyncMessaging(t *testing.T) {
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit)
 	wg := &sync.WaitGroup{}
 	testUtils.SendNotifyMessages(server.GetAgentMap(), &counter, wg)
-	server.HandleEndOfTurn(0,0)
+	server.HandleEndOfTurn(0, 0)
 	testUtils.SendNotifyMessages(server.GetAgentMap(), &counter, wg)
 	wg.Wait()
 	goal := uint32(2 * numAgents)

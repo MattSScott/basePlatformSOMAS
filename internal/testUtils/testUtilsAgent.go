@@ -62,6 +62,7 @@ func (ta TestServerFunctionsAgent) GetAgentStoppedTalking() int {
 }
 
 func (ta *TestServerFunctionsAgent) HandleTestMessage() {
+	time.Sleep(10 * time.Millisecond)
 	newCounterValue := atomic.AddInt32(&ta.Counter, 1)
 	if newCounterValue == atomic.LoadInt32(&ta.Goal) {
 		ta.NotifyAgentFinishedMessaging()
