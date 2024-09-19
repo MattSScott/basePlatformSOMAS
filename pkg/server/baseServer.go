@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/MattSScott/basePlatformSOMAS/pkg/agent"
@@ -11,6 +12,14 @@ import (
 )
 
 type BaseServer[T agent.IAgent[T]] struct {
+	//Note that if you move variables used atomically from the start of the struct (int32) the program may throw an error
+	//atomic flag (modified only by server) and read concurrently by agents which signifies when channels are closed and no more messaging can occur
+	//flag gets locked before incrementing and while closing channels so a goroutine doesnt read an early version of flag and send to a closed channel
+	allowMessageSend bool
+	//mutex which locks the flag from being read while channels are being closed
+	//allowMessageSendLock sync.Mutex
+	//Max number of messages a single agent can send to others.
+	messageLimit int32
 	// map of agentid -> agent struct
 	agentMap map[uuid.UUID]T
 	// map of agentid -> empty struct so that agents cannot access each others agent structs
@@ -27,6 +36,14 @@ type BaseServer[T agent.IAgent[T]] struct {
 	turns int
 	// closable channel to signify that messaging is complete
 	endNotifyAgentDone chan struct{}
+	//map that stores channels which agents send messages to.
+	//Note that sending/recieving to a channel is a read op on the map itself so no need to use sync.Map
+	agentMessageChannels sync.Map
+	//map that holds counters that track number of messages sent by each agent. Map is concurrently read/written so need to use sync.Map
+	agentMessagesSent sync.Map
+	//WaitGroup which makes the main thread wait before setting up all agent listening spinners
+	agentListenerSetupStaller sync.WaitGroup
+	allowMessageLock          sync.RWMutex
 }
 
 func (server *BaseServer[T]) HandleStartOfTurn(iter, turn int) {
@@ -47,7 +64,6 @@ awaitSessionEnd:
 			agentStoppedTalkingMap[id] = struct{}{}
 
 		case <-ctx.Done():
-			//fmt.Println("Exiting due to timeout")
 			status = false
 			break awaitSessionEnd
 		}
@@ -67,7 +83,13 @@ func (server *BaseServer[T]) HandleEndOfTurn(iter, turn int) {
 
 func (server *BaseServer[T]) SendMessage(msg message.IMessage[T], receivers []uuid.UUID) {
 	for _, receiver := range receivers {
-		go msg.InvokeMessageHandler(server.agentMap[receiver])
+		server.allowMessageLock.RLock()
+		if server.allowMessageSend {
+			mapValue , _ :=server.agentMessageChannels.Load(receiver)
+			channel := mapValue.(chan message.IMessage[T])
+			channel <-msg
+		}
+		server.allowMessageLock.RUnlock()
 	}
 }
 
@@ -81,14 +103,17 @@ func (server *BaseServer[T]) BroadcastMessage(msg message.IMessage[T]) {
 			i++
 		}
 	}
-	for _, receiver := range arrayRec {
-		go msg.InvokeMessageHandler(server.agentMap[receiver])
-	}
+	server.SendMessage(msg, arrayRec)
 }
 
 func (serv *BaseServer[T]) AddAgent(agent T) {
+	msgCounter := 0
 	serv.agentMap[agent.GetID()] = agent
 	serv.agentIdSet[agent.GetID()] = struct{}{}
+	serv.agentMessageChannels.Store(agent.GetID(),make(chan message.IMessage[T]))
+	serv.agentMessagesSent.Store(agent.GetID(), &msgCounter)
+	serv.agentListenerSetupStaller.Add(1)
+	go serv.agentMessageListener(agent.GetID())
 }
 
 func (serv *BaseServer[T]) ViewAgentIdSet() map[uuid.UUID]struct{} {
@@ -105,9 +130,12 @@ func (serv *BaseServer[T]) Start() {
 		for j := 0; j < serv.turns; j++ {
 			serv.HandleStartOfTurn(i+1, j+1)
 			serv.gameRunner.RunTurn()
+			fmt.Println(1)
 			serv.HandleEndOfTurn(i+1, j+1)
+			fmt.Println("turn finished")
 		}
 	}
+	serv.closeMessageChannels()
 }
 
 func (serv *BaseServer[T]) GetAgentMap() map[uuid.UUID]T {
@@ -201,7 +229,39 @@ func CreateServer[T agent.IAgent[T]](generatorArray []agent.AgentGeneratorCountP
 		turns:                  turns,
 		agentFinishedMessaging: make(chan uuid.UUID),
 		endNotifyAgentDone:     make(chan struct{}),
+		agentMessageChannels:   sync.Map{},
+		messageLimit:           100,
+		allowMessageSend:       true,
+		allowMessageLock:       sync.RWMutex{},
+
 	}
+	fmt.Println("Initiliasing agents")
 	serv.initialiseAgents(generatorArray)
+	serv.agentListenerSetupStaller.Wait()
 	return serv
+}
+
+func (server *BaseServer[T]) agentMessageListener(id uuid.UUID) {
+	fmt.Println(id, "Starting listening on channel")
+	server.agentListenerSetupStaller.Done()
+	chanValueUncast,_ := server.agentMessageChannels.Load(id)
+	channel := chanValueUncast.(chan message.IMessage[T])
+	for msg := range channel {
+		msg.InvokeMessageHandler(server.AccessAgentByID(id))
+		fmt.Println(id, "Got Message")
+	}
+	fmt.Println(id, "Broke out of agent listening loop")
+}
+
+func (server *BaseServer[T]) closeMessageChannels() {
+	server.allowMessageLock.Lock()
+	server.allowMessageSend = false
+	server.agentMessageChannels.Range(func(key,value any) bool {
+		id := key.(uuid.UUID)
+		channel := value.(chan message.IMessage[T])
+		close(channel)
+		fmt.Println("closed messaging channel of agent:",id)
+		return true
+	})
+	server.allowMessageLock.Unlock()
 }

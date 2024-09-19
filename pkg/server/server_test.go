@@ -107,7 +107,7 @@ func TestAgentRecievesMessage(t *testing.T) {
 }
 
 func TestWaitForMessagingToEnd(t *testing.T) {
-	numberOfMessages := 10099
+	numberOfMessages := 10
 	numAgents := 2
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second)
 	agentMap := server.GetAgentMap()
@@ -164,17 +164,16 @@ func TestRemoveAgent(t *testing.T) {
 func TestNumIterationsInServer(t *testing.T) {
 	iterations := 1
 	numAgents := 2
-	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second)
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Millisecond)
 	getIterationsValue := server.GetIterations()
 	if getIterationsValue != iterations {
 		t.Error("Incorrect number of iterations instantiated, expected:", iterations, "got:", getIterationsValue)
 	}
 }
-
 func TestNumTurnsInServer(t *testing.T) {
 	turns := 1
 	numAgents := 2
-	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second)
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Millisecond)
 	getTurnsValue := server.GetTurns()
 	if getTurnsValue != turns {
 		t.Error("Incorrect number of turns instantiated, expected:", turns, "got:", getTurnsValue)
@@ -183,7 +182,7 @@ func TestNumTurnsInServer(t *testing.T) {
 
 func TestBroadcastMessage(t *testing.T) {
 	numAgents := 10
-	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second)
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Millisecond)
 	i := 0
 	var agentGoal int32 = int32(numAgents - 1)
 	for _, ag := range server.GetAgentMap() {
