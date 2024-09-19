@@ -84,13 +84,13 @@ func (server *BaseServer[T]) SendMessage(msg message.IMessage[T], receivers []uu
 		return
 	}
 	for _, receiver := range receivers {
-		server.allowMessageLock.RLock()
+		//server.allowMessageLock.RLock()
 		if server.allowMessageSend {
 			mapValue, _ := server.agentMessageChannels.Load(receiver)
 			channel := mapValue.(chan message.IMessage[T])
 			channel <- msg
 		}
-		server.allowMessageLock.RUnlock()
+		//server.allowMessageLock.RUnlock()
 	}
 }
 
