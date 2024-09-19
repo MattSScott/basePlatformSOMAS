@@ -40,6 +40,7 @@ type BaseServer[T agent.IAgent[T]] struct {
 	allowMessageSend          bool
 	agentListenerSetupStaller sync.WaitGroup
 	allowMessageLock          sync.RWMutex
+	messageMapLock            sync.RWMutex
 }
 
 func (server *BaseServer[T]) HandleStartOfTurn(iter, turn int) {
@@ -109,7 +110,9 @@ func (serv *BaseServer[T]) AddAgent(agent T) {
 	msgCounter := 0
 	serv.agentMap[agent.GetID()] = agent
 	serv.agentIdSet[agent.GetID()] = struct{}{}
+	serv.messageMapLock.Lock()
 	serv.agentMessageChannels[agent.GetID()] = make(chan message.IMessage[T])
+	serv.messageMapLock.Unlock()
 	serv.agentMessagesSent.Store(agent.GetID(), &msgCounter)
 	serv.agentListenerSetupStaller.Add(1)
 	go serv.agentMessageListener(agent.GetID())
@@ -231,6 +234,7 @@ func CreateServer[T agent.IAgent[T]](generatorArray []agent.AgentGeneratorCountP
 		messageLimit:           100,
 		allowMessageSend:       true,
 		allowMessageLock:       sync.RWMutex{},
+		messageMapLock:         sync.RWMutex{},
 	}
 	fmt.Println("Initiliasing agents")
 	serv.initialiseAgents(generatorArray)
@@ -240,8 +244,10 @@ func CreateServer[T agent.IAgent[T]](generatorArray []agent.AgentGeneratorCountP
 
 func (server *BaseServer[T]) agentMessageListener(id uuid.UUID) {
 	server.agentListenerSetupStaller.Done()
-
-	for msg := range server.agentMessageChannels[id] {
+	server.messageMapLock.RLock()
+	channel := server.agentMessageChannels[id]
+	server.messageMapLock.RUnlock()
+	for msg := range channel {
 		msg.InvokeMessageHandler(server.AccessAgentByID(id))
 	}
 }

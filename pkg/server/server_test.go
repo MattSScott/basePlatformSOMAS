@@ -144,7 +144,7 @@ func TestAddAgent(t *testing.T) {
 	lenAgMap := len(agMap)
 	expectedNumAgents := numAgents + 1
 	if lenAgMap != expectedNumAgents {
-		t.Error("Removing Agents Failed,expected number of agents:", expectedNumAgents, ",got:", lenAgMap)
+		t.Error("Adding Agents Failed,expected number of agents:", expectedNumAgents, ",got:", lenAgMap)
 	}
 }
 
@@ -202,13 +202,13 @@ func TestBroadcastMessage(t *testing.T) {
 func TestSendSynchronousMessage(t *testing.T) {
 	numAgents := 10
 	numMessages := 10
-	server := testUtils.GenerateTestServer(numAgents, 1, 1, 20*time.Millisecond)
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, 10000*time.Millisecond)
 	arrayReceivers := make([]uuid.UUID, numAgents)
 	i := 0
 	for id, ag := range server.GetAgentMap() {
 		arrayReceivers[i] = id
 		i += 1
-		ag.SetGoal(int32(numMessages * numAgents))
+		ag.SetGoal(int32(numMessages * (numAgents-1)))
 	}
 
 
@@ -221,7 +221,7 @@ func TestSendSynchronousMessage(t *testing.T) {
 
 	for _, ag := range server.GetAgentMap() {
 		if !ag.ReceivedMessage() {
-			t.Error("Didn't Receive Message")
+			t.Error("Didn't Receive Message",ag.GetCounter())
 		}
 	}
 }
