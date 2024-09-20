@@ -71,11 +71,13 @@ func (server *BaseServer[T]) SendMessage(msg message.IMessage[T], receivers []uu
 	for _, receiver := range receivers {
 		select {
 		case server.messageSenderSemaphore <- struct{}{}:
-			go msg.InvokeMessageHandler(server.agentMap[receiver])
-			<-server.messageSenderSemaphore
+			id := receiver
+			go func() {
+				msg.InvokeMessageHandler(server.agentMap[id])
+				<-server.messageSenderSemaphore
+			}()
 		default:
-			continue
-		}
+		} 
 	}
 
 }
@@ -89,9 +91,7 @@ func (server *BaseServer[T]) BroadcastMessage(msg message.IMessage[T]) {
 			i++
 		}
 	}
-	for _, receiver := range arrayRec {
-		go msg.InvokeMessageHandler(server.agentMap[receiver])
-	}
+	server.SendMessage(msg, arrayRec)
 }
 
 func (serv *BaseServer[T]) AddAgent(agent T) {

@@ -49,11 +49,20 @@ type TestTimeoutMessage struct {
 	Workload time.Duration
 }
 
+type TestMessagingBandwidthLimiter struct {
+	message.BaseMessage
+}
+
+
 func NewExtendedAgent(serv agent.IExposedServerFunctions[IExtendedAgent]) IExtendedAgent {
 	return &TestMessagingAgent{
 		BaseAgent:  agent.CreateBaseAgent(serv),
 		AgentField: 0,
 	}
+}
+
+func (infLoopMessage TestMessagingBandwidthLimiter) InvokeMessageHandler(ag ITestBaseAgent) {
+	ag.HandleInfiniteLoopMessage(infLoopMessage)
 }
 
 func (timeoutM TestTimeoutMessage) InvokeMessageHandler(ag ITestBaseAgent) {

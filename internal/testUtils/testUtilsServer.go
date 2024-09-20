@@ -20,11 +20,12 @@ type TestServer struct {
 	IterationCounter int
 }
 
-func GenerateTestServer(numAgents, iterations, turns int, maxDuration time.Duration) *TestServer {
+
+func GenerateTestServer(numAgents, iterations, turns int, maxDuration time.Duration,maxThreads int) *TestServer {
 	m := make([]agent.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = agent.MakeAgentGeneratorCountPair(NewTestAgent, numAgents)
 	return &TestServer{
-		BaseServer:       server.CreateServer(m, iterations, turns, maxDuration,1000),
+		BaseServer:       server.CreateServer(m, iterations, turns, maxDuration, maxThreads),
 		TurnCounter:      0,
 		IterationCounter: 0,
 	}
@@ -34,6 +35,12 @@ func CreateTestTimeoutMessage(workLoad time.Duration) *TestTimeoutMessage {
 	return &TestTimeoutMessage{
 		message.BaseMessage{},
 		workLoad,
+	}
+}
+
+func CreateInfLoopMessage() *TestMessagingBandwidthLimiter {
+	return &TestMessagingBandwidthLimiter{
+		message.BaseMessage{},
 	}
 }
 
