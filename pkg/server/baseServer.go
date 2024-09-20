@@ -32,7 +32,6 @@ type BaseServer[T agent.IAgent[T]] struct {
 }
 
 func (server *BaseServer[T]) HandleStartOfTurn(iter, turn int) {
-
 	server.agentFinishedMessaging = make(chan uuid.UUID)
 	server.endNotifyAgentDone = make(chan struct{})
 	fmt.Printf("Iteration %d, Turn %d starting...\n", iter, turn)
@@ -49,7 +48,6 @@ awaitSessionEnd:
 		case id := <-serv.agentFinishedMessaging:
 			agentStoppedTalkingMap[id] = struct{}{}
 		case <-ctx.Done():
-			//fmt.Println("Exiting due to timeout")
 			status = false
 			break awaitSessionEnd
 		}
@@ -60,7 +58,7 @@ awaitSessionEnd:
 
 func (server *BaseServer[T]) HandleEndOfTurn(iter, turn int) {
 	if server.EndAgentListeningSession() {
-		fmt.Println("All agents notified that they have finished messaging")
+		fmt.Println("All agents notified that they have finished messaging, exiting")
 	} else {
 		fmt.Println("All agents didn't notify that they have finished messaging, exited on timeout")
 	}
@@ -69,6 +67,9 @@ func (server *BaseServer[T]) HandleEndOfTurn(iter, turn int) {
 
 func (server *BaseServer[T]) SendMessage(msg message.IMessage[T], receivers []uuid.UUID) {
 	for _, receiver := range receivers {
+		if msg.GetSender() == uuid.Nil {
+			panic("No sender found - did you compose the BaseMessage?")
+		}
 		select {
 		case server.messageSenderSemaphore <- struct{}{}:
 			id := receiver
@@ -82,6 +83,9 @@ func (server *BaseServer[T]) SendMessage(msg message.IMessage[T], receivers []uu
 
 }
 func (server *BaseServer[T]) BroadcastMessage(msg message.IMessage[T]) {
+	if msg.GetSender() == uuid.Nil {
+		panic("No sender found - did you compose the BaseMessage?")
+	}
 	agSet := server.ViewAgentIdSet()
 	arrayRec := make([]uuid.UUID, len(agSet)-1)
 	i := 0
@@ -174,6 +178,9 @@ func (serv *BaseServer[T]) GenerateAgentArrayFromMap() []T {
 }
 
 func (serv *BaseServer[T]) SendSynchronousMessage(msg message.IMessage[T], recipients []uuid.UUID) {
+	if msg.GetSender() == uuid.Nil {
+		panic("No sender found - did you compose the BaseMessage?")
+	}
 	for _, recip := range recipients {
 		if msg.GetSender() == recip {
 			continue
