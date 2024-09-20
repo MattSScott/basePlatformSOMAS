@@ -24,7 +24,7 @@ func GenerateTestServer(numAgents, iterations, turns int, maxDuration time.Durat
 	m := make([]agent.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = agent.MakeAgentGeneratorCountPair(NewTestAgent, numAgents)
 	return &TestServer{
-		BaseServer:       server.CreateServer(m, iterations, turns, maxDuration),
+		BaseServer:       server.CreateServer(m, iterations, turns, maxDuration,1000),
 		TurnCounter:      0,
 		IterationCounter: 0,
 	}

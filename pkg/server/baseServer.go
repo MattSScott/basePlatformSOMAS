@@ -27,6 +27,8 @@ type BaseServer[T agent.IAgent[T]] struct {
 	turns int
 	// closable channel to signify that messaging is complete
 	endNotifyAgentDone chan struct{}
+	//limits the number of sendmessage goroutines executing at once
+	messageSenderSemaphore chan struct{}
 }
 
 func (server *BaseServer[T]) HandleStartOfTurn(iter, turn int) {
@@ -67,10 +69,16 @@ func (server *BaseServer[T]) HandleEndOfTurn(iter, turn int) {
 
 func (server *BaseServer[T]) SendMessage(msg message.IMessage[T], receivers []uuid.UUID) {
 	for _, receiver := range receivers {
-		go msg.InvokeMessageHandler(server.agentMap[receiver])
+		select {
+		case server.messageSenderSemaphore <- struct{}{}:
+			go msg.InvokeMessageHandler(server.agentMap[receiver])
+			<-server.messageSenderSemaphore
+		default:
+			continue
+		}
 	}
-}
 
+}
 func (server *BaseServer[T]) BroadcastMessage(msg message.IMessage[T]) {
 	agSet := server.ViewAgentIdSet()
 	arrayRec := make([]uuid.UUID, len(agSet)-1)
@@ -191,7 +199,7 @@ func (serv *BaseServer[T]) initialiseAgents(m []agent.AgentGeneratorCountPair[T]
 }
 
 // generate a server instance based on a mapping function and number of iterations
-func CreateServer[T agent.IAgent[T]](generatorArray []agent.AgentGeneratorCountPair[T], iterations, turns int, turnMaxDuration time.Duration) *BaseServer[T] {
+func CreateServer[T agent.IAgent[T]](generatorArray []agent.AgentGeneratorCountPair[T], iterations, turns int, turnMaxDuration time.Duration, messageBandwidth int) *BaseServer[T] {
 	serv := &BaseServer[T]{
 		agentMap:               make(map[uuid.UUID]T),
 		agentIdSet:             make(map[uuid.UUID]struct{}),
@@ -201,6 +209,7 @@ func CreateServer[T agent.IAgent[T]](generatorArray []agent.AgentGeneratorCountP
 		turns:                  turns,
 		agentFinishedMessaging: make(chan uuid.UUID),
 		endNotifyAgentDone:     make(chan struct{}),
+		messageSenderSemaphore: make(chan struct{}, messageBandwidth),
 	}
 	serv.initialiseAgents(generatorArray)
 	return serv
