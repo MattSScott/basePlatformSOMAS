@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"sync/atomic"
 	"time"
 
 	"github.com/MattSScott/basePlatformSOMAS/pkg/agent"
@@ -11,126 +10,109 @@ import (
 	"github.com/google/uuid"
 )
 
-type IDemoAgent interface {
-	agent.IAgent[IDemoAgent]
-	ICounterFunctions
-	SetICounterFunctions(ICounterFunctions)
+type IACSOSAgent interface {
+	agent.IAgent[IACSOSAgent]
+	Talk()
+	HandleHelloMessage(HelloMessage)
+	HandleWelloMessage(WelloMessage)
 }
 
-type ICounterFunctions interface {
-	IncrementCounter()
+type IACSOSServer interface {
+	server.IServer[IACSOSAgent]
 }
 
-type IDemoServer interface {
-	server.IServer[IDemoAgent]
-	ICounterFunctions
-	PrintCounter()
+type ACSOSServer struct {
+	*server.BaseServer[IACSOSAgent]
 }
 
-type DemoServer struct {
-	ThreadCounter int32
-	*server.BaseServer[IDemoAgent]
+type HelloAgent struct {
+	*agent.BaseAgent[IACSOSAgent]
 }
 
-type DemoAgent struct {
-	*agent.BaseAgent[IDemoAgent]
-	ICounterFunctions
+func GenerateHelloAgent(serv agent.IExposedServerFunctions[IACSOSAgent]) IACSOSAgent {
+	return &HelloAgent{
+		agent.CreateBaseAgent(serv),
+	}
 }
 
-type DemoMessage1 struct {
+type WelloAgent struct {
+	*agent.BaseAgent[IACSOSAgent]
+}
+
+func GenerateWelloAgent(serv agent.IExposedServerFunctions[IACSOSAgent]) IACSOSAgent {
+	return &WelloAgent{
+		agent.CreateBaseAgent(serv),
+	}
+}
+
+type HelloMessage struct {
 	message.BaseMessage
 }
 
-type DemoMessage2 struct {
+func (hm HelloMessage) InvokeMessageHandler(ag IACSOSAgent) {
+	ag.HandleHelloMessage(hm)
+}
+
+type WelloMessage struct {
 	message.BaseMessage
 }
 
-func GenerateTestServer(numAgents, iterations, turns int, maxDuration time.Duration) *DemoServer {
-	m := make([]agent.AgentGeneratorCountPair[IDemoAgent], 1)
-	m[0] = agent.MakeAgentGeneratorCountPair(NewDemoAgent, numAgents)
-	server := DemoServer{
-		BaseServer:    server.CreateServer(m, iterations, turns, maxDuration, 1000),
-		ThreadCounter: 0,
+func (wm WelloMessage) InvokeMessageHandler(ag IACSOSAgent) {
+	ag.HandleWelloMessage(wm)
+}
+
+func (ha *HelloAgent) HandleHelloMessage(msg HelloMessage) {
+}
+
+func (ha *HelloAgent) HandleWelloMessage(msg WelloMessage) {
+	fmt.Println("Horld")
+	ha.NotifyAgentFinishedMessaging()
+}
+
+func (ha *HelloAgent) Talk() {
+	fmt.Println("Hello")
+	ha.BroadcastMessage(&HelloMessage{ha.CreateBaseMessage()})
+}
+
+func (ha *WelloAgent) Talk() {
+	fmt.Println("Wello")
+	ha.BroadcastMessage(&WelloMessage{ha.CreateBaseMessage()})
+}
+
+func (wa *WelloAgent) HandleHelloMessage(msg HelloMessage) {
+	fmt.Println("World")
+	recip := []uuid.UUID{msg.GetSender()}
+	wa.SendMessage(&WelloMessage{wa.CreateBaseMessage()}, recip)
+	wa.NotifyAgentFinishedMessaging()
+}
+
+func (ha *WelloAgent) HandleWelloMessage(msg WelloMessage) {
+}
+
+func GenerateACSOSServer(numAgents, iterations, turns int, maxDuration time.Duration) *ACSOSServer {
+	m := make([]agent.AgentGeneratorCountPair[IACSOSAgent], 2)
+	m[0] = agent.MakeAgentGeneratorCountPair(GenerateHelloAgent, numAgents)
+	m[1] = agent.MakeAgentGeneratorCountPair(GenerateWelloAgent, numAgents)
+
+	return &ACSOSServer{
+		BaseServer: server.CreateServer(m, iterations, turns, maxDuration, 1000),
 	}
-	for _, ag := range server.GetAgentMap() {
-		ag.SetICounterFunctions(&server)
-	}
-	return &server
+
 }
 
-func NewDemoAgent(serv agent.IExposedServerFunctions[IDemoAgent]) IDemoAgent {
-	return &DemoAgent{
-		BaseAgent: agent.CreateBaseAgent(serv),
-	}
-}
-
-func (a *DemoAgent) SetICounterFunctions(functions ICounterFunctions) {
-	a.ICounterFunctions = functions
-}
-
-func (server *DemoServer) IncrementCounter() {
-	atomic.AddInt32(&server.ThreadCounter, 1)
-}
-
-func (server *DemoServer) PrintCounter() {
-	fmt.Println(server.ThreadCounter)
-}
-
-func (d *DemoMessage1) InvokeMessageHandler(ag IDemoAgent) {
-	fmt.Println("Hello World")
-	agSet := ag.ViewAgentIdSet()
-	arrayRec := make([]uuid.UUID, len(agSet)-1)
-	i := 0
-	for id := range agSet {
-		if id != ag.GetID() {
-			arrayRec[i] = id
-			i++
-		}
-	}
-	msg := DemoMessage2{ag.CreateBaseMessage()}
-	ag.SendMessage(&msg, arrayRec)
-	ag.IncrementCounter()
-	ag.NotifyAgentFinishedMessaging()
-}
-
-func (d *DemoMessage2) InvokeMessageHandler(ag IDemoAgent) {
-	fmt.Println("Wello Horld")
-	agSet := ag.ViewAgentIdSet()
-	arrayRec := make([]uuid.UUID, len(agSet)-1)
-	i := 0
-	for id := range agSet {
-		if id != ag.GetID() {
-			arrayRec[i] = id
-			i++
-		}
-	}
-	msg := DemoMessage1{ag.CreateBaseMessage()}
-	ag.IncrementCounter()
-	ag.SendMessage(&msg, arrayRec)
-	ag.NotifyAgentFinishedMessaging()
-}
-
-func (serv *DemoServer) RunTurn() {
-	agMap := serv.GetAgentMap()
-	recArray := make([]uuid.UUID, len(agMap))
-	z := 0
-	for id := range serv.GetAgentMap() {
-		recArray[z] = id
-		z++
-	}
+func (serv *ACSOSServer) RunTurn() {
 	for _, ag := range serv.GetAgentMap() {
-		msg1 := DemoMessage1{ag.CreateBaseMessage()}
-		ag.SendMessage(&msg1, recArray)
+		ag.Talk()
 	}
 }
 
 func main() {
 	fmt.Println("Running Demo")
-	numAgents := 100
+	numAgents := 10
 	numTurns := 1
 	numIterations := 1
-	timeout := time.Second
-	serv := GenerateTestServer(numAgents, numIterations, numTurns, timeout)
+	timeout := time.Millisecond
+	serv := GenerateACSOSServer(numAgents, numIterations, numTurns, timeout)
 	serv.SetGameRunner(serv)
 	serv.Start()
 }
