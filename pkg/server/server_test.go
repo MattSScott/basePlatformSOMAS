@@ -98,7 +98,7 @@ func TestAgentRecievesMessage(t *testing.T) {
 		ag.SetGoal(1)
 	}
 	server.SendMessage(testMessage, arrayReceivers)
-	_ = server.EndAgentListeningSession()
+	server.EndAgentListeningSession()
 	for _, ag := range server.GetAgentMap() {
 		if !ag.ReceivedMessage() {
 			t.Error(ag, "Didn't Receive Message")
@@ -118,7 +118,6 @@ func TestWaitForMessagingToEnd(t *testing.T) {
 		i++
 		ag.SetGoal(int32(numberOfMessages * numAgents))
 	}
-
 	for j := 0; j < numberOfMessages; j++ {
 		for _, ag := range server.GetAgentMap() {
 			msg := ag.CreateTestMessage()
@@ -337,7 +336,8 @@ func TestRepeatedTimeouts(t *testing.T) {
 		server.BroadcastMessage(timeoutMsg)
 		status := server.EndAgentListeningSession()
 		if status && (agentWorkload > timeLimit) {
-			t.Error("Should have exited on timeout but did not")
+
+			t.Error("Should have exited on timeout but did not",i)
 		}
 	}
 }
