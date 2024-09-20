@@ -22,6 +22,7 @@ type ITestBaseAgent interface {
 	NotifyAgentFinishedMessagingUnthreaded(*sync.WaitGroup, *uint32)
 	GetAgentStoppedTalking() int
 	HandleTimeoutTestMessage(msg TestTimeoutMessage)
+	HandleInfiniteLoopMessage(msg TestMessagingBandwidthLimiter)
 }
 
 type TestServerFunctionsAgent struct {
@@ -29,10 +30,6 @@ type TestServerFunctionsAgent struct {
 	Goal           int32
 	StoppedTalking int
 	*agent.BaseAgent[ITestBaseAgent]
-}
-
-type IBadAgent interface {
-	agent.IAgent[IBadAgent]
 }
 
 func (ta *TestServerFunctionsAgent) UpdateAgentInternalState() {
@@ -111,4 +108,9 @@ func (ta *TestServerFunctionsAgent) GetGoal() int32 {
 func (ta *TestServerFunctionsAgent) HandleTimeoutTestMessage(msg TestTimeoutMessage) {
 	time.Sleep(msg.Workload) // simulate long work
 	ta.NotifyAgentFinishedMessaging()
+}
+
+func (ta *TestServerFunctionsAgent) HandleInfiniteLoopMessage(msg TestMessagingBandwidthLimiter) {
+	//two or more agents broadcasting will cause infinite recursive calls
+	ta.BroadcastMessage(&msg)
 }

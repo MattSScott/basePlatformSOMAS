@@ -1,7 +1,6 @@
 package server_test
 
 import (
-	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -12,7 +11,7 @@ import (
 
 func TestGenerateServer(t *testing.T) {
 	numAgents := 2
-	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second)
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second, 100000)
 	lenAgentMap := len(server.GetAgentMap())
 	if lenAgentMap != numAgents {
 		t.Error(lenAgentMap, "agents initialised, expected:", numAgents)
@@ -21,7 +20,7 @@ func TestGenerateServer(t *testing.T) {
 
 func TestAgentsCorrectlyInstantiated(t *testing.T) {
 	numAgents := 2
-	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second)
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second, 100000)
 	lenAgentMap := len(server.GetAgentMap())
 	if lenAgentMap != numAgents {
 		t.Error("Incorrect number of agents added to server,got", lenAgentMap, "expected", numAgents)
@@ -34,14 +33,14 @@ func TestHandlerInitialiser(t *testing.T) {
 		}
 	}()
 	numAgents := 2
-	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second)
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second, 100000)
 	server.Start()
 }
 
 func TestGenerateArrayFromMap(t *testing.T) {
 	mapFound := make(map[uuid.UUID]int)
 	numAgents := 2
-	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second)
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second, 100000)
 	agentArray := server.GenerateAgentArrayFromMap()
 	for _, agent := range agentArray {
 		_, exists := mapFound[agent.GetID()]
@@ -63,7 +62,7 @@ func TestRunTurn(t *testing.T) {
 	numAgents := 20
 	iterations := 1
 	rounds := 1
-	server := testUtils.GenerateTestServer(numAgents, iterations, rounds, time.Millisecond)
+	server := testUtils.GenerateTestServer(numAgents, iterations, rounds, time.Millisecond, 100000)
 	server.SetGameRunner(server)
 	server.Start()
 	if server.GetTurnCounter() != (iterations * rounds) {
@@ -75,7 +74,7 @@ func TestRunIteration(t *testing.T) {
 	numAgents := 2
 	iterations := 2
 	rounds := 2
-	server := testUtils.GenerateTestServer(numAgents, iterations, rounds, time.Second)
+	server := testUtils.GenerateTestServer(numAgents, iterations, rounds, time.Second, 100000)
 	server.SetGameRunner(server)
 	for i := 0; i < rounds; i++ {
 		server.RunIteration()
@@ -87,7 +86,7 @@ func TestRunIteration(t *testing.T) {
 
 func TestAgentRecievesMessage(t *testing.T) {
 	numAgents := 2
-	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second)
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second, 100000)
 	agent1 := testUtils.NewTestAgent(server)
 	testMessage := agent1.CreateTestMessage()
 	lenAgMap := len(server.GetAgentMap())
@@ -98,10 +97,9 @@ func TestAgentRecievesMessage(t *testing.T) {
 		i += 1
 		ag.SetGoal(1)
 	}
-	go server.SendMessage(testMessage, arrayReceivers)
-	_ = server.EndAgentListeningSession()
+	server.SendMessage(testMessage, arrayReceivers)
+	server.EndAgentListeningSession()
 	for _, ag := range server.GetAgentMap() {
-		fmt.Println()
 		if !ag.ReceivedMessage() {
 			t.Error(ag, "Didn't Receive Message")
 		}
@@ -109,11 +107,9 @@ func TestAgentRecievesMessage(t *testing.T) {
 }
 
 func TestWaitForMessagingToEnd(t *testing.T) {
-	//This tests the function WaitForMessagingToEnd() which serves as a synchronisation procedure to ensure the main
-	//thread waits for messaging to complete before moving the main thread on
-	numberOfMessages := 10099
-	numAgents := 2
-	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second)
+	numberOfMessages := 100
+	numAgents := 10
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Millisecond, 100000)
 	agentMap := server.GetAgentMap()
 	arrayOfIDs := make([]uuid.UUID, numAgents)
 	i := 0
@@ -125,12 +121,14 @@ func TestWaitForMessagingToEnd(t *testing.T) {
 	for j := 0; j < numberOfMessages; j++ {
 		for _, ag := range server.GetAgentMap() {
 			msg := ag.CreateTestMessage()
-			go ag.SendMessage(msg, arrayOfIDs)
+			ag.SendMessage(msg, arrayOfIDs)
 		}
 	}
+	start := time.Now()
 	a := server.EndAgentListeningSession()
+	end := time.Since(start)
 	if !a {
-		t.Error("Messaging ended early")
+		t.Error("Messaging ended on timeout,execution took:", end)
 	}
 	for _, ag := range agentMap {
 		if !ag.ReceivedMessage() {
@@ -141,7 +139,7 @@ func TestWaitForMessagingToEnd(t *testing.T) {
 
 func TestAddAgent(t *testing.T) {
 	numAgents := 2
-	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second)
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second, 100000)
 	agent := testUtils.NewTestAgent(server)
 	server.AddAgent(agent)
 	agMap := server.GetAgentMap()
@@ -154,7 +152,7 @@ func TestAddAgent(t *testing.T) {
 
 func TestRemoveAgent(t *testing.T) {
 	numAgents := 2
-	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second)
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second, 100000)
 	agMap := server.GetAgentMap()
 	for _, ag := range agMap {
 		server.RemoveAgent(ag)
@@ -168,7 +166,7 @@ func TestRemoveAgent(t *testing.T) {
 func TestNumIterationsInServer(t *testing.T) {
 	iterations := 1
 	numAgents := 2
-	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second)
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second, 100000)
 	getIterationsValue := server.GetIterations()
 	if getIterationsValue != iterations {
 		t.Error("Incorrect number of iterations instantiated, expected:", iterations, "got:", getIterationsValue)
@@ -178,16 +176,35 @@ func TestNumIterationsInServer(t *testing.T) {
 func TestNumTurnsInServer(t *testing.T) {
 	turns := 1
 	numAgents := 2
-	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second)
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second, 100000)
 	getTurnsValue := server.GetTurns()
 	if getTurnsValue != turns {
 		t.Error("Incorrect number of turns instantiated, expected:", turns, "got:", getTurnsValue)
 	}
 }
 
+func TestBroadcastMessage(t *testing.T) {
+	numAgents := 10
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second, 100000)
+	i := 0
+	var agentGoal int32 = int32(numAgents - 1)
+	for _, ag := range server.GetAgentMap() {
+		i += 1
+		ag.SetGoal(agentGoal)
+		testMessage := ag.CreateTestMessage()
+		ag.BroadcastMessage(testMessage)
+	}
+	_ = server.EndAgentListeningSession()
+	for _, ag := range server.GetAgentMap() {
+		if !ag.ReceivedMessage() {
+			t.Error(ag, "Didn't Receive Message")
+		}
+	}
+}
+
 func TestSendSynchronousMessage(t *testing.T) {
 	numAgents := 10
-	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second)
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second, 100000)
 	agent1 := testUtils.NewTestAgent(server)
 	testMessage := agent1.CreateTestMessage()
 	arrayReceivers := make([]uuid.UUID, numAgents)
@@ -207,7 +224,7 @@ func TestSendSynchronousMessage(t *testing.T) {
 
 func TestSynchronousMessagingSession(t *testing.T) {
 	numAgents := 2
-	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second)
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second, 100000)
 	server.RunSynchronousMessagingSession()
 	for _, ag := range server.GetAgentMap() {
 
@@ -220,13 +237,11 @@ func TestSynchronousMessagingSession(t *testing.T) {
 func TestAccessAgentByID(t *testing.T) {
 	var randNum int32 = 2357
 	numAgents := 2
-	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second)
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second, 100000)
 	for _, ag := range server.GetAgentMap() {
-
 		ag.SetCounter(randNum)
-
 	}
-	for id := range server.GetAgentMap() {
+	for id := range server.ViewAgentIdSet() {
 		accessedAgentID := server.AccessAgentByID(id).GetCounter()
 		if accessedAgentID != randNum {
 			t.Error("Access Agent By ID is not working (incorrect struct value in test agent),expected:", randNum, "got:", accessedAgentID)
@@ -243,7 +258,7 @@ func TestMessagePrint(t *testing.T) {
 func TestGameRunner(t *testing.T) {
 	timeLimit := 100 * time.Millisecond
 	numAgents := 2
-	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit)
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit, 100000)
 	server.SetGameRunner(server)
 	server.BaseServer.RunIteration()
 	server.BaseServer.RunTurn()
@@ -261,10 +276,10 @@ func TestGoroutineWontHangAsyncMessaging(t *testing.T) {
 	var counter uint32 = 0
 	var numAgents int = 3
 	timeLimit := 1000 * time.Millisecond
-	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit)
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit, 100000)
 	wg := &sync.WaitGroup{}
 	testUtils.SendNotifyMessages(server.GetAgentMap(), &counter, wg)
-	server.EndAgentListeningSession()
+	server.HandleEndOfTurn(0, 0)
 	testUtils.SendNotifyMessages(server.GetAgentMap(), &counter, wg)
 	wg.Wait()
 	goal := uint32(2 * numAgents)
@@ -278,7 +293,7 @@ func TestRepeatedAsyncMessaging(t *testing.T) {
 	var numAgents int = 3
 	var numIters int = 5
 	timeLimit := 100 * time.Millisecond
-	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit)
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit, 100000)
 	for i := 0; i < numIters; i++ {
 		wg := &sync.WaitGroup{}
 		server.HandleStartOfTurn(0, i)
@@ -299,7 +314,7 @@ func TestTimeoutExit(t *testing.T) {
 	var numAgents int = 3
 	timeLimit := 100 * time.Millisecond
 	agentWorkload := 150 * time.Millisecond
-	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit)
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit, 100000)
 	server.HandleStartOfTurn(0, 0)
 	timeoutMsg := testUtils.CreateTestTimeoutMessage(agentWorkload)
 	server.BroadcastMessage(timeoutMsg)
@@ -313,8 +328,8 @@ func TestRepeatedTimeouts(t *testing.T) {
 	var numAgents int = 3
 	var numIters int = 5
 	timeLimit := 100 * time.Millisecond
-	agentWorkload := 300 * time.Millisecond
-	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit)
+	agentWorkload := 50 * time.Millisecond
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit, 100000)
 	for i := 0; i < numIters; i++ {
 		server.HandleStartOfTurn(0, i)
 		timeoutMsg := testUtils.CreateTestTimeoutMessage(agentWorkload)
@@ -325,4 +340,16 @@ func TestRepeatedTimeouts(t *testing.T) {
 			t.Error("Should have exited on timeout but did not",i)
 		}
 	}
+}
+
+func TestRecursiveInvokeMessageHandlerCalls(t *testing.T) {
+	numAgents := 3
+	timeLimit := time.Millisecond
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit, 100000)
+	msg := testUtils.CreateInfLoopMessage()
+	for _, ag := range server.GetAgentMap() {
+		msg.SetSender(ag.GetID())
+		ag.BroadcastMessage(msg)
+	}
+	server.EndAgentListeningSession()
 }

@@ -27,14 +27,8 @@ type BaseServer[T agent.IAgent[T]] struct {
 	turns int
 	// closable channel to signify that messaging is complete
 	endNotifyAgentDone chan struct{}
-	currentIteration int 
-	currentRound int
-}
-
-type finishedMessagingNotification struct {
-	id uuid.UUID
-	round int
-	iteration int
+	//limits the number of sendmessage goroutines executing at once
+	messageSenderSemaphore chan struct{}
 }
 
 func (server *BaseServer[T]) HandleStartOfTurn(iter, turn int) {
@@ -50,16 +44,13 @@ func (serv *BaseServer[T]) EndAgentListeningSession() bool {
 	ctx, cancel := context.WithTimeout(context.Background(), serv.turnTimeout)
 	defer cancel()
 	agentStoppedTalkingMap := make(map[uuid.UUID]struct{})
-	awaitSessionEnd:
+awaitSessionEnd:
 	for len(agentStoppedTalkingMap) != len(serv.agentMap) {
 		select {
-		case finishedMessagingNotification := <-serv.agentFinishedMessaging:
-			if finishedMessagingNotification.iteration == serv.currentIteration && finishedMessagingNotification.round == serv.currentRound {
-				agentStoppedTalkingMap[finishedMessagingNotification.id] = struct{}{}
-				fmt.Print(finishedMessagingNotification.iteration,finishedMessagingNotification.round,serv.currentIteration,serv.currentRound)
-			}
+		case id := <-serv.agentFinishedMessaging:
+			agentStoppedTalkingMap[id] = struct{}{}
 		case <-ctx.Done():
-			fmt.Println("Exiting due to timeout")
+			//fmt.Println("Exiting due to timeout")
 			status = false
 			break awaitSessionEnd
 		}
@@ -69,14 +60,39 @@ func (serv *BaseServer[T]) EndAgentListeningSession() bool {
 }
 
 func (server *BaseServer[T]) HandleEndOfTurn(iter, turn int) {
-	server.EndAgentListeningSession()
+	if server.EndAgentListeningSession() {
+		fmt.Println("All agents notified that they have finished messaging")
+	} else {
+		fmt.Println("All agents didn't notify that they have finished messaging, exited on timeout")
+	}
 	fmt.Printf("Iteration %d, Turn %d finished.\n", iter, turn)
 }
 
 func (server *BaseServer[T]) SendMessage(msg message.IMessage[T], receivers []uuid.UUID) {
 	for _, receiver := range receivers {
-		go msg.InvokeMessageHandler(server.agentMap[receiver])
+		select {
+		case server.messageSenderSemaphore <- struct{}{}:
+			id := receiver
+			go func() {
+				msg.InvokeMessageHandler(server.agentMap[id])
+				<-server.messageSenderSemaphore
+			}()
+		default:
+		}
 	}
+
+}
+func (server *BaseServer[T]) BroadcastMessage(msg message.IMessage[T]) {
+	agSet := server.ViewAgentIdSet()
+	arrayRec := make([]uuid.UUID, len(agSet)-1)
+	i := 0
+	for id := range agSet {
+		if id != msg.GetSender() {
+			arrayRec[i] = id
+			i++
+		}
+	}
+	server.SendMessage(msg, arrayRec)
 }
 
 func (serv *BaseServer[T]) AddAgent(agent T) {
@@ -114,13 +130,10 @@ func (serv *BaseServer[T]) AgentStoppedTalking(id uuid.UUID) {
 		iteration: serv.currentIteration,
 	}
 	select {
-	case serv.agentFinishedMessaging <- msg:
-		fmt.Println("Trying!")
+	case serv.agentFinishedMessaging <- id:
 		return
 	case <-serv.endNotifyAgentDone:
-		fmt.Println("Dropped!")
 		return
-
 	}
 }
 
@@ -191,7 +204,7 @@ func (serv *BaseServer[T]) initialiseAgents(m []agent.AgentGeneratorCountPair[T]
 }
 
 // generate a server instance based on a mapping function and number of iterations
-func CreateServer[T agent.IAgent[T]](generatorArray []agent.AgentGeneratorCountPair[T], iterations, turns int, turnMaxDuration time.Duration) *BaseServer[T] {
+func CreateServer[T agent.IAgent[T]](generatorArray []agent.AgentGeneratorCountPair[T], iterations, turns int, turnMaxDuration time.Duration, messageBandwidth int) *BaseServer[T] {
 	serv := &BaseServer[T]{
 		agentMap:               make(map[uuid.UUID]T),
 		agentIdSet:             make(map[uuid.UUID]struct{}),
@@ -201,9 +214,7 @@ func CreateServer[T agent.IAgent[T]](generatorArray []agent.AgentGeneratorCountP
 		turns:                  turns,
 		agentFinishedMessaging: make(chan finishedMessagingNotification),
 		endNotifyAgentDone:     make(chan struct{}),
-		currentIteration: 0,
-		currentRound: 0,
-
+		messageSenderSemaphore: make(chan struct{}, messageBandwidth),
 	}
 	serv.initialiseAgents(generatorArray)
 	return serv
