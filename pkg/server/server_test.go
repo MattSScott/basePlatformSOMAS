@@ -353,3 +353,38 @@ func TestRecursiveInvokeMessageHandlerCalls(t *testing.T) {
 	}
 	server.EndAgentListeningSession()
 }
+
+func TestSendMessageNoIDPanic(t *testing.T) {
+	defer func() {
+		if panicValue := recover(); panicValue == nil {
+			t.Errorf("did not panic when message sender not set")
+		}
+	}()
+	numAgents := 2
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Millisecond, 100000)
+	agMap := server.GetAgentMap()
+	recievers := make([]uuid.UUID, len(agMap))
+	i := 0
+	for id := range agMap {
+		recievers[i] = id
+		i++
+	}
+	for _, ag := range agMap {
+		msg := &testUtils.TestMessage{}
+		ag.SendMessage(msg,recievers)
+	}
+}
+
+func TestBroadcastMessageNoIDPanic(t *testing.T) {
+	defer func() {
+		if panicValue := recover(); panicValue == nil {
+			t.Errorf("did not panic when message sender not set")
+		}
+	}()
+	numAgents := 2
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Millisecond, 100000)
+	for _, ag := range server.GetAgentMap() {
+		msg := &testUtils.TestMessage{}
+		ag.BroadcastMessage(msg)
+	}
+}

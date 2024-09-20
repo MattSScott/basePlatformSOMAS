@@ -16,7 +16,7 @@ type BaseServer[T agent.IAgent[T]] struct {
 	// map of agentid -> empty struct so that agents cannot access each others agent structs
 	agentIdSet map[uuid.UUID]struct{}
 	// channel a server goroutine will send to in order to signal messaging completion
-	agentFinishedMessaging chan finishedMessagingNotification
+	agentFinishedMessaging chan uuid.UUID
 	// duration after which messaging phase forcefully ends during rounds
 	turnTimeout time.Duration
 	// interface which holds extended methods for round running and turn running
@@ -32,9 +32,8 @@ type BaseServer[T agent.IAgent[T]] struct {
 }
 
 func (server *BaseServer[T]) HandleStartOfTurn(iter, turn int) {
-	server.currentIteration = iter
-	server.currentRound = turn
-	server.agentFinishedMessaging = make(chan finishedMessagingNotification)
+
+	server.agentFinishedMessaging = make(chan uuid.UUID)
 	server.endNotifyAgentDone = make(chan struct{})
 	fmt.Printf("Iteration %d, Turn %d starting...\n", iter, turn)
 }
@@ -124,11 +123,6 @@ func (serv *BaseServer[T]) GetAgentMap() map[uuid.UUID]T {
 }
 
 func (serv *BaseServer[T]) AgentStoppedTalking(id uuid.UUID) {
-	msg := finishedMessagingNotification{
-		id: id,
-		round: serv.currentRound,
-		iteration: serv.currentIteration,
-	}
 	select {
 	case serv.agentFinishedMessaging <- id:
 		return
@@ -212,7 +206,7 @@ func CreateServer[T agent.IAgent[T]](generatorArray []agent.AgentGeneratorCountP
 		gameRunner:             nil,
 		iterations:             iterations,
 		turns:                  turns,
-		agentFinishedMessaging: make(chan finishedMessagingNotification),
+		agentFinishedMessaging: make(chan uuid.UUID),
 		endNotifyAgentDone:     make(chan struct{}),
 		messageSenderSemaphore: make(chan struct{}, messageBandwidth),
 	}
