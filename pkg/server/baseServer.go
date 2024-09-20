@@ -68,6 +68,9 @@ func (server *BaseServer[T]) HandleEndOfTurn(iter, turn int) {
 }
 
 func (server *BaseServer[T]) SendMessage(msg message.IMessage[T], receivers []uuid.UUID) {
+	if msg.GetSender() == uuid.Nil {
+		panic("No sender found - did you compose the BaseMessage?")
+	}
 	for _, receiver := range receivers {
 		select {
 		case server.messageSenderSemaphore <- struct{}{}:
@@ -77,11 +80,14 @@ func (server *BaseServer[T]) SendMessage(msg message.IMessage[T], receivers []uu
 				<-server.messageSenderSemaphore
 			}()
 		default:
-		} 
+		}
 	}
 
 }
 func (server *BaseServer[T]) BroadcastMessage(msg message.IMessage[T]) {
+	if msg.GetSender() == uuid.Nil {
+		panic("No sender found - did you compose the BaseMessage?")
+	}
 	agSet := server.ViewAgentIdSet()
 	arrayRec := make([]uuid.UUID, len(agSet)-1)
 	i := 0

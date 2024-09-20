@@ -72,11 +72,13 @@ func (ha *HelloAgent) HandleWelloMessage(msg WelloMessage) {
 func (ha *HelloAgent) Talk() {
 	fmt.Println("Hello")
 	ha.BroadcastMessage(&HelloMessage{ha.CreateBaseMessage()})
+	ha.NotifyAgentFinishedMessaging()
 }
 
 func (ha *WelloAgent) Talk() {
 	fmt.Println("Wello")
 	ha.BroadcastMessage(&WelloMessage{ha.CreateBaseMessage()})
+	ha.NotifyAgentFinishedMessaging()
 }
 
 func (wa *WelloAgent) HandleHelloMessage(msg HelloMessage) {
