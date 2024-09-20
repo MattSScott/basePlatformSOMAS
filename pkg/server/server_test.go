@@ -390,3 +390,24 @@ func TestBroadcastMessageNoIDPanic(t *testing.T) {
 		ag.BroadcastMessage(msg)
 	}
 }
+
+func TestSendSynchronousMessageNoIDPanic(t *testing.T) {
+	defer func() {
+		if panicValue := recover(); panicValue == nil {
+			t.Errorf("did not panic when message sender not set")
+		}
+	}()
+	numAgents := 2
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Millisecond, 100000)
+	agMap := server.GetAgentMap()
+	recievers := make([]uuid.UUID, len(agMap))
+	i := 0
+	for id := range agMap {
+		recievers[i] = id
+		i++
+	}
+	for _, ag := range agMap {
+		msg := &testUtils.TestMessage{}
+		ag.SendSynchronousMessage(msg,recievers)
+	}
+}

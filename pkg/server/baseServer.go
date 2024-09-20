@@ -181,6 +181,9 @@ func (serv *BaseServer[T]) GenerateAgentArrayFromMap() []T {
 }
 
 func (serv *BaseServer[T]) SendSynchronousMessage(msg message.IMessage[T], recipients []uuid.UUID) {
+	if msg.GetSender() == uuid.Nil {
+		panic("No sender found - did you compose the BaseMessage?")
+	}
 	for _, recip := range recipients {
 		if msg.GetSender() == recip {
 			continue
