@@ -77,7 +77,7 @@ func (server *BaseServer[T]) SendMessage(msg message.IMessage[T], receivers []uu
 				<-server.messageSenderSemaphore
 			}()
 		default:
-		} 
+		}
 	}
 
 }

@@ -20,8 +20,7 @@ type TestServer struct {
 	IterationCounter int
 }
 
-
-func GenerateTestServer(numAgents, iterations, turns int, maxDuration time.Duration,maxThreads int) *TestServer {
+func GenerateTestServer(numAgents, iterations, turns int, maxDuration time.Duration, maxThreads int) *TestServer {
 	m := make([]agent.AgentGeneratorCountPair[ITestBaseAgent], 1)
 	m[0] = agent.MakeAgentGeneratorCountPair(NewTestAgent, numAgents)
 	return &TestServer{

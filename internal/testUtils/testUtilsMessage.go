@@ -53,7 +53,6 @@ type TestMessagingBandwidthLimiter struct {
 	message.BaseMessage
 }
 
-
 func NewExtendedAgent(serv agent.IExposedServerFunctions[IExtendedAgent]) IExtendedAgent {
 	return &TestMessagingAgent{
 		BaseAgent:  agent.CreateBaseAgent(serv),

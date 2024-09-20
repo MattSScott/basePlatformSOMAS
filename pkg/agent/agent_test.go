@@ -33,7 +33,7 @@ func TestUpdateAgentInternalState(t *testing.T) {
 }
 
 func TestCreateBaseMessage(t *testing.T) {
-	testServ := testUtils.GenerateTestServer(1, 1, 1, time.Second,100000)
+	testServ := testUtils.GenerateTestServer(1, 1, 1, time.Second, 100000)
 	ag := testUtils.NewTestAgent(testServ)
 	newMsg := ag.CreateBaseMessage()
 	msgSenderID := newMsg.GetSender()
@@ -44,7 +44,7 @@ func TestCreateBaseMessage(t *testing.T) {
 }
 
 func TestNotifyAgentMessaging(t *testing.T) {
-	testServ := testUtils.GenerateTestServer(1, 1, 1, time.Second,100000)
+	testServ := testUtils.GenerateTestServer(1, 1, 1, time.Second, 100000)
 	ag := testUtils.NewTestAgent(testServ)
 	ag.FinishedMessaging()
 	agentStoppedTalkingCalls := ag.GetAgentStoppedTalking()
