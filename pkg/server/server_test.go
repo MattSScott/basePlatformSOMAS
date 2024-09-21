@@ -41,26 +41,12 @@ func TestHandlerInitialiser(t *testing.T) {
 func TestRunTurn(t *testing.T) {
 	numAgents := 20
 	iterations := 1
-	rounds := 1
-	server := testUtils.GenerateTestServer(numAgents, iterations, rounds, time.Millisecond, 100000)
-	server.SetGameRunner(server)
+	turns := 1
+	server := testUtils.GenerateTestServer(numAgents, iterations, turns, time.Millisecond, 100000)
+	server.SetTurnRunner(server)
 	server.Start()
-	if server.GetTurnCounter() != (iterations * rounds) {
-		t.Error("wrong number of iterations executed, got:", server.GetTurnCounter(), "expected", iterations*rounds)
-	}
-}
-
-func TestRunIteration(t *testing.T) {
-	numAgents := 2
-	iterations := 2
-	rounds := 2
-	server := testUtils.GenerateTestServer(numAgents, iterations, rounds, time.Second, 100000)
-	server.SetGameRunner(server)
-	for i := 0; i < rounds; i++ {
-		server.RunIteration()
-	}
-	if server.GetIterationCounter() != rounds {
-		t.Error("wrong number of rounds executed", server.GetIterationCounter(), "expected", rounds)
+	if server.GetTurnCounter() != (iterations * turns) {
+		t.Error("wrong number of iterations executed, got:", server.GetTurnCounter(), "expected", iterations*turns)
 	}
 }
 
@@ -226,8 +212,8 @@ func TestGameRunner(t *testing.T) {
 	timeLimit := 100 * time.Millisecond
 	numAgents := 2
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit, 100000)
-	server.SetGameRunner(server)
-	server.BaseServer.RunTurn()
+	server.SetTurnRunner(server)
+	server.BaseServer.RunTurn(-1, -1)
 	turns := server.GetTurnCounter()
 	if turns != 1 {
 		t.Errorf("Server unable to run turn: have turn value %d, expected %d", turns, 1)
@@ -241,7 +227,7 @@ func TestGoroutineWontHangAsyncMessaging(t *testing.T) {
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit, 100000)
 	wg := &sync.WaitGroup{}
 	testUtils.SendNotifyMessages(server.GetAgentMap(), &counter, wg)
-	server.HandleEndOfTurn(0, 0)
+	server.HandleEndOfTurn()
 	testUtils.SendNotifyMessages(server.GetAgentMap(), &counter, wg)
 	wg.Wait()
 	goal := uint32(2 * numAgents)
@@ -258,7 +244,7 @@ func TestRepeatedAsyncMessaging(t *testing.T) {
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit, 100000)
 	for i := 0; i < numIters; i++ {
 		wg := &sync.WaitGroup{}
-		server.HandleStartOfTurn(0, i)
+		server.HandleStartOfTurn()
 		testUtils.SendNotifyMessages(server.GetAgentMap(), &counter, wg)
 		stat := server.EndAgentListeningSession()
 		if !stat {
@@ -277,7 +263,7 @@ func TestTimeoutExit(t *testing.T) {
 	timeLimit := 100 * time.Millisecond
 	agentWorkload := 150 * time.Millisecond
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit, 100000)
-	server.HandleStartOfTurn(0, 0)
+	server.HandleStartOfTurn()
 	timeoutMsg := testUtils.CreateTestTimeoutMessage(agentWorkload)
 	timeoutMsg.SetSender(uuid.New())
 	server.BroadcastMessage(timeoutMsg)
@@ -296,7 +282,7 @@ func TestRepeatedTimeouts(t *testing.T) {
 	timeoutMsg := testUtils.CreateTestTimeoutMessage(agentWorkload)
 	timeoutMsg.SetSender(uuid.New())
 	for i := 0; i < numIters; i++ {
-		server.HandleStartOfTurn(0, i)
+		server.HandleStartOfTurn()
 		server.BroadcastMessage(timeoutMsg)
 		status := server.EndAgentListeningSession()
 		if status && (agentWorkload > timeLimit) {

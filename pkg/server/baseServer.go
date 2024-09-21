@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/MattSScott/basePlatformSOMAS/pkg/agent"
@@ -13,13 +12,13 @@ import (
 type BaseServer[T agent.IAgent[T]] struct {
 	// map of agentid -> agent struct
 	agentMap map[uuid.UUID]T
-	// map of agentid -> empty struct so that agents cannot access each others agent structs
+	// hashset of agent IDs
 	agentIdSet map[uuid.UUID]struct{}
 	// channel a server goroutine will send to in order to signal messaging completion
 	agentFinishedMessaging chan uuid.UUID
-	// duration after which messaging phase forcefully ends during rounds
+	// duration after which messaging phase forcefully ends during turns
 	turnTimeout time.Duration
-	// interface which holds extended methods for round running and turn running
+	// interface which allows overridable turns
 	gameRunner GameRunner
 	// number of iterations for server
 	iterations int
@@ -27,14 +26,13 @@ type BaseServer[T agent.IAgent[T]] struct {
 	turns int
 	// closable channel to signify that messaging is complete
 	endNotifyAgentDone chan struct{}
-	//limits the number of sendmessage goroutines executing at once
+	// limits the number of sendmessage goroutines executing at once
 	messageSenderSemaphore chan struct{}
 }
 
-func (server *BaseServer[T]) HandleStartOfTurn(iter, turn int) {
+func (server *BaseServer[T]) HandleStartOfTurn() {
 	server.agentFinishedMessaging = make(chan uuid.UUID)
 	server.endNotifyAgentDone = make(chan struct{})
-	fmt.Printf("Iteration %d, Turn %d starting...\n", iter, turn)
 }
 
 func (serv *BaseServer[T]) EndAgentListeningSession() bool {
@@ -56,13 +54,8 @@ awaitSessionEnd:
 	return status
 }
 
-func (server *BaseServer[T]) HandleEndOfTurn(iter, turn int) {
-	if server.EndAgentListeningSession() {
-		fmt.Println("All agents notified that they have finished messaging")
-	} else {
-		fmt.Println("All agents didn't notify that they have finished messaging, exited on timeout")
-	}
-	fmt.Printf("Iteration %d, Turn %d finished.\n", iter, turn)
+func (server *BaseServer[T]) HandleEndOfTurn() {
+	server.EndAgentListeningSession()
 }
 
 func (server *BaseServer[T]) SendMessage(msg message.IMessage[T], recipient uuid.UUID) {
@@ -107,11 +100,13 @@ func (serv *BaseServer[T]) AccessAgentByID(id uuid.UUID) T {
 func (serv *BaseServer[T]) Start() {
 	serv.checkHandler()
 	for i := 0; i < serv.iterations; i++ {
+		serv.RunStartOfIteration(i)
 		for j := 0; j < serv.turns; j++ {
-			serv.HandleStartOfTurn(i+1, j+1)
-			serv.gameRunner.RunTurn()
-			serv.HandleEndOfTurn(i+1, j+1)
+			serv.HandleStartOfTurn()
+			serv.RunTurn(i, j)
+			serv.HandleEndOfTurn()
 		}
+		serv.RunEndOfIteration(i)
 	}
 }
 
@@ -128,18 +123,26 @@ func (serv *BaseServer[T]) AgentStoppedTalking(id uuid.UUID) {
 	}
 }
 
-func (serv *BaseServer[T]) SetGameRunner(handler GameRunner) {
+func (serv *BaseServer[T]) SetTurnRunner(handler GameRunner) {
 	serv.gameRunner = handler
 }
 
 func (serv *BaseServer[T]) checkHandler() {
 	if serv.gameRunner == nil {
-		panic("round running handler has not been set. Have you run SetRunHandler?")
+		panic("Handler for running turn has not been set. Have you called SetTurnRunner?")
 	}
 }
 
-func (serv *BaseServer[T]) RunTurn() {
-	serv.gameRunner.RunTurn()
+func (serv *BaseServer[T]) RunTurn(turn, iteration int) {
+	serv.gameRunner.RunTurn(turn, iteration)
+}
+
+func (serv *BaseServer[T]) RunStartOfIteration(iteration int) {
+	serv.gameRunner.RunStartOfIteration(iteration)
+}
+
+func (serv *BaseServer[T]) RunEndOfIteration(iteration int) {
+	serv.gameRunner.RunEndOfIteration(iteration)
 }
 
 func (serv *BaseServer[T]) GetTurns() int {

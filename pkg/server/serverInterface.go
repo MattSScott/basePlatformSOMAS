@@ -28,6 +28,7 @@ type IServer[T agent.IAgent[T]] interface {
 }
 
 type GameRunner interface {
-	RunIteration()
-	RunTurn()
+	RunStartOfIteration(int)
+	RunTurn(int, int)
+	RunEndOfIteration(int)
 }
