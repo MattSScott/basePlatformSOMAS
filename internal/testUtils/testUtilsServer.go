@@ -15,13 +15,17 @@ type ITestServer interface {
 
 type TestServer struct {
 	*server.BaseServer[ITestBaseAgent]
-	TurnCounter int
+	TurnCounter           int
+	IterationStartCounter int
+	IterationEndCounter   int
 }
 
 func GenerateTestServer(numAgents, iterations, turns int, maxDuration time.Duration, maxThreads int) *TestServer {
 	serv := &TestServer{
-		BaseServer:  server.CreateServer[ITestBaseAgent](iterations, turns, maxDuration, maxThreads),
-		TurnCounter: 0,
+		BaseServer:            server.CreateServer[ITestBaseAgent](iterations, turns, maxDuration, maxThreads),
+		TurnCounter:           0,
+		IterationStartCounter: 0,
+		IterationEndCounter:   0,
 	}
 	for i := 0; i < numAgents; i++ {
 		serv.AddAgent(NewTestAgent(serv))
@@ -53,8 +57,12 @@ func (ts *TestServer) RunTurn(turn, iteration int) {
 	ts.TurnCounter += 1
 }
 
-func (ts *TestServer) GetTurnCounter() int {
-	return ts.TurnCounter
+func (ts *TestServer) RunStartOfIteration(iteration int) {
+	ts.IterationStartCounter += 1
+}
+
+func (ts *TestServer) RunEndOfIteration(iteration int) {
+	ts.IterationEndCounter += 1
 }
 
 func SendNotifyMessages(agMap map[uuid.UUID]ITestBaseAgent, count *uint32, wg *sync.WaitGroup) {

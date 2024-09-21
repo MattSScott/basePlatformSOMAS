@@ -43,10 +43,10 @@ func TestRunTurn(t *testing.T) {
 	iterations := 1
 	turns := 1
 	server := testUtils.GenerateTestServer(numAgents, iterations, turns, time.Millisecond, 100000)
-	server.SetTurnRunner(server)
+	server.SetGameRunner(server)
 	server.Start()
-	if server.GetTurnCounter() != (iterations * turns) {
-		t.Error("wrong number of iterations executed, got:", server.GetTurnCounter(), "expected", iterations*turns)
+	if server.TurnCounter != (iterations * turns) {
+		t.Error("wrong number of iterations executed, got:", server.TurnCounter, "expected", iterations*turns)
 	}
 }
 
@@ -212,11 +212,26 @@ func TestGameRunner(t *testing.T) {
 	timeLimit := 100 * time.Millisecond
 	numAgents := 2
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit, 100000)
-	server.SetTurnRunner(server)
-	server.BaseServer.RunTurn(-1, -1)
-	turns := server.GetTurnCounter()
+	server.SetGameRunner(server)
+	server.RunTurn(-1, -1)
+	turns := server.TurnCounter
 	if turns != 1 {
 		t.Errorf("Server unable to run turn: have turn value %d, expected %d", turns, 1)
+	}
+}
+
+func TestIterationRunner(t *testing.T) {
+	timeLimit := 100 * time.Millisecond
+	numAgents := 2
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit, 100000)
+	server.SetGameRunner(server)
+	server.RunStartOfIteration(-1)
+	server.RunEndOfIteration(-1)
+	if server.IterationStartCounter != 1 {
+		t.Errorf("RunStartOfIteration failed. Expected StartCounter to be 1, got: %d", server.IterationStartCounter)
+	}
+	if server.IterationEndCounter != 1 {
+		t.Errorf("RunEndOfIteration failed. Expected EndCounter to be 1, got: %d", server.IterationEndCounter)
 	}
 }
 

@@ -100,13 +100,13 @@ func (serv *BaseServer[T]) AccessAgentByID(id uuid.UUID) T {
 func (serv *BaseServer[T]) Start() {
 	serv.checkHandler()
 	for i := 0; i < serv.iterations; i++ {
-		serv.RunStartOfIteration(i)
+		serv.gameRunner.RunStartOfIteration(i)
 		for j := 0; j < serv.turns; j++ {
 			serv.HandleStartOfTurn()
-			serv.RunTurn(i, j)
+			serv.gameRunner.RunTurn(i, j)
 			serv.HandleEndOfTurn()
 		}
-		serv.RunEndOfIteration(i)
+		serv.gameRunner.RunEndOfIteration(i)
 	}
 }
 
@@ -123,26 +123,26 @@ func (serv *BaseServer[T]) AgentStoppedTalking(id uuid.UUID) {
 	}
 }
 
-func (serv *BaseServer[T]) SetTurnRunner(handler GameRunner) {
+func (serv *BaseServer[T]) SetGameRunner(handler GameRunner) {
 	serv.gameRunner = handler
 }
 
 func (serv *BaseServer[T]) checkHandler() {
 	if serv.gameRunner == nil {
-		panic("Handler for running turn has not been set. Have you called SetTurnRunner?")
+		panic("Handler for running turn has not been set. Have you called SetGameRunner?")
 	}
 }
 
 func (serv *BaseServer[T]) RunTurn(turn, iteration int) {
-	serv.gameRunner.RunTurn(turn, iteration)
+	panic("RunTurn not defined in server.")
 }
 
 func (serv *BaseServer[T]) RunStartOfIteration(iteration int) {
-	serv.gameRunner.RunStartOfIteration(iteration)
+	panic("RunStartOfIteration not defined in server.")
 }
 
 func (serv *BaseServer[T]) RunEndOfIteration(iteration int) {
-	serv.gameRunner.RunEndOfIteration(iteration)
+	panic("RunEndOfIteration not defined in server.")
 }
 
 func (serv *BaseServer[T]) GetTurns() int {
