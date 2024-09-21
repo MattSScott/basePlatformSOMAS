@@ -1,7 +1,6 @@
 package server_test
 
 import (
-	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -330,8 +329,6 @@ func TestSendMessageNoIDPanic(t *testing.T) {
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Millisecond, 100000)
 	agMap := server.GetAgentMap()
 
-	fmt.Println(len(agMap))
-
 	for _, ag := range agMap {
 		msg := &testUtils.TestMessage{}
 		for recip := range agMap {
@@ -378,9 +375,9 @@ func TestRunTurnNotSetPanic(t *testing.T) {
 		}
 	}()
 	server := &testUtils.TestTurnMethodPanics{
-		BaseServer: server.CreateServer[testUtils.ITestBaseAgent](1,1,time.Millisecond,100000),
+		BaseServer: server.CreateServer[testUtils.ITestBaseAgent](1, 1, time.Millisecond, 100000),
 	}
-	server.RunTurn(0,0)
+	server.RunTurn(0, 0)
 }
 
 func TestRunStartOfIterationNotSetPanic(t *testing.T) {
@@ -390,7 +387,7 @@ func TestRunStartOfIterationNotSetPanic(t *testing.T) {
 		}
 	}()
 	server := &testUtils.TestTurnMethodPanics{
-		BaseServer: server.CreateServer[testUtils.ITestBaseAgent](1,1,time.Millisecond,100000),
+		BaseServer: server.CreateServer[testUtils.ITestBaseAgent](1, 1, time.Millisecond, 100000),
 	}
 	server.RunStartOfIteration(0)
 }
@@ -402,23 +399,23 @@ func TestRunEndOfIterationNotSetPanic(t *testing.T) {
 		}
 	}()
 	server := &testUtils.TestTurnMethodPanics{
-		BaseServer: server.CreateServer[testUtils.ITestBaseAgent](1,1,time.Millisecond,100000),
+		BaseServer: server.CreateServer[testUtils.ITestBaseAgent](1, 1, time.Millisecond, 100000),
 	}
 	server.RunEndOfIteration(0)
 }
 
 func TestRunStartEndOfTurn(t *testing.T) {
-	timeLimit := 1* time.Millisecond
+	timeLimit := 1 * time.Millisecond
 	numAgents := 2
 	iterations := 3
 	server := testUtils.GenerateTestServer(numAgents, iterations, 1, timeLimit, 100000)
 	server.SetGameRunner(server)
 	server.Start()
 
-	if !(server.IterationStartCounter== iterations) {
-		t.Error(server.IterationStartCounter,"instances of RunStartOfTurn(iteration) executed. Expected:",iterations)
+	if !(server.IterationStartCounter == iterations) {
+		t.Error(server.IterationStartCounter, "instances of RunStartOfTurn(iteration) executed. Expected:", iterations)
 	}
-	if !(server.IterationEndCounter== iterations) {
-		t.Error(server.IterationEndCounter,"instances of RunEndOfTurn(iteration) executed. Expected:",iterations)
+	if !(server.IterationEndCounter == iterations) {
+		t.Error(server.IterationEndCounter, "instances of RunEndOfTurn(iteration) executed. Expected:", iterations)
 	}
 }
