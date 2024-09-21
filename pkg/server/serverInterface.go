@@ -12,8 +12,6 @@ type IAgentOperations[T agent.IAgent[T]] interface {
 	AddAgent(agentToAdd T)
 	// removes an agent from the server
 	RemoveAgent(agentToRemove T)
-	// translate the agent map into an array of agents
-	GenerateAgentArrayFromMap() []T
 }
 
 type IServer[T agent.IAgent[T]] interface {
@@ -30,6 +28,7 @@ type IServer[T agent.IAgent[T]] interface {
 }
 
 type GameRunner interface {
-	RunIteration()
-	RunTurn()
+	RunStartOfIteration(int)
+	RunTurn(int, int)
+	RunEndOfIteration(int)
 }

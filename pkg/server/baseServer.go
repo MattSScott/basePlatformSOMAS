@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/MattSScott/basePlatformSOMAS/pkg/agent"
@@ -13,13 +12,13 @@ import (
 type BaseServer[T agent.IAgent[T]] struct {
 	// map of agentid -> agent struct
 	agentMap map[uuid.UUID]T
-	// map of agentid -> empty struct so that agents cannot access each others agent structs
+	// hashset of agent IDs
 	agentIdSet map[uuid.UUID]struct{}
 	// channel a server goroutine will send to in order to signal messaging completion
 	agentFinishedMessaging chan uuid.UUID
-	// duration after which messaging phase forcefully ends during rounds
+	// duration after which messaging phase forcefully ends during turns
 	turnTimeout time.Duration
-	// interface which holds extended methods for round running and turn running
+	// interface which allows overridable turns
 	gameRunner GameRunner
 	// number of iterations for server
 	iterations int
@@ -27,14 +26,13 @@ type BaseServer[T agent.IAgent[T]] struct {
 	turns int
 	// closable channel to signify that messaging is complete
 	endNotifyAgentDone chan struct{}
-	//limits the number of sendmessage goroutines executing at once
+	// limits the number of sendmessage goroutines executing at once
 	messageSenderSemaphore chan struct{}
 }
 
-func (server *BaseServer[T]) HandleStartOfTurn(iter, turn int) {
+func (server *BaseServer[T]) HandleStartOfTurn() {
 	server.agentFinishedMessaging = make(chan uuid.UUID)
 	server.endNotifyAgentDone = make(chan struct{})
-	fmt.Printf("Iteration %d, Turn %d starting...\n", iter, turn)
 }
 
 func (serv *BaseServer[T]) EndAgentListeningSession() bool {
@@ -47,9 +45,7 @@ awaitSessionEnd:
 		select {
 		case id := <-serv.agentFinishedMessaging:
 			agentStoppedTalkingMap[id] = struct{}{}
-
 		case <-ctx.Done():
-			//fmt.Println("Exiting due to timeout")
 			status = false
 			break awaitSessionEnd
 		}
@@ -58,46 +54,34 @@ awaitSessionEnd:
 	return status
 }
 
-func (server *BaseServer[T]) HandleEndOfTurn(iter, turn int) {
-	if server.EndAgentListeningSession() {
-		fmt.Println("All agents notified that they have finished messaging")
-	} else {
-		fmt.Println("All agents didn't notify that they have finished messaging, exited on timeout")
-	}
-	fmt.Printf("Iteration %d, Turn %d finished.\n", iter, turn)
+func (server *BaseServer[T]) HandleEndOfTurn() {
+	server.EndAgentListeningSession()
 }
 
-func (server *BaseServer[T]) SendMessage(msg message.IMessage[T], receivers []uuid.UUID) {
+func (server *BaseServer[T]) SendMessage(msg message.IMessage[T], recipient uuid.UUID) {
 	if msg.GetSender() == uuid.Nil {
 		panic("No sender found - did you compose the BaseMessage?")
 	}
-	for _, receiver := range receivers {
-		select {
-		case server.messageSenderSemaphore <- struct{}{}:
-			id := receiver
-			go func() {
-				msg.InvokeMessageHandler(server.agentMap[id])
-				<-server.messageSenderSemaphore
-			}()
-		default:
-		}
+	select {
+	case server.messageSenderSemaphore <- struct{}{}:
+		go func() {
+			msg.InvokeMessageHandler(server.agentMap[recipient])
+			<-server.messageSenderSemaphore
+		}()
+	default:
 	}
-
 }
+
 func (server *BaseServer[T]) BroadcastMessage(msg message.IMessage[T]) {
 	if msg.GetSender() == uuid.Nil {
 		panic("No sender found - did you compose the BaseMessage?")
 	}
-	agSet := server.ViewAgentIdSet()
-	arrayRec := make([]uuid.UUID, len(agSet)-1)
-	i := 0
-	for id := range agSet {
-		if id != msg.GetSender() {
-			arrayRec[i] = id
-			i++
+	for id := range server.ViewAgentIdSet() {
+		if id == msg.GetSender() {
+			continue
 		}
+		server.SendMessage(msg, id)
 	}
-	server.SendMessage(msg, arrayRec)
 }
 
 func (serv *BaseServer[T]) AddAgent(agent T) {
@@ -116,11 +100,13 @@ func (serv *BaseServer[T]) AccessAgentByID(id uuid.UUID) T {
 func (serv *BaseServer[T]) Start() {
 	serv.checkHandler()
 	for i := 0; i < serv.iterations; i++ {
+		serv.gameRunner.RunStartOfIteration(i)
 		for j := 0; j < serv.turns; j++ {
-			serv.HandleStartOfTurn(i+1, j+1)
-			serv.gameRunner.RunTurn()
-			serv.HandleEndOfTurn(i+1, j+1)
+			serv.HandleStartOfTurn()
+			serv.gameRunner.RunTurn(i, j)
+			serv.HandleEndOfTurn()
 		}
+		serv.gameRunner.RunEndOfIteration(i)
 	}
 }
 
@@ -134,7 +120,6 @@ func (serv *BaseServer[T]) AgentStoppedTalking(id uuid.UUID) {
 		return
 	case <-serv.endNotifyAgentDone:
 		return
-
 	}
 }
 
@@ -144,20 +129,24 @@ func (serv *BaseServer[T]) SetGameRunner(handler GameRunner) {
 
 func (serv *BaseServer[T]) checkHandler() {
 	if serv.gameRunner == nil {
-		panic("round running handler has not been set. Have you run SetRunHandler?")
+		panic("Handler for running turn has not been set. Have you called SetGameRunner?")
 	}
 }
 
-func (serv *BaseServer[T]) RunTurn() {
-	serv.gameRunner.RunTurn()
+func (serv *BaseServer[T]) RunTurn(turn, iteration int) {
+	panic("RunTurn not defined in server.")
+}
+
+func (serv *BaseServer[T]) RunStartOfIteration(iteration int) {
+	panic("RunStartOfIteration not defined in server.")
+}
+
+func (serv *BaseServer[T]) RunEndOfIteration(iteration int) {
+	panic("RunEndOfIteration not defined in server.")
 }
 
 func (serv *BaseServer[T]) GetTurns() int {
 	return serv.turns
-}
-
-func (serv *BaseServer[T]) RunIteration() {
-	serv.gameRunner.RunIteration()
 }
 
 func (serv *BaseServer[T]) GetIterations() int {
@@ -169,27 +158,14 @@ func (serv *BaseServer[T]) RemoveAgent(agentToRemove T) {
 	delete(serv.agentIdSet, agentToRemove.GetID())
 }
 
-func (serv *BaseServer[T]) GenerateAgentArrayFromMap() []T {
-	agentMapToArray := make([]T, len(serv.agentMap))
-
-	i := 0
-	for _, ag := range serv.agentMap {
-		agentMapToArray[i] = ag
-		i++
-	}
-	return agentMapToArray
-}
-
-func (serv *BaseServer[T]) SendSynchronousMessage(msg message.IMessage[T], recipients []uuid.UUID) {
+func (serv *BaseServer[T]) SendSynchronousMessage(msg message.IMessage[T], recip uuid.UUID) {
 	if msg.GetSender() == uuid.Nil {
 		panic("No sender found - did you compose the BaseMessage?")
 	}
-	for _, recip := range recipients {
-		if msg.GetSender() == recip {
-			continue
-		}
-		msg.InvokeMessageHandler(serv.agentMap[recip])
+	if msg.GetSender() == recip {
+		return
 	}
+	msg.InvokeMessageHandler(serv.agentMap[recip])
 }
 
 func (serv *BaseServer[T]) RunSynchronousMessagingSession() {
@@ -198,18 +174,9 @@ func (serv *BaseServer[T]) RunSynchronousMessagingSession() {
 	}
 }
 
-func (serv *BaseServer[T]) initialiseAgents(m []agent.AgentGeneratorCountPair[T]) {
-	for _, pair := range m {
-		for i := 0; i < pair.Count; i++ {
-			agent := pair.Generator(serv)
-			serv.AddAgent(agent)
-		}
-	}
-}
-
 // generate a server instance based on a mapping function and number of iterations
-func CreateServer[T agent.IAgent[T]](generatorArray []agent.AgentGeneratorCountPair[T], iterations, turns int, turnMaxDuration time.Duration, messageBandwidth int) *BaseServer[T] {
-	serv := &BaseServer[T]{
+func CreateServer[T agent.IAgent[T]](iterations, turns int, turnMaxDuration time.Duration, messageBandwidth int) *BaseServer[T] {
+	return &BaseServer[T]{
 		agentMap:               make(map[uuid.UUID]T),
 		agentIdSet:             make(map[uuid.UUID]struct{}),
 		turnTimeout:            turnMaxDuration,
@@ -220,6 +187,4 @@ func CreateServer[T agent.IAgent[T]](generatorArray []agent.AgentGeneratorCountP
 		endNotifyAgentDone:     make(chan struct{}),
 		messageSenderSemaphore: make(chan struct{}, messageBandwidth),
 	}
-	serv.initialiseAgents(generatorArray)
-	return serv
 }

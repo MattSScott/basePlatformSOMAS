@@ -21,8 +21,8 @@ type IAgent[T any] interface {
 }
 
 type IMessagingProtocol[T any] interface {
-	SendSynchronousMessage(message.IMessage[T], []uuid.UUID)
-	SendMessage(message.IMessage[T], []uuid.UUID)
+	SendSynchronousMessage(message.IMessage[T], uuid.UUID)
+	SendMessage(message.IMessage[T], uuid.UUID)
 	BroadcastMessage(message.IMessage[T])
 	AgentStoppedTalking(uuid.UUID)
 }
