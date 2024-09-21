@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/MattSScott/basePlatformSOMAS/internal/testUtils"
+	"github.com/MattSScott/basePlatformSOMAS/pkg/server"
 	"github.com/google/uuid"
 )
 
@@ -367,5 +368,57 @@ func TestSendSynchronousMessageNoIDPanic(t *testing.T) {
 		for recip := range agMap {
 			ag.SendSynchronousMessage(msg, recip)
 		}
+	}
+}
+
+func TestRunTurnNotSetPanic(t *testing.T) {
+	defer func() {
+		if panicValue := recover(); panicValue == nil {
+			t.Errorf("Did not panic when RunTurn not overriden in extended server")
+		}
+	}()
+	server := &testUtils.TestTurnMethodPanics{
+		BaseServer: server.CreateServer[testUtils.ITestBaseAgent](1,1,time.Millisecond,100000),
+	}
+	server.RunTurn(0,0)
+}
+
+func TestRunStartOfIterationNotSetPanic(t *testing.T) {
+	defer func() {
+		if panicValue := recover(); panicValue == nil {
+			t.Errorf("Did not panic when RunStartOfIteration not overriden in extended server")
+		}
+	}()
+	server := &testUtils.TestTurnMethodPanics{
+		BaseServer: server.CreateServer[testUtils.ITestBaseAgent](1,1,time.Millisecond,100000),
+	}
+	server.RunStartOfIteration(0)
+}
+
+func TestRunEndOfIterationNotSetPanic(t *testing.T) {
+	defer func() {
+		if panicValue := recover(); panicValue == nil {
+			t.Errorf("Did not panic when RunEndOfIteration not overriden in extended server")
+		}
+	}()
+	server := &testUtils.TestTurnMethodPanics{
+		BaseServer: server.CreateServer[testUtils.ITestBaseAgent](1,1,time.Millisecond,100000),
+	}
+	server.RunEndOfIteration(0)
+}
+
+func TestRunStartEndOfTurn(t *testing.T) {
+	timeLimit := 1* time.Millisecond
+	numAgents := 2
+	iterations := 3
+	server := testUtils.GenerateTestServer(numAgents, iterations, 1, timeLimit, 100000)
+	server.SetGameRunner(server)
+	server.Start()
+
+	if !(server.IterationStartCounter== iterations) {
+		t.Error(server.IterationStartCounter,"instances of RunStartOfTurn(iteration) executed. Expected:",iterations)
+	}
+	if !(server.IterationEndCounter== iterations) {
+		t.Error(server.IterationEndCounter,"instances of RunEndOfTurn(iteration) executed. Expected:",iterations)
 	}
 }

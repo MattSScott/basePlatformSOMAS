@@ -13,6 +13,10 @@ type ITestServer interface {
 	server.IServer[ITestBaseAgent]
 }
 
+type TestTurnMethodPanics struct {
+	*server.BaseServer[ITestBaseAgent]
+}
+
 type TestServer struct {
 	*server.BaseServer[ITestBaseAgent]
 	TurnCounter           int
