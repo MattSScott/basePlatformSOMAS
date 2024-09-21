@@ -1,6 +1,7 @@
 package server_test
 
 import (
+	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -37,27 +38,6 @@ func TestHandlerInitialiser(t *testing.T) {
 	server.Start()
 }
 
-func TestGenerateArrayFromMap(t *testing.T) {
-	mapFound := make(map[uuid.UUID]int)
-	numAgents := 2
-	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second, 100000)
-	agentArray := server.GenerateAgentArrayFromMap()
-	for _, agent := range agentArray {
-		_, exists := mapFound[agent.GetID()]
-		if exists {
-			t.Error("Duplicate of", agent.GetID(), "found in output array")
-		} else {
-			mapFound[agent.GetID()] = 1
-		}
-	}
-	for id := range server.GetAgentMap() {
-		_, exists := mapFound[id]
-		if !exists {
-			t.Error(id, "in agentMap but not in array")
-		}
-	}
-}
-
 func TestRunTurn(t *testing.T) {
 	numAgents := 20
 	iterations := 1
@@ -89,15 +69,10 @@ func TestAgentRecievesMessage(t *testing.T) {
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second, 100000)
 	agent1 := testUtils.NewTestAgent(server)
 	testMessage := agent1.CreateTestMessage()
-	lenAgMap := len(server.GetAgentMap())
-	arrayReceivers := make([]uuid.UUID, lenAgMap)
-	i := 0
 	for id, ag := range server.GetAgentMap() {
-		arrayReceivers[i] = id
-		i += 1
 		ag.SetGoal(1)
+		server.SendMessage(testMessage, id)
 	}
-	server.SendMessage(testMessage, arrayReceivers)
 	server.EndAgentListeningSession()
 	for _, ag := range server.GetAgentMap() {
 		if !ag.ReceivedMessage() {
@@ -105,7 +80,6 @@ func TestAgentRecievesMessage(t *testing.T) {
 		}
 	}
 }
-
 
 func TestAddAgent(t *testing.T) {
 	numAgents := 2
@@ -134,28 +108,27 @@ func TestRemoveAgent(t *testing.T) {
 }
 
 func TestWaitForMessagingToEnd(t *testing.T) {
-	numberOfMessages := 100
+	numMessages := 100
 	numAgents := 10
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Millisecond, 100000)
 	agentMap := server.GetAgentMap()
-	arrayOfIDs := make([]uuid.UUID, numAgents)
-	i := 0
-	for id, ag := range agentMap {
-		arrayOfIDs[i] = id
-		i++
-		ag.SetGoal(int32(numberOfMessages * numAgents))
-	}
-	for j := 0; j < numberOfMessages; j++ {
-		for _, ag := range server.GetAgentMap() {
-			msg := ag.CreateTestMessage()
-			ag.SendMessage(msg, arrayOfIDs)
+	agentGoal := int32(numMessages * numAgents)
+
+	for _, ag := range agentMap {
+		ag.SetGoal(agentGoal)
+		msg := ag.CreateTestMessage()
+		for recip := range agentMap {
+			for i := 0; i < numMessages; i++ {
+				ag.SendMessage(msg, recip)
+			}
 		}
 	}
+
 	start := time.Now()
-	a := server.EndAgentListeningSession()
+	stat := server.EndAgentListeningSession()
 	end := time.Since(start)
-	if !a {
-		t.Error("Messaging ended on timeout,execution took:", end)
+	if !stat {
+		t.Error("Messaging ended on timeout, execution took:", end)
 	}
 	for _, ag := range agentMap {
 		if !ag.ReceivedMessage() {
@@ -185,16 +158,15 @@ func TestNumTurnsInServer(t *testing.T) {
 
 func TestBroadcastMessage(t *testing.T) {
 	numAgents := 10
-	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second, 100000)
-	i := 0
-	var agentGoal int32 = int32(numAgents - 1)
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, 10*time.Millisecond, 100000)
+	agentGoal := int32(numAgents - 1)
+
 	for _, ag := range server.GetAgentMap() {
-		i += 1
 		ag.SetGoal(agentGoal)
 		testMessage := ag.CreateTestMessage()
 		ag.BroadcastMessage(testMessage)
 	}
-	_ = server.EndAgentListeningSession()
+	server.EndAgentListeningSession()
 	for _, ag := range server.GetAgentMap() {
 		if !ag.ReceivedMessage() {
 			t.Error(ag, "Didn't Receive Message")
@@ -205,16 +177,11 @@ func TestBroadcastMessage(t *testing.T) {
 func TestSendSynchronousMessage(t *testing.T) {
 	numAgents := 10
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second, 100000)
-	agent1 := testUtils.NewTestAgent(server)
-	testMessage := agent1.CreateTestMessage()
-	arrayReceivers := make([]uuid.UUID, numAgents)
-	i := 0
+	testMessage := testUtils.NewTestAgent(server).CreateTestMessage()
 	for id, ag := range server.GetAgentMap() {
-		arrayReceivers[i] = id
-		i += 1
 		ag.SetGoal(1)
+		server.SendSynchronousMessage(testMessage, id)
 	}
-	server.SendSynchronousMessage(testMessage, arrayReceivers)
 	for _, ag := range server.GetAgentMap() {
 		if !ag.ReceivedMessage() {
 			t.Error("Didn't Receive Message")
@@ -260,13 +227,8 @@ func TestGameRunner(t *testing.T) {
 	numAgents := 2
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit, 100000)
 	server.SetGameRunner(server)
-	server.BaseServer.RunIteration()
 	server.BaseServer.RunTurn()
 	turns := server.GetTurnCounter()
-	iters := server.GetIterationCounter()
-	if iters != 1 {
-		t.Errorf("Server unable to run iteration: have round value %d, expected %d", iters, 1)
-	}
 	if turns != 1 {
 		t.Errorf("Server unable to run turn: have turn value %d, expected %d", turns, 1)
 	}
@@ -339,7 +301,7 @@ func TestRepeatedTimeouts(t *testing.T) {
 		status := server.EndAgentListeningSession()
 		if status && (agentWorkload > timeLimit) {
 
-			t.Error("Should have exited on timeout but did not",i)
+			t.Error("Should have exited on timeout but did not", i)
 		}
 	}
 }
@@ -365,15 +327,14 @@ func TestSendMessageNoIDPanic(t *testing.T) {
 	numAgents := 2
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Millisecond, 100000)
 	agMap := server.GetAgentMap()
-	recievers := make([]uuid.UUID, len(agMap))
-	i := 0
-	for id := range agMap {
-		recievers[i] = id
-		i++
-	}
+
+	fmt.Println(len(agMap))
+
 	for _, ag := range agMap {
 		msg := &testUtils.TestMessage{}
-		ag.SendMessage(msg,recievers)
+		for recip := range agMap {
+			ag.SendMessage(msg, recip)
+		}
 	}
 }
 
@@ -400,14 +361,10 @@ func TestSendSynchronousMessageNoIDPanic(t *testing.T) {
 	numAgents := 2
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Millisecond, 100000)
 	agMap := server.GetAgentMap()
-	recievers := make([]uuid.UUID, len(agMap))
-	i := 0
-	for id := range agMap {
-		recievers[i] = id
-		i++
-	}
 	for _, ag := range agMap {
 		msg := &testUtils.TestMessage{}
-		ag.SendSynchronousMessage(msg,recievers)
+		for recip := range agMap {
+			ag.SendSynchronousMessage(msg, recip)
+		}
 	}
 }

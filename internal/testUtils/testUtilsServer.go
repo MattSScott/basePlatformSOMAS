@@ -4,7 +4,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/MattSScott/basePlatformSOMAS/pkg/agent"
 	"github.com/MattSScott/basePlatformSOMAS/pkg/message"
 	"github.com/MattSScott/basePlatformSOMAS/pkg/server"
 	"github.com/google/uuid"
@@ -21,13 +20,15 @@ type TestServer struct {
 }
 
 func GenerateTestServer(numAgents, iterations, turns int, maxDuration time.Duration, maxThreads int) *TestServer {
-	m := make([]agent.AgentGeneratorCountPair[ITestBaseAgent], 1)
-	m[0] = agent.MakeAgentGeneratorCountPair(NewTestAgent, numAgents)
-	return &TestServer{
-		BaseServer:       server.CreateServer(m, iterations, turns, maxDuration, maxThreads),
+	serv := &TestServer{
+		BaseServer:       server.CreateServer[ITestBaseAgent](iterations, turns, maxDuration, maxThreads),
 		TurnCounter:      0,
 		IterationCounter: 0,
 	}
+	for i := 0; i < numAgents; i++ {
+		serv.AddAgent(NewTestAgent(serv))
+	}
+	return serv
 }
 
 func CreateTestTimeoutMessage(workLoad time.Duration) *TestTimeoutMessage {
@@ -71,15 +72,4 @@ func SendNotifyMessages(agMap map[uuid.UUID]ITestBaseAgent, count *uint32, wg *s
 		wg.Add(1)
 		go ag.NotifyAgentFinishedMessagingUnthreaded(wg, count)
 	}
-}
-
-func (t *TestServer) BroadcastMessage(msg message.IMessage[ITestBaseAgent]) {
-	agMap := t.GetAgentMap()
-	recipArr := make([]uuid.UUID, len(agMap))
-	i := 0
-	for id := range agMap {
-		recipArr[i] = id
-		i++
-	}
-	t.SendMessage(msg, recipArr)
 }

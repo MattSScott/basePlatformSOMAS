@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/MattSScott/basePlatformSOMAS/pkg/agent"
-	"github.com/google/uuid"
 )
 
 type ITestBaseAgent interface {
@@ -83,15 +82,10 @@ func (ta *TestServerFunctionsAgent) GetCounter() int32 {
 }
 
 func (ta *TestServerFunctionsAgent) RunSynchronousMessaging() {
-	recipients := ta.ViewAgentIdSet()
-	recipientArr := make([]uuid.UUID, len(recipients))
-	i := 0
-	for recip := range recipients {
-		recipientArr[i] = recip
-		i += 1
-	}
 	newMsg := ta.CreateTestMessage()
-	ta.SendSynchronousMessage(newMsg, recipientArr)
+	for id := range ta.ViewAgentIdSet() {
+		ta.SendSynchronousMessage(newMsg, id)
+	}
 }
 
 func (ta *TestServerFunctionsAgent) SetCounter(count int32) {

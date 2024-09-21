@@ -47,9 +47,7 @@ awaitSessionEnd:
 		select {
 		case id := <-serv.agentFinishedMessaging:
 			agentStoppedTalkingMap[id] = struct{}{}
-
 		case <-ctx.Done():
-			//fmt.Println("Exiting due to timeout")
 			status = false
 			break awaitSessionEnd
 		}
@@ -67,37 +65,30 @@ func (server *BaseServer[T]) HandleEndOfTurn(iter, turn int) {
 	fmt.Printf("Iteration %d, Turn %d finished.\n", iter, turn)
 }
 
-func (server *BaseServer[T]) SendMessage(msg message.IMessage[T], receivers []uuid.UUID) {
+func (server *BaseServer[T]) SendMessage(msg message.IMessage[T], recipient uuid.UUID) {
 	if msg.GetSender() == uuid.Nil {
 		panic("No sender found - did you compose the BaseMessage?")
 	}
-	for _, receiver := range receivers {
-		select {
-		case server.messageSenderSemaphore <- struct{}{}:
-			id := receiver
-			go func() {
-				msg.InvokeMessageHandler(server.agentMap[id])
-				<-server.messageSenderSemaphore
-			}()
-		default:
-		}
+	select {
+	case server.messageSenderSemaphore <- struct{}{}:
+		go func() {
+			msg.InvokeMessageHandler(server.agentMap[recipient])
+			<-server.messageSenderSemaphore
+		}()
+	default:
 	}
-
 }
+
 func (server *BaseServer[T]) BroadcastMessage(msg message.IMessage[T]) {
 	if msg.GetSender() == uuid.Nil {
 		panic("No sender found - did you compose the BaseMessage?")
 	}
-	agSet := server.ViewAgentIdSet()
-	arrayRec := make([]uuid.UUID, len(agSet)-1)
-	i := 0
-	for id := range agSet {
-		if id != msg.GetSender() {
-			arrayRec[i] = id
-			i++
+	for id := range server.ViewAgentIdSet() {
+		if id == msg.GetSender() {
+			continue
 		}
+		server.SendMessage(msg, id)
 	}
-	server.SendMessage(msg, arrayRec)
 }
 
 func (serv *BaseServer[T]) AddAgent(agent T) {
@@ -134,7 +125,6 @@ func (serv *BaseServer[T]) AgentStoppedTalking(id uuid.UUID) {
 		return
 	case <-serv.endNotifyAgentDone:
 		return
-
 	}
 }
 
@@ -156,10 +146,6 @@ func (serv *BaseServer[T]) GetTurns() int {
 	return serv.turns
 }
 
-func (serv *BaseServer[T]) RunIteration() {
-	serv.gameRunner.RunIteration()
-}
-
 func (serv *BaseServer[T]) GetIterations() int {
 	return serv.iterations
 }
@@ -169,27 +155,14 @@ func (serv *BaseServer[T]) RemoveAgent(agentToRemove T) {
 	delete(serv.agentIdSet, agentToRemove.GetID())
 }
 
-func (serv *BaseServer[T]) GenerateAgentArrayFromMap() []T {
-	agentMapToArray := make([]T, len(serv.agentMap))
-
-	i := 0
-	for _, ag := range serv.agentMap {
-		agentMapToArray[i] = ag
-		i++
-	}
-	return agentMapToArray
-}
-
-func (serv *BaseServer[T]) SendSynchronousMessage(msg message.IMessage[T], recipients []uuid.UUID) {
+func (serv *BaseServer[T]) SendSynchronousMessage(msg message.IMessage[T], recip uuid.UUID) {
 	if msg.GetSender() == uuid.Nil {
 		panic("No sender found - did you compose the BaseMessage?")
 	}
-	for _, recip := range recipients {
-		if msg.GetSender() == recip {
-			continue
-		}
-		msg.InvokeMessageHandler(serv.agentMap[recip])
+	if msg.GetSender() == recip {
+		return
 	}
+	msg.InvokeMessageHandler(serv.agentMap[recip])
 }
 
 func (serv *BaseServer[T]) RunSynchronousMessagingSession() {
@@ -198,18 +171,9 @@ func (serv *BaseServer[T]) RunSynchronousMessagingSession() {
 	}
 }
 
-func (serv *BaseServer[T]) initialiseAgents(m []agent.AgentGeneratorCountPair[T]) {
-	for _, pair := range m {
-		for i := 0; i < pair.Count; i++ {
-			agent := pair.Generator(serv)
-			serv.AddAgent(agent)
-		}
-	}
-}
-
 // generate a server instance based on a mapping function and number of iterations
-func CreateServer[T agent.IAgent[T]](generatorArray []agent.AgentGeneratorCountPair[T], iterations, turns int, turnMaxDuration time.Duration, messageBandwidth int) *BaseServer[T] {
-	serv := &BaseServer[T]{
+func CreateServer[T agent.IAgent[T]](iterations, turns int, turnMaxDuration time.Duration, messageBandwidth int) *BaseServer[T] {
+	return &BaseServer[T]{
 		agentMap:               make(map[uuid.UUID]T),
 		agentIdSet:             make(map[uuid.UUID]struct{}),
 		turnTimeout:            turnMaxDuration,
@@ -220,6 +184,4 @@ func CreateServer[T agent.IAgent[T]](generatorArray []agent.AgentGeneratorCountP
 		endNotifyAgentDone:     make(chan struct{}),
 		messageSenderSemaphore: make(chan struct{}, messageBandwidth),
 	}
-	serv.initialiseAgents(generatorArray)
-	return serv
 }
