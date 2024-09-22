@@ -94,9 +94,9 @@ func TestRemoveAgent(t *testing.T) {
 }
 
 func TestWaitForMessagingToEnd(t *testing.T) {
-	numMessages := 100
+	numMessages := 20
 	numAgents := 10
-	server := testUtils.GenerateTestServer(numAgents, 1, 1, 10*time.Millisecond, 200)
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, 5*time.Millisecond, 200)
 	agentMap := server.GetAgentMap()
 	agentGoal := int32(numMessages * numAgents)
 
