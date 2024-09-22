@@ -57,7 +57,7 @@ func TestSendMessage(t *testing.T) {
 	testMessage := agent1.CreateTestMessage()
 	for id, ag := range server.GetAgentMap() {
 		ag.SetGoal(1)
-		server.SendMessage(testMessage, id)
+		server.DeliverMessage(testMessage, id)
 	}
 	server.EndAgentListeningSession()
 	for _, ag := range server.GetAgentMap() {
@@ -166,7 +166,7 @@ func TestSendSynchronousMessage(t *testing.T) {
 	testMessage := testUtils.NewTestAgent(server).CreateTestMessage()
 	for id, ag := range server.GetAgentMap() {
 		ag.SetGoal(1)
-		server.SendSynchronousMessage(testMessage, id)
+		ag.SendSynchronousMessage(testMessage, id)
 	}
 	for _, ag := range server.GetAgentMap() {
 		if !ag.ReceivedMessage() {
@@ -180,9 +180,8 @@ func TestSynchronousMessagingSession(t *testing.T) {
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second, 100)
 	server.RunSynchronousMessagingSession()
 	for _, ag := range server.GetAgentMap() {
-
-		if ag.GetCounter() != int32(numAgents-1) {
-			t.Error("All messages did not pass, got:", ag.GetCounter(), "expected:", numAgents-1)
+		if ag.GetCounter() != int32(numAgents) {
+			t.Error("All messages did not pass, got:", ag.GetCounter(), "expected:", numAgents)
 		}
 	}
 }
@@ -318,7 +317,7 @@ func TestSendMessageNoIDPanic(t *testing.T) {
 			t.Errorf("did not panic when message sender not set")
 		}
 	}()
-	numAgents := 1
+	numAgents := 2
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Millisecond, 100)
 	agMap := server.GetAgentMap()
 

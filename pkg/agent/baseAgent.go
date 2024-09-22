@@ -44,11 +44,18 @@ func (a *BaseAgent[T]) SendMessage(msg message.IMessage[T], recipient uuid.UUID)
 	select {
 	case a.messageLimiterSemaphore <- struct{}{}:
 		go func() {
-			a.IExposedServerFunctions.SendMessage(msg, recipient)
+			a.DeliverMessage(msg, recipient)
 			<-a.messageLimiterSemaphore
 		}()
 	default:
 	}
+}
+
+func (a *BaseAgent[T]) SendSynchronousMessage(msg message.IMessage[T], recipient uuid.UUID) {
+	if msg.GetSender() == uuid.Nil {
+		panic("No sender found - did you compose the BaseMessage?")
+	}
+	a.DeliverMessage(msg, recipient)
 }
 
 func (agent *BaseAgent[T]) BroadcastMessage(msg message.IMessage[T]) {

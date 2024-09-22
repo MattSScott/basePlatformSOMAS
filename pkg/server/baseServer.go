@@ -58,7 +58,7 @@ func (server *BaseServer[T]) HandleEndOfTurn() {
 	server.EndAgentListeningSession()
 }
 
-func (server *BaseServer[T]) SendMessage(msg message.IMessage[T], recipient uuid.UUID) {
+func (server *BaseServer[T]) DeliverMessage(msg message.IMessage[T], recipient uuid.UUID) {
 	msg.InvokeMessageHandler(server.agentMap[recipient])
 }
 
@@ -134,16 +134,6 @@ func (serv *BaseServer[T]) GetIterations() int {
 func (serv *BaseServer[T]) RemoveAgent(agentToRemove T) {
 	delete(serv.agentMap, agentToRemove.GetID())
 	delete(serv.agentIdSet, agentToRemove.GetID())
-}
-
-func (serv *BaseServer[T]) SendSynchronousMessage(msg message.IMessage[T], recip uuid.UUID) {
-	if msg.GetSender() == uuid.Nil {
-		panic("No sender found - did you compose the BaseMessage?")
-	}
-	if msg.GetSender() == recip {
-		return
-	}
-	msg.InvokeMessageHandler(serv.agentMap[recip])
 }
 
 func (serv *BaseServer[T]) RunSynchronousMessagingSession() {
