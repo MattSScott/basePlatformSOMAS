@@ -95,9 +95,9 @@ func TestBroadCastMessage(t *testing.T) {
 	senderID := agent1.GetID()
 	server.EndAgentListeningSession()
 	for _, ag := range server.GetAgentMap() {
-		if !ag.ReceivedMessage()  && ag.GetID() != senderID {
+		if !ag.ReceivedMessage() && ag.GetID() != senderID {
 			t.Error(ag, "Didn't Receive Message")
-		}else if ag.ReceivedMessage()  && ag.GetID() == senderID {
+		} else if ag.ReceivedMessage() && ag.GetID() == senderID {
 			t.Error(ag, "is sender and received its own message")
 		}
 	}
@@ -139,7 +139,7 @@ func TestSendMessageNoIDPanic(t *testing.T) {
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Millisecond, 100000)
 	agMap := server.GetAgentMap()
 
-	for _,ag := range agMap {
+	for _, ag := range agMap {
 		msg := &testUtils.TestMessage{}
 		for recip := range agMap {
 			ag.SendMessage(msg, recip)
