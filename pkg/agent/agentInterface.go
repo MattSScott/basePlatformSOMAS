@@ -18,12 +18,13 @@ type IAgent[T any] interface {
 	RunSynchronousMessaging()
 	// allows for creation of a base message
 	CreateBaseMessage() message.BaseMessage
+	BroadcastMessage(message.IMessage[T])
 }
 
 type IMessagingProtocol[T any] interface {
 	SendSynchronousMessage(message.IMessage[T], uuid.UUID)
 	SendMessage(message.IMessage[T], uuid.UUID)
-	BroadcastMessage(message.IMessage[T])
+	//BroadcastMessage(message.IMessage[T])
 	AgentStoppedTalking(uuid.UUID)
 }
 
@@ -33,4 +34,5 @@ type IExposedServerFunctions[T any] interface {
 	ViewAgentIdSet() map[uuid.UUID]struct{}
 	// return exposed functions for agent
 	AccessAgentByID(uuid.UUID) T
+	GetAgentMessagingBandwidth() int
 }

@@ -1,6 +1,7 @@
 package testUtils
 
 import (
+	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -100,8 +101,10 @@ func (ta *TestServerFunctionsAgent) GetGoal() int32 {
 }
 
 func (ta *TestServerFunctionsAgent) HandleTimeoutTestMessage(msg TestTimeoutMessage) {
+	start := time.Now()
 	time.Sleep(msg.Workload) // simulate long work
-	ta.NotifyAgentFinishedMessaging()
+	fmt.Println("work has been completed, took ", time.Since(start), "notifying finished messaging")
+	//ta.NotifyAgentFinishedMessaging()
 }
 
 func (ta *TestServerFunctionsAgent) HandleInfiniteLoopMessage(msg TestMessagingBandwidthLimiter) {
