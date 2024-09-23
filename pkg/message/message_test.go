@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MattSScott/basePlatformSOMAS/internal/testUtils"
-	"github.com/MattSScott/basePlatformSOMAS/pkg/message"
-	"github.com/MattSScott/basePlatformSOMAS/pkg/server"
+	"github.com/MattSScott/basePlatformSOMAS/v2/internal/testUtils"
+	"github.com/MattSScott/basePlatformSOMAS/v2/pkg/message"
+	"github.com/MattSScott/basePlatformSOMAS/v2/pkg/server"
 )
 
 func TestMessageCanBeExtended(t *testing.T) {

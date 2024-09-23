@@ -1,4 +1,4 @@
-module github.com/MattSScott/basePlatformSOMAS
+module github.com/MattSScott/basePlatformSOMAS/v2
 
 go 1.20
 
