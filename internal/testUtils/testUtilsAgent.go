@@ -104,7 +104,7 @@ func (ta *TestServerFunctionsAgent) HandleTimeoutTestMessage(msg TestTimeoutMess
 	start := time.Now()
 	time.Sleep(msg.Workload) // simulate long work
 	fmt.Println("work has been completed, took ", time.Since(start), "notifying finished messaging")
-	//ta.NotifyAgentFinishedMessaging()
+	ta.NotifyAgentFinishedMessaging()
 }
 
 func (ta *TestServerFunctionsAgent) HandleInfiniteLoopMessage(msg TestMessagingBandwidthLimiter) {
