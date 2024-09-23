@@ -108,6 +108,8 @@ func (ta *TestServerFunctionsAgent) HandleTimeoutTestMessage(msg TestTimeoutMess
 }
 
 func (ta *TestServerFunctionsAgent) HandleInfiniteLoopMessage(msg TestMessagingBandwidthLimiter) {
-	// two or more agents broadcasting will cause infinite recursive calls
-	ta.BroadcastMessage(&msg)
+	// two or more agents sending to each other repeatedly will cause infinite recursive calls
+	originalSender := msg.GetSender()
+	msg.SetSender(ta.GetID())
+	ta.SendMessage(&msg, originalSender)
 }

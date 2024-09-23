@@ -397,3 +397,38 @@ func TestRunStartEndOfTurn(t *testing.T) {
 		t.Error(server.IterationEndCounter, "instances of RunEndOfTurn(iteration) executed. Expected:", iterations)
 	}
 }
+
+func TestMessagesSendInSaturatedServer(t *testing.T) {
+	timeLimit := 1 * time.Millisecond
+	server := testUtils.GenerateTestServer(0, 1, 1, timeLimit, 100)
+	evilAgent1 := testUtils.NewTestAgent(server)
+	evilAgent2 := testUtils.NewTestAgent(server)
+	testAgent1 := testUtils.NewTestAgent(server)
+	testAgent2 := testUtils.NewTestAgent(server)
+	testAgent1.SetGoal(1)
+	testAgent2.SetGoal(1)
+	evilAgent1.SetGoal(0)
+	evilAgent2.SetGoal(0)
+	server.AddAgent(testAgent1)
+	server.AddAgent(testAgent2)
+	server.AddAgent(evilAgent1)
+	server.AddAgent(evilAgent2)
+
+	infLoopMessage := testUtils.CreateInfLoopMessage()
+	infLoopMessage.SetSender(evilAgent1.GetID())
+	evilAgent1.SendMessage(infLoopMessage, evilAgent2.GetID())
+	time.Sleep(10 * time.Millisecond)
+	//if message bandwidth is faulty this will fill it with messages from the two agents
+	testMsg := testAgent1.CreateTestMessage()
+	testAgent1.SendMessage(testMsg, testAgent2.GetID())
+	testMsg = testAgent2.CreateTestMessage()
+	testAgent2.SendMessage(testMsg, testAgent1.GetID())
+	server.EndAgentListeningSession()
+	for _, ag := range server.GetAgentMap() {
+		if !ag.ReceivedMessage() {
+			t.Error(ag.GetID(), "Got ", ag.GetCounter(), "messages", "expected:", ag.GetGoal())
+		}
+
+	}
+
+}
