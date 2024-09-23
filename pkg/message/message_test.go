@@ -58,7 +58,6 @@ func TestPrint(t *testing.T) {
 	newMsg := a1.GetMessage1()
 	newMsg.Print()
 }
-
 func TestGetSender(t *testing.T) {
 	server := server.CreateServer[testUtils.IExtendedAgent](1, 1, time.Second, 100000)
 	a1 := testUtils.NewExtendedAgent(server)

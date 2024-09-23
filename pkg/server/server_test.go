@@ -50,7 +50,7 @@ func TestRunTurn(t *testing.T) {
 	}
 }
 
-func TestSendMessage(t *testing.T) {
+func TestDeliverMessage(t *testing.T) {
 	numAgents := 2
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second, 100)
 	agent1 := testUtils.NewTestAgent(server)
@@ -93,7 +93,7 @@ func TestRemoveAgent(t *testing.T) {
 	}
 }
 
-func TestWaitForMessagingToEnd(t *testing.T) {
+func TestEndAgentListeningSession(t *testing.T) {
 	numMessages := 20
 	numAgents := 10
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, 5*time.Millisecond, 200)
@@ -156,21 +156,6 @@ func TestBroadcastMessage(t *testing.T) {
 	for _, ag := range server.GetAgentMap() {
 		if !ag.ReceivedMessage() {
 			t.Error(ag, "Didn't Receive Message")
-		}
-	}
-}
-
-func TestSendSynchronousMessage(t *testing.T) {
-	numAgents := 10
-	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second, 100)
-	testMessage := testUtils.NewTestAgent(server).CreateTestMessage()
-	for id, ag := range server.GetAgentMap() {
-		ag.SetGoal(1)
-		ag.SendSynchronousMessage(testMessage, id)
-	}
-	for _, ag := range server.GetAgentMap() {
-		if !ag.ReceivedMessage() {
-			t.Error("Didn't Receive Message")
 		}
 	}
 }
@@ -325,23 +310,6 @@ func TestSendMessageNoIDPanic(t *testing.T) {
 		msg := &testUtils.TestMessage{}
 		for recip := range agMap {
 			ag.SendMessage(msg, recip)
-		}
-	}
-}
-
-func TestSendSynchronousMessageNoIDPanic(t *testing.T) {
-	defer func() {
-		if panicValue := recover(); panicValue == nil {
-			t.Errorf("did not panic when message sender not set")
-		}
-	}()
-	numAgents := 2
-	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Millisecond, 100)
-	agMap := server.GetAgentMap()
-	for _, ag := range agMap {
-		msg := &testUtils.TestMessage{}
-		for recip := range agMap {
-			ag.SendSynchronousMessage(msg, recip)
 		}
 	}
 }

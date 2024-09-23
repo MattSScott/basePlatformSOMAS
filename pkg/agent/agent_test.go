@@ -156,3 +156,35 @@ func TestSendMessageNoIDPanic(t *testing.T) {
 		}
 	}
 }
+
+func TestSendSynchronousMessageNoIDPanic(t *testing.T) {
+	defer func() {
+		if panicValue := recover(); panicValue == nil {
+			t.Errorf("did not panic when message sender not set")
+		}
+	}()
+	numAgents := 2
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Millisecond, 100)
+	agMap := server.GetAgentMap()
+	for _, ag := range agMap {
+		msg := &testUtils.TestMessage{}
+		for recip := range agMap {
+			ag.SendSynchronousMessage(msg, recip)
+		}
+	}
+}
+
+func TestSendSynchronousMessage(t *testing.T) {
+	numAgents := 10
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second, 100)
+	testMessage := testUtils.NewTestAgent(server).CreateTestMessage()
+	for id, ag := range server.GetAgentMap() {
+		ag.SetGoal(1)
+		ag.SendSynchronousMessage(testMessage, id)
+	}
+	for _, ag := range server.GetAgentMap() {
+		if !ag.ReceivedMessage() {
+			t.Error("Didn't Receive Message")
+		}
+	}
+}
