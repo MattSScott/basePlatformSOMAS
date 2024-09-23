@@ -1,6 +1,7 @@
 package testUtils
 
 import (
+	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -100,11 +101,15 @@ func (ta *TestServerFunctionsAgent) GetGoal() int32 {
 }
 
 func (ta *TestServerFunctionsAgent) HandleTimeoutTestMessage(msg TestTimeoutMessage) {
+	start := time.Now()
 	time.Sleep(msg.Workload) // simulate long work
+	fmt.Println("work has been completed, took ", time.Since(start), "notifying finished messaging")
 	ta.NotifyAgentFinishedMessaging()
 }
 
 func (ta *TestServerFunctionsAgent) HandleInfiniteLoopMessage(msg TestMessagingBandwidthLimiter) {
-	// two or more agents broadcasting will cause infinite recursive calls
-	ta.BroadcastMessage(&msg)
+	// two or more agents sending to each other repeatedly will cause infinite recursive calls
+	originalSender := msg.GetSender()
+	msg.SetSender(ta.GetID())
+	ta.SendMessage(&msg, originalSender)
 }

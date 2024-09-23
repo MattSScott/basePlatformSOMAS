@@ -18,12 +18,16 @@ type IAgent[T any] interface {
 	RunSynchronousMessaging()
 	// allows for creation of a base message
 	CreateBaseMessage() message.BaseMessage
+	// allows for sending a message across the entire system
+	BroadcastMessage(message.IMessage[T])
+	// allows for sending a message to a single recipient
+	SendMessage(message.IMessage[T], uuid.UUID)
+	// allows for sending a message to a single recipient synchronously
+	SendSynchronousMessage(message.IMessage[T], uuid.UUID)
 }
 
 type IMessagingProtocol[T any] interface {
-	SendSynchronousMessage(message.IMessage[T], uuid.UUID)
-	SendMessage(message.IMessage[T], uuid.UUID)
-	BroadcastMessage(message.IMessage[T])
+	DeliverMessage(message.IMessage[T], uuid.UUID)
 	AgentStoppedTalking(uuid.UUID)
 }
 
@@ -33,4 +37,6 @@ type IExposedServerFunctions[T any] interface {
 	ViewAgentIdSet() map[uuid.UUID]struct{}
 	// return exposed functions for agent
 	AccessAgentByID(uuid.UUID) T
+	// return max number of threads spawnable by an agent
+	GetAgentMessagingBandwidth() int
 }

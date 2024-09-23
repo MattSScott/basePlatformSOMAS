@@ -26,8 +26,8 @@ type BaseServer[T agent.IAgent[T]] struct {
 	turns int
 	// closable channel to signify that messaging is complete
 	endNotifyAgentDone chan struct{}
-	// limits the number of sendmessage goroutines executing at once
-	messageSenderSemaphore chan struct{}
+	//the max number of sent messages the server will process concurrently from each agent at one time. Anymore sent will be dropped
+	agentMessagingBandwidth int
 }
 
 func (server *BaseServer[T]) HandleStartOfTurn() {
@@ -58,30 +58,8 @@ func (server *BaseServer[T]) HandleEndOfTurn() {
 	server.EndAgentListeningSession()
 }
 
-func (server *BaseServer[T]) SendMessage(msg message.IMessage[T], recipient uuid.UUID) {
-	if msg.GetSender() == uuid.Nil {
-		panic("No sender found - did you compose the BaseMessage?")
-	}
-	select {
-	case server.messageSenderSemaphore <- struct{}{}:
-		go func() {
-			msg.InvokeMessageHandler(server.agentMap[recipient])
-			<-server.messageSenderSemaphore
-		}()
-	default:
-	}
-}
-
-func (server *BaseServer[T]) BroadcastMessage(msg message.IMessage[T]) {
-	if msg.GetSender() == uuid.Nil {
-		panic("No sender found - did you compose the BaseMessage?")
-	}
-	for id := range server.ViewAgentIdSet() {
-		if id == msg.GetSender() {
-			continue
-		}
-		server.SendMessage(msg, id)
-	}
+func (server *BaseServer[T]) DeliverMessage(msg message.IMessage[T], recipient uuid.UUID) {
+	msg.InvokeMessageHandler(server.agentMap[recipient])
 }
 
 func (serv *BaseServer[T]) AddAgent(agent T) {
@@ -158,33 +136,27 @@ func (serv *BaseServer[T]) RemoveAgent(agentToRemove T) {
 	delete(serv.agentIdSet, agentToRemove.GetID())
 }
 
-func (serv *BaseServer[T]) SendSynchronousMessage(msg message.IMessage[T], recip uuid.UUID) {
-	if msg.GetSender() == uuid.Nil {
-		panic("No sender found - did you compose the BaseMessage?")
-	}
-	if msg.GetSender() == recip {
-		return
-	}
-	msg.InvokeMessageHandler(serv.agentMap[recip])
-}
-
 func (serv *BaseServer[T]) RunSynchronousMessagingSession() {
 	for _, agent := range serv.agentMap {
 		agent.RunSynchronousMessaging()
 	}
 }
 
+func (serv *BaseServer[T]) GetAgentMessagingBandwidth() int {
+	return serv.agentMessagingBandwidth
+}
+
 // generate a server instance based on a mapping function and number of iterations
 func CreateServer[T agent.IAgent[T]](iterations, turns int, turnMaxDuration time.Duration, messageBandwidth int) *BaseServer[T] {
 	return &BaseServer[T]{
-		agentMap:               make(map[uuid.UUID]T),
-		agentIdSet:             make(map[uuid.UUID]struct{}),
-		turnTimeout:            turnMaxDuration,
-		gameRunner:             nil,
-		iterations:             iterations,
-		turns:                  turns,
-		agentFinishedMessaging: make(chan uuid.UUID),
-		endNotifyAgentDone:     make(chan struct{}),
-		messageSenderSemaphore: make(chan struct{}, messageBandwidth),
+		agentMap:                make(map[uuid.UUID]T),
+		agentIdSet:              make(map[uuid.UUID]struct{}),
+		turnTimeout:             turnMaxDuration,
+		gameRunner:              nil,
+		iterations:              iterations,
+		turns:                   turns,
+		agentFinishedMessaging:  make(chan uuid.UUID),
+		endNotifyAgentDone:      make(chan struct{}),
+		agentMessagingBandwidth: messageBandwidth,
 	}
 }

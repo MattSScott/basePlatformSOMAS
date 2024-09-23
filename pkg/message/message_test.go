@@ -2,14 +2,17 @@ package message_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/MattSScott/basePlatformSOMAS/internal/testUtils"
 	"github.com/MattSScott/basePlatformSOMAS/pkg/message"
+	"github.com/MattSScott/basePlatformSOMAS/pkg/server"
 )
 
 func TestMessageCanBeExtended(t *testing.T) {
-	agent1 := testUtils.NewExtendedAgent(nil)
-	agent2 := testUtils.NewExtendedAgent(nil)
+	server := server.CreateServer[testUtils.IExtendedAgent](1, 1, time.Second, 100000)
+	agent1 := testUtils.NewExtendedAgent(server)
+	agent2 := testUtils.NewExtendedAgent(server)
 	msgFromA1 := agent1.GetMessage1()
 	msgFromA1.InvokeMessageHandler(agent2)
 	msgFromA2 := agent2.GetMessage2()
@@ -23,9 +26,10 @@ func TestMessageCanBeExtended(t *testing.T) {
 }
 
 func TestSingleMessageGetsHandled(t *testing.T) {
-	a1 := testUtils.NewExtendedAgent(nil)
-	a2 := testUtils.NewExtendedAgent(nil)
-	a3 := testUtils.NewExtendedAgent(nil)
+	server := server.CreateServer[testUtils.IExtendedAgent](1, 1, time.Second, 100000)
+	a1 := testUtils.NewExtendedAgent(server)
+	a2 := testUtils.NewExtendedAgent(server)
+	a3 := testUtils.NewExtendedAgent(server)
 	nullMsg := a1.GetNullMessage()
 	for _, recip := range []testUtils.IExtendedAgent{a2, a3} {
 		nullMsg.InvokeMessageHandler(recip)
@@ -36,8 +40,9 @@ func TestSingleMessageGetsHandled(t *testing.T) {
 }
 
 func TestMultipleMessagesGetHandled(t *testing.T) {
-	a1 := testUtils.NewExtendedAgent(nil)
-	a2 := testUtils.NewExtendedAgent(nil)
+	server := server.CreateServer[testUtils.IExtendedAgent](1, 1, time.Second, 100000)
+	a1 := testUtils.NewExtendedAgent(server)
+	a2 := testUtils.NewExtendedAgent(server)
 	allMessages := []message.IMessage[testUtils.IExtendedAgent]{a1.GetMessage1(), a1.GetMessage1(), a1.GetMessage2()}
 	for _, msg := range allMessages {
 		msg.InvokeMessageHandler(a2)
@@ -48,13 +53,14 @@ func TestMultipleMessagesGetHandled(t *testing.T) {
 }
 
 func TestPrint(t *testing.T) {
-	a1 := testUtils.NewExtendedAgent(nil)
+	server := server.CreateServer[testUtils.IExtendedAgent](1, 1, time.Second, 100000)
+	a1 := testUtils.NewExtendedAgent(server)
 	newMsg := a1.GetMessage1()
 	newMsg.Print()
 }
-
 func TestGetSender(t *testing.T) {
-	a1 := testUtils.NewExtendedAgent(nil)
+	server := server.CreateServer[testUtils.IExtendedAgent](1, 1, time.Second, 100000)
+	a1 := testUtils.NewExtendedAgent(server)
 	msg := a1.GetMessage1()
 	agID := a1.GetID()
 	msgSenderID := msg.GetSender()
