@@ -23,6 +23,16 @@ func TestAgentIdOperations(t *testing.T) {
 	}
 }
 
+func TestNilInterfaceInjection(t *testing.T) {
+	defer func() {
+		if panicValue := recover(); panicValue == nil {
+			t.Errorf("did not panic when nil interface injected")
+		}
+	}()
+	ag := agent.CreateBaseAgent[testUtils.ITestBaseAgent](nil)
+	ag.GetID()
+}
+
 func TestUpdateAgentInternalState(t *testing.T) {
 	var testServ agent.IExposedServerFunctions[testUtils.ITestBaseAgent] = &testUtils.TestServer{
 		BaseServer:            server.CreateServer[testUtils.ITestBaseAgent](1, 1, time.Second, 100),

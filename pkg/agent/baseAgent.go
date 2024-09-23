@@ -16,6 +16,9 @@ func (a *BaseAgent[T]) GetID() uuid.UUID {
 }
 
 func CreateBaseAgent[T IAgent[T]](serv IExposedServerFunctions[T]) *BaseAgent[T] {
+	if serv == nil {
+		panic("Nil interface passed to CreateBaseAgent. Please pass an instance of IExposedServerFunctions")
+	}
 	return &BaseAgent[T]{
 		IExposedServerFunctions: serv,
 		id:                      uuid.New(),
