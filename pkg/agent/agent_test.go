@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MattSScott/basePlatformSOMAS/internal/testUtils"
-	"github.com/MattSScott/basePlatformSOMAS/pkg/agent"
-	"github.com/MattSScott/basePlatformSOMAS/pkg/server"
+	"github.com/MattSScott/basePlatformSOMAS/v2/internal/testUtils"
+	"github.com/MattSScott/basePlatformSOMAS/v2/pkg/agent"
+	"github.com/MattSScott/basePlatformSOMAS/v2/pkg/server"
 	"github.com/google/uuid"
 )
 

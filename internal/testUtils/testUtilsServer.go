@@ -4,8 +4,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/MattSScott/basePlatformSOMAS/pkg/message"
-	"github.com/MattSScott/basePlatformSOMAS/pkg/server"
+	"github.com/MattSScott/basePlatformSOMAS/v2/pkg/message"
+	"github.com/MattSScott/basePlatformSOMAS/v2/pkg/server"
 	"github.com/google/uuid"
 )
 

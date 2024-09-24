@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/MattSScott/basePlatformSOMAS/pkg/agent"
+	"github.com/MattSScott/basePlatformSOMAS/v2/pkg/agent"
 	"github.com/google/uuid"
 )
 
