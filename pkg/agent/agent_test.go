@@ -84,7 +84,7 @@ func TestSendMessage(t *testing.T) {
 		ag.SetGoal(1)
 		agent1.SendMessage(testMessage, id)
 	}
-	server.EndAgentListeningSession()
+	time.Sleep(10 * time.Millisecond)
 	for _, ag := range server.GetAgentMap() {
 		if !ag.ReceivedMessage() {
 			t.Error(ag, "Didn't Receive Message")
@@ -92,7 +92,7 @@ func TestSendMessage(t *testing.T) {
 	}
 }
 
-func TestBroadCastMessage(t *testing.T) {
+func TestBroadcastMessage(t *testing.T) {
 	numAgents := 3
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Millisecond, 100000)
 	agent1 := testUtils.NewTestAgent(server)
@@ -103,7 +103,7 @@ func TestBroadCastMessage(t *testing.T) {
 	}
 	agent1.BroadcastMessage(testMessage)
 	senderID := agent1.GetID()
-	server.EndAgentListeningSession()
+	time.Sleep(10 * time.Millisecond)
 	for _, ag := range server.GetAgentMap() {
 		if !ag.ReceivedMessage() && ag.GetID() != senderID {
 			t.Error(ag, "Didn't Receive Message")
@@ -136,7 +136,7 @@ func TestRecursiveInvokeMessageHandlerCalls(t *testing.T) {
 		msg.SetSender(ag.GetID())
 		ag.BroadcastMessage(msg)
 	}
-	server.EndAgentListeningSession()
+	time.Sleep(10 * time.Millisecond)
 }
 
 func TestSendMessageNoIDPanic(t *testing.T) {
