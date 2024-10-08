@@ -10,7 +10,7 @@ type IMessage[T any] interface {
 	GetSender() uuid.UUID
 	// Sets the sender struct member of a message
 	SetSender(uuid.UUID)
-	// calls the appropriate messsage handler method on the receiving agent
+	// calls the appropriate message handler method on the receiving agent
 	InvokeMessageHandler(T)
 }
 
