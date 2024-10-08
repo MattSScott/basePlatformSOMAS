@@ -407,7 +407,7 @@ func TestRecursiveInvokeMessageHandlerCalls(t *testing.T) {
 
 func TestSendMessage(t *testing.T) {
 	numAgents := 3
-	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Millisecond, 100000)
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, 10*time.Millisecond, 100000)
 	agent1 := testUtils.NewTestAgent(server)
 	testMessage := agent1.CreateTestMessage()
 	server.AddAgent(agent1)
@@ -425,7 +425,7 @@ func TestSendMessage(t *testing.T) {
 
 func TestBroadcastMessageFromAgent(t *testing.T) {
 	numAgents := 3
-	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Millisecond, 100000)
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, 10*time.Millisecond, 100000)
 	agent1 := testUtils.NewTestAgent(server)
 	testMessage := agent1.CreateTestMessage()
 	server.AddAgent(agent1)
