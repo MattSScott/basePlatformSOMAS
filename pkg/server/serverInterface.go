@@ -9,9 +9,26 @@ type IAgentOperations[T agent.IAgent[T]] interface {
 	// gives access to the agents in the simulator
 	GetAgentMap() map[uuid.UUID]T
 	// adds an agent to the server
-	AddAgent(agentToAdd T)
+	AddAgent(T)
 	// removes an agent from the server
-	RemoveAgent(agentToRemove T)
+	RemoveAgent(T)
+}
+
+type IGameStateController interface {
+	// gives access to number of iteration in simulator
+	GetIterations() int
+	// gives access to number of turns in simulator
+	GetTurns() int
+	// injects a GameRunner interface into the server
+	SetGameRunner(GameRunner)
+	// begins simulator
+	Start()
+}
+
+type GameRunner interface {
+	RunStartOfIteration(int)
+	RunTurn(int, int)
+	RunEndOfIteration(int)
 }
 
 type IServer[T agent.IAgent[T]] interface {
@@ -19,16 +36,6 @@ type IServer[T agent.IAgent[T]] interface {
 	IAgentOperations[T]
 	// exposes server methods to agents for messaging, etc
 	agent.IExposedServerFunctions[T]
-	// gives access to number of iteration in simulator
-	GetIterations() int
-	// begins simulator
-	Start()
-	//Signals the end of a messaging session. Either all agents send a message indicating they finished or server forcefully moves on after a set time period
-	EndAgentListeningSession() bool
-}
-
-type GameRunner interface {
-	RunStartOfIteration(int)
-	RunTurn(int, int)
-	RunEndOfIteration(int)
+	// exposes server methods for controlling game state
+	IGameStateController
 }

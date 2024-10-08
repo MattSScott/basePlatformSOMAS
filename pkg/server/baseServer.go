@@ -30,12 +30,12 @@ type BaseServer[T agent.IAgent[T]] struct {
 	agentMessagingBandwidth int
 }
 
-func (server *BaseServer[T]) HandleStartOfTurn() {
+func (server *BaseServer[T]) handleStartOfTurn() {
 	server.agentFinishedMessaging = make(chan uuid.UUID)
 	server.endNotifyAgentDone = make(chan struct{})
 }
 
-func (serv *BaseServer[T]) EndAgentListeningSession() bool {
+func (serv *BaseServer[T]) endAgentListeningSession() bool {
 	status := true
 	ctx, cancel := context.WithTimeout(context.Background(), serv.turnTimeout)
 	defer cancel()
@@ -54,8 +54,8 @@ awaitSessionEnd:
 	return status
 }
 
-func (server *BaseServer[T]) HandleEndOfTurn() {
-	server.EndAgentListeningSession()
+func (server *BaseServer[T]) handleEndOfTurn() {
+	server.endAgentListeningSession()
 }
 
 func (server *BaseServer[T]) DeliverMessage(msg message.IMessage[T], recipient uuid.UUID) {
@@ -80,9 +80,9 @@ func (serv *BaseServer[T]) Start() {
 	for i := 0; i < serv.iterations; i++ {
 		serv.gameRunner.RunStartOfIteration(i)
 		for j := 0; j < serv.turns; j++ {
-			serv.HandleStartOfTurn()
+			serv.handleStartOfTurn()
 			serv.gameRunner.RunTurn(i, j)
-			serv.HandleEndOfTurn()
+			serv.handleEndOfTurn()
 		}
 		serv.gameRunner.RunEndOfIteration(i)
 	}
