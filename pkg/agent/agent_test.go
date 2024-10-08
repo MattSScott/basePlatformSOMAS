@@ -187,3 +187,19 @@ func TestBroadcastMessage(t *testing.T) {
 		}
 	}
 }
+
+func TestChangeMessageSender(t *testing.T) {
+	serv := testUtils.GenerateTestServer(1,1,1,10*time.Millisecond,100)
+	agent := testUtils.NewTestAgent(serv)
+	msg := agent.CreateTestMessage()
+	agentID := agent.GetID()
+	msgID := msg.GetSender()
+	if msgID!= agentID {
+		t.Errorf("Expected id = %v, got %v.",agentID,msgID)
+	}
+	msg.Sender = uuid.New()
+	msgID = msg.GetSender()
+	if msgID!= agentID {
+		t.Errorf("Expected id = %v, got %v.",agentID,msgID)
+	}
+}

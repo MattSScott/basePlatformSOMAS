@@ -2,6 +2,8 @@ package server
 
 import (
 	"context"
+	"flag"
+	"log"
 	"time"
 
 	"github.com/MattSScott/basePlatformSOMAS/v2/pkg/agent"
@@ -36,6 +38,8 @@ func (server *BaseServer[T]) handleStartOfTurn() {
 }
 
 func (serv *BaseServer[T]) endAgentListeningSession() bool {
+	logAgentsFinishedMessagingFlag := flag.Int("verbose", 0, "flag which indicates whether percentage of agents that finished messaging is printed to the console")
+	flag.Parse()
 	status := true
 	ctx, cancel := context.WithTimeout(context.Background(), serv.turnTimeout)
 	defer cancel()
@@ -51,6 +55,12 @@ awaitSessionEnd:
 		}
 	}
 	close(serv.endNotifyAgentDone)
+	if *(logAgentsFinishedMessagingFlag) == 1 {
+		totalAgents := len(serv.agentIdSet)
+		agentsFinishedMessaging := len(agentStoppedTalkingMap)
+		percentage := 100.0 * (float32(agentsFinishedMessaging) / float32(totalAgents))
+		log.Printf("%v%% of agents indicated that they have finished messaging. %v total agents, %v agents indicated they had finished messaging.", percentage, totalAgents, agentsFinishedMessaging)
+	}
 	return status
 }
 
