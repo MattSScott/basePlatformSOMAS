@@ -142,9 +142,8 @@ func TestRecursiveInvokeMessageHandlerCalls(t *testing.T) {
 	numAgents := 3
 	timeLimit := time.Millisecond
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit, 100)
-	msg := testUtils.CreateInfLoopMessage()
 	for _, ag := range server.GetAgentMap() {
-		msg.SetSender(ag.GetID())
+		msg := testUtils.CreateInfLoopMessage(ag.GetID())
 		ag.BroadcastMessage(msg)
 	}
 	time.Sleep(10 * time.Millisecond)

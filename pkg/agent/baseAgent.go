@@ -27,9 +27,7 @@ func CreateBaseAgent[T IAgent[T]](serv IExposedServerFunctions[T]) *BaseAgent[T]
 }
 
 func (a *BaseAgent[T]) CreateBaseMessage() message.BaseMessage {
-	msg := message.BaseMessage{}
-	msg.SetSender(a.GetID())
-	return msg
+	return message.BaseMessage{Sender: a.GetID()}
 }
 
 func (a *BaseAgent[T]) UpdateAgentInternalState() {}

@@ -7,7 +7,6 @@ import (
 
 	"github.com/MattSScott/basePlatformSOMAS/v2/internal/testUtils"
 	"github.com/MattSScott/basePlatformSOMAS/v2/pkg/server"
-	"github.com/google/uuid"
 )
 
 func TestGenerateServer(t *testing.T) {
@@ -258,7 +257,7 @@ func TestTimeoutExit(t *testing.T) {
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit, 100)
 	server.ExposeStartOfTurn()
 	timeoutMsg := testUtils.CreateTestTimeoutMessage(agentWorkload)
-	timeoutMsg.SetSender(uuid.New())
+	// timeoutMsg.SetSender(uuid.New())
 	for _, ag := range server.GetAgentMap() {
 		ag.BroadcastMessage(timeoutMsg)
 	}
@@ -275,7 +274,7 @@ func TestRepeatedTimeouts(t *testing.T) {
 	agentWorkload := 20 * time.Millisecond
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit, 100)
 	timeoutMsg := testUtils.CreateTestTimeoutMessage(agentWorkload)
-	timeoutMsg.SetSender(uuid.New())
+	// timeoutMsg.SetSender(uuid.New())
 	for i := 0; i < numIters; i++ {
 		server.ExposeStartOfTurn()
 		for _, ag := range server.GetAgentMap() {
@@ -375,8 +374,7 @@ func TestMessagesSendInSaturatedServer(t *testing.T) {
 	server.AddAgent(evilAgent1)
 	server.AddAgent(evilAgent2)
 
-	infLoopMessage := testUtils.CreateInfLoopMessage()
-	infLoopMessage.SetSender(evilAgent1.GetID())
+	infLoopMessage := testUtils.CreateInfLoopMessage(evilAgent1.GetID())
 	evilAgent1.SendMessage(infLoopMessage, evilAgent2.GetID())
 	time.Sleep(10 * time.Millisecond)
 	//if message bandwidth is faulty this will fill it with messages from the two agents
@@ -397,9 +395,8 @@ func TestRecursiveInvokeMessageHandlerCalls(t *testing.T) {
 	numAgents := 3
 	timeLimit := time.Millisecond
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit, 100)
-	msg := testUtils.CreateInfLoopMessage()
 	for _, ag := range server.GetAgentMap() {
-		msg.SetSender(ag.GetID())
+		msg := testUtils.CreateInfLoopMessage(ag.GetID())
 		ag.BroadcastMessage(msg)
 	}
 	server.ExposeEndListening()

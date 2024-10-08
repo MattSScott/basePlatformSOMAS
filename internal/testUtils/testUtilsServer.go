@@ -39,14 +39,14 @@ func GenerateTestServer(numAgents, iterations, turns int, maxDuration time.Durat
 
 func CreateTestTimeoutMessage(workLoad time.Duration) *TestTimeoutMessage {
 	return &TestTimeoutMessage{
-		message.BaseMessage{},
+		message.BaseMessage{Sender: uuid.New()},
 		workLoad,
 	}
 }
 
-func CreateInfLoopMessage() *TestMessagingBandwidthLimiter {
+func CreateInfLoopMessage(id uuid.UUID) *TestMessagingBandwidthLimiter {
 	return &TestMessagingBandwidthLimiter{
-		message.BaseMessage{},
+		message.BaseMessage{Sender: id},
 	}
 }
 
@@ -75,5 +75,3 @@ func SendNotifyMessages(agMap map[uuid.UUID]ITestBaseAgent, count *uint32, wg *s
 		go ag.NotifyAgentFinishedMessagingUnthreaded(wg, count)
 	}
 }
-
-
