@@ -26,7 +26,3 @@ func (bm *BaseMessage) GetSender() uuid.UUID {
 func (bm *BaseMessage) SetSender(id uuid.UUID) {
 	bm.sender = id
 }
-
-func (bm *BaseMessage) InvokeMessageHandler(T any) {
-	panic("InvokeMessageHandler undefined on message")
-}
