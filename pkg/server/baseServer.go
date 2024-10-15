@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/MattSScott/basePlatformSOMAS/v2/internal/diagnosticsEngine"
 	"github.com/MattSScott/basePlatformSOMAS/v2/pkg/agent"
 	"github.com/MattSScott/basePlatformSOMAS/v2/pkg/message"
 	"github.com/google/uuid"
@@ -28,6 +29,8 @@ type BaseServer[T agent.IAgent[T]] struct {
 	endNotifyAgentDone chan struct{}
 	//the max number of sent messages the server will process concurrently from each agent at one time. Anymore sent will be dropped
 	agentMessagingBandwidth int
+	// diagnostic engine
+	diagnosticsEngine diagnosticsEngine.IDiagnosticsEngine
 }
 
 func (server *BaseServer[T]) handleStartOfTurn() {
@@ -45,6 +48,7 @@ awaitSessionEnd:
 		select {
 		case id := <-serv.agentFinishedMessaging:
 			agentStoppedTalkingMap[id] = struct{}{}
+			serv.diagnosticsEngine.ReportEndMessagingStatus()
 		case <-ctx.Done():
 			status = false
 			break awaitSessionEnd
@@ -56,6 +60,8 @@ awaitSessionEnd:
 
 func (server *BaseServer[T]) handleEndOfTurn() {
 	server.endAgentListeningSession()
+	server.diagnosticsEngine.CompileRoundDiagnostics(len(server.agentMap))
+	server.diagnosticsEngine.ResetRoundDiagnostics()
 }
 
 func (server *BaseServer[T]) DeliverMessage(msg message.IMessage[T], recipient uuid.UUID) {
@@ -146,6 +152,10 @@ func (serv *BaseServer[T]) GetAgentMessagingBandwidth() int {
 	return serv.agentMessagingBandwidth
 }
 
+func (serv *BaseServer[T]) GetDiagnosticEngine() diagnosticsEngine.IDiagnosticsEngine {
+	return serv.diagnosticsEngine
+}
+
 // generate a server instance based on a mapping function and number of iterations
 func CreateServer[T agent.IAgent[T]](iterations, turns int, turnMaxDuration time.Duration, messageBandwidth int) *BaseServer[T] {
 	return &BaseServer[T]{
@@ -158,5 +168,6 @@ func CreateServer[T agent.IAgent[T]](iterations, turns int, turnMaxDuration time
 		agentFinishedMessaging:  make(chan uuid.UUID),
 		endNotifyAgentDone:      make(chan struct{}),
 		agentMessagingBandwidth: messageBandwidth,
+		diagnosticsEngine:       diagnosticsEngine.CreateDiagnosticsEngine(),
 	}
 }
