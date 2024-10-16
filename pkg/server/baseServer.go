@@ -31,6 +31,13 @@ type BaseServer[T agent.IAgent[T]] struct {
 	agentMessagingBandwidth int
 	// diagnostic engine
 	diagnosticsEngine diagnosticsEngine.IDiagnosticsEngine
+	//flag which controls whether diagnostics are reported
+	reportMessagingDiagnostics bool
+}
+
+
+func (server *BaseServer[T]) ReportMessagingDiagnostics() {
+	server.reportMessagingDiagnostics = true
 }
 
 func (server *BaseServer[T]) handleStartOfTurn() {
@@ -89,6 +96,9 @@ func (serv *BaseServer[T]) Start() {
 			serv.handleStartOfTurn()
 			serv.gameRunner.RunTurn(i, j)
 			serv.handleEndOfTurn()
+			if serv.reportMessagingDiagnostics {
+				serv.diagnosticsEngine.CompileRoundDiagnostics(len(serv.agentIdSet))
+			}
 		}
 		serv.gameRunner.RunEndOfIteration(i)
 	}

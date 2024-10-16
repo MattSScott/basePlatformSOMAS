@@ -475,3 +475,11 @@ func TestFinishedMessagingDiagnotic(t *testing.T) {
 		t.Errorf("Diagnostic engine incorrectly calculated number of agents finished messaging. Expected %v, got %v", finishedMessaging, finishedMessagingDiagnostics)
 	}
 }
+
+func TestReportDiagnostics(t *testing.T) {
+	numAgents := 3
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, 10*time.Millisecond, 100000)
+	server.SetGameRunner(server)
+	server.ReportMessagingDiagnostics()
+	server.Start()
+}
