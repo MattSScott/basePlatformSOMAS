@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/MattSScott/basePlatformSOMAS/v2/internal/diagnosticsEngine"
 	"github.com/MattSScott/basePlatformSOMAS/v2/internal/testUtils"
 	"github.com/MattSScott/basePlatformSOMAS/v2/pkg/server"
 )
@@ -257,7 +258,6 @@ func TestTimeoutExit(t *testing.T) {
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit, 100)
 	server.ExposeStartOfTurn()
 	timeoutMsg := testUtils.CreateTestTimeoutMessage(agentWorkload)
-	// timeoutMsg.SetSender(uuid.New())
 	for _, ag := range server.GetAgentMap() {
 		ag.BroadcastMessage(timeoutMsg)
 	}
@@ -274,7 +274,6 @@ func TestRepeatedTimeouts(t *testing.T) {
 	agentWorkload := 20 * time.Millisecond
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit, 100)
 	timeoutMsg := testUtils.CreateTestTimeoutMessage(agentWorkload)
-	// timeoutMsg.SetSender(uuid.New())
 	for i := 0; i < numIters; i++ {
 		server.ExposeStartOfTurn()
 		for _, ag := range server.GetAgentMap() {
@@ -438,5 +437,41 @@ func TestBroadcastMessageFromAgent(t *testing.T) {
 		} else if ag.ReceivedMessage() && ag.GetID() == senderID {
 			t.Error(ag, "is sender and received its own message")
 		}
+	}
+}
+
+func TestMessagesDiagnostics(t *testing.T) {
+	totalMessages := 100
+	succesfulMessages := 51
+
+	testDiagnosticsEngine := diagnosticsEngine.CreateDiagnosticsEngine()
+	for i := 0; i < succesfulMessages; i++ {
+		testDiagnosticsEngine.ReportSendMessageStatus(true)
+	}
+	for i := 0; i < (totalMessages - succesfulMessages); i++ {
+		testDiagnosticsEngine.ReportSendMessageStatus(false)
+	}
+	totalMessagesDiagnostic, sentMessagesDiagnostic, _ := testDiagnosticsEngine.GetRoundDiagnostics()
+
+	if sentMessagesDiagnostic != succesfulMessages {
+		t.Errorf("Diagnostic engine incorrectly calculated number of messages sent succesfully. Expected %v, got %v", succesfulMessages, sentMessagesDiagnostic)
+	}
+
+	if totalMessagesDiagnostic != totalMessages {
+		t.Errorf("Diagnostic engine incorrectly calculated total number of messages sent. Expected %v, got %v", totalMessages, totalMessagesDiagnostic)
+	}
+
+}
+
+func TestFinishedMessagingDiagnotic(t *testing.T) {
+	finishedMessaging := 51
+	testDiagnosticsEngine := diagnosticsEngine.CreateDiagnosticsEngine()
+	for i := 0; i < finishedMessaging; i++ {
+		testDiagnosticsEngine.ReportEndMessagingStatus()
+	}
+
+	_, _, finishedMessagingDiagnostics := testDiagnosticsEngine.GetRoundDiagnostics()
+	if finishedMessagingDiagnostics != finishedMessaging {
+		t.Errorf("Diagnostic engine incorrectly calculated number of agents finished messaging. Expected %v, got %v", finishedMessaging, finishedMessagingDiagnostics)
 	}
 }

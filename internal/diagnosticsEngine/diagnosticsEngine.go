@@ -37,9 +37,9 @@ func (de *DiagnosticsEngine) ResetRoundDiagnostics() {
 }
 
 func (de *DiagnosticsEngine) CompileRoundDiagnostics(numAgents int) {
-	messageSuccessRate := float32(de.numMessages) / float32(de.numMessageSuccesses)
+	messageSuccessRate := 100 * float32(de.numMessages) / float32(de.numMessageSuccesses)
 	msgDropped := de.numMessages - de.numMessageSuccesses
-	endMessagingSuccessRate := float32(de.numEndMessagings) / float32(numAgents)
+	endMessagingSuccessRate := 100 * float32(de.numEndMessagings) / float32(numAgents)
 	fmt.Printf("%f%% of messages successfully sent (%d delivered, %d dropped)\n", messageSuccessRate, de.numMessageSuccesses, msgDropped)
 	fmt.Printf("%f%% of agents successfully ended messaging (%d ended, %d total)\n", endMessagingSuccessRate, de.numEndMessagings, numAgents)
 }
@@ -51,3 +51,9 @@ func CreateDiagnosticsEngine() *DiagnosticsEngine {
 		numMessageSuccesses: 0,
 	}
 }
+
+func (de *DiagnosticsEngine) GetRoundDiagnostics() (int,int,int) {
+	return de.numMessages,de.numMessageSuccesses,de.numEndMessagings
+}
+
+
