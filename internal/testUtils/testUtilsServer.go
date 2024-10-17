@@ -39,14 +39,14 @@ func GenerateTestServer(numAgents, iterations, turns int, maxDuration time.Durat
 
 func CreateTestTimeoutMessage(workLoad time.Duration) *TestTimeoutMessage {
 	return &TestTimeoutMessage{
-		message.BaseMessage{},
+		message.BaseMessage{Sender: uuid.New()},
 		workLoad,
 	}
 }
 
-func CreateInfLoopMessage() *TestMessagingBandwidthLimiter {
+func CreateInfLoopMessage(id uuid.UUID) *TestMessagingBandwidthLimiter {
 	return &TestMessagingBandwidthLimiter{
-		message.BaseMessage{},
+		message.BaseMessage{Sender: id},
 	}
 }
 
@@ -58,8 +58,16 @@ func NewTestMessage() *TestMessage {
 }
 
 func (ts *TestServer) RunTurn(turn, iteration int) {
+	for _,ag:= range ts.GetAgentMap() {
+		newMsg := ag.CreateTestMessage()
+		ag.BroadcastMessage(newMsg)
+	}
+	
 	ts.TurnCounter += 1
 }
+
+
+
 
 func (ts *TestServer) RunStartOfIteration(iteration int) {
 	ts.IterationStartCounter += 1
