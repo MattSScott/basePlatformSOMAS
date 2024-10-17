@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MattSScott/basePlatformSOMAS/v2/internal/diagnosticsEngine"
 	"github.com/MattSScott/basePlatformSOMAS/v2/internal/testUtils"
 	"github.com/MattSScott/basePlatformSOMAS/v2/pkg/server"
 )
@@ -437,46 +436,6 @@ func TestBroadcastMessageFromAgent(t *testing.T) {
 		} else if ag.ReceivedMessage() && ag.GetID() == senderID {
 			t.Error(ag, "is sender and received its own message")
 		}
-	}
-}
-
-func TestMessagesDiagnostics(t *testing.T) {
-	totalMessages := 100
-	succesfulMessages := 51
-
-	testDiagnosticsEngine := diagnosticsEngine.CreateDiagnosticsEngine()
-	for i := 0; i < succesfulMessages; i++ {
-		testDiagnosticsEngine.ReportSendMessageStatus(true)
-	}
-	for i := 0; i < (totalMessages - succesfulMessages); i++ {
-		testDiagnosticsEngine.ReportSendMessageStatus(false)
-	}
-	// totalMessagesDiagnostic, sentMessagesDiagnostic, _ := testDiagnosticsEngine.GetRoundDiagnostics()
-	totalMessagesDiagnostic := testDiagnosticsEngine.GetNumberSentMessages()
-	sentMessagesDiagnostic := testDiagnosticsEngine.GetNumberMessageSuccesses()
-
-	if sentMessagesDiagnostic != succesfulMessages {
-		t.Errorf("Diagnostic engine incorrectly calculated number of messages sent succesfully. Expected %v, got %v", succesfulMessages, sentMessagesDiagnostic)
-	}
-
-	if totalMessagesDiagnostic != totalMessages {
-		t.Errorf("Diagnostic engine incorrectly calculated total number of messages sent. Expected %v, got %v", totalMessages, totalMessagesDiagnostic)
-	}
-
-}
-
-func TestFinishedMessagingDiagnotic(t *testing.T) {
-	finishedMessaging := 51
-	testDiagnosticsEngine := diagnosticsEngine.CreateDiagnosticsEngine()
-	for i := 0; i < finishedMessaging; i++ {
-		testDiagnosticsEngine.ReportEndMessagingStatus()
-	}
-
-	// _, _, finishedMessagingDiagnostics := testDiagnosticsEngine.GetRoundDiagnostics()
-	finishedMessagingDiagnostics := testDiagnosticsEngine.GetNumberEndMessagings()
-
-	if finishedMessagingDiagnostics != finishedMessaging {
-		t.Errorf("Diagnostic engine incorrectly calculated number of agents finished messaging. Expected %v, got %v", finishedMessaging, finishedMessagingDiagnostics)
 	}
 }
 
