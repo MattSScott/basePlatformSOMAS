@@ -24,8 +24,6 @@ type IExposedServerFunctions[T any] interface {
 type IMessagingFunctions[T any] interface {
 	// signals end of agent's listening session
 	NotifyAgentFinishedMessaging()
-	// allows for synchronous messaging to be run
-	RunSynchronousMessaging()
 	// allows for creation of a base message
 	CreateBaseMessage() message.BaseMessage
 	// allows for sending a message across the entire system

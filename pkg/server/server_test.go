@@ -159,17 +159,6 @@ func TestBroadcastMessage(t *testing.T) {
 	}
 }
 
-func TestSynchronousMessagingSession(t *testing.T) {
-	numAgents := 2
-	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second, 100)
-	server.RunSynchronousMessagingSession()
-	for _, ag := range server.GetAgentMap() {
-		if ag.GetCounter() != int32(numAgents) {
-			t.Error("All messages did not pass, got:", ag.GetCounter(), "expected:", numAgents)
-		}
-	}
-}
-
 func TestAccessAgentByID(t *testing.T) {
 	var randNum int32 = 2357
 	numAgents := 2
