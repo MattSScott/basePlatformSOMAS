@@ -33,8 +33,6 @@ func (a *BaseAgent[T]) CreateBaseMessage() message.BaseMessage {
 	return message.BaseMessage{Sender: a.GetID()}
 }
 
-func (a *BaseAgent[T]) UpdateAgentInternalState() {}
-
 func (a *BaseAgent[T]) NotifyAgentFinishedMessaging() {
 	go a.AgentStoppedTalking(a.id)
 }

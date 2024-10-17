@@ -33,26 +33,6 @@ func TestNilInterfaceInjection(t *testing.T) {
 	ag.GetID()
 }
 
-func TestUpdateAgentInternalState(t *testing.T) {
-	var testServ agent.IExposedServerFunctions[testUtils.ITestBaseAgent] = &testUtils.TestServer{
-		BaseServer:            server.CreateServer[testUtils.ITestBaseAgent](1, 1, time.Second, 100),
-		TurnCounter:           0,
-		IterationStartCounter: 0,
-		IterationEndCounter:   0,
-	}
-	ag := testUtils.TestServerFunctionsAgent{
-		BaseAgent: agent.CreateBaseAgent(testServ),
-		Counter:   0,
-	}
-	if ag.Counter != 0 {
-		t.Error("Additional agent field not correctly instantiated")
-	}
-	ag.UpdateAgentInternalState()
-	if ag.Counter != 1 {
-		t.Error("Agent state not correctly updated")
-	}
-}
-
 func TestCreateBaseMessage(t *testing.T) {
 	testServ := testUtils.GenerateTestServer(1, 1, 1, time.Second, 100000)
 	ag := testUtils.NewTestAgent(testServ)
