@@ -66,9 +66,6 @@ func (ts *TestServer) RunTurn(turn, iteration int) {
 	ts.TurnCounter += 1
 }
 
-
-
-
 func (ts *TestServer) RunStartOfIteration(iteration int) {
 	ts.IterationStartCounter += 1
 }
