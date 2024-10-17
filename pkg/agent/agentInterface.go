@@ -1,21 +1,29 @@
 package agent
 
 import (
+	"github.com/MattSScott/basePlatformSOMAS/v2/internal/diagnosticsEngine"
 	"github.com/MattSScott/basePlatformSOMAS/v2/pkg/message"
 	"github.com/google/uuid"
 )
 
-type IAgent[T any] interface {
-	// composes necessary server functions for agent access
-	IExposedServerFunctions[T]
-	// returns the unique ID of an agent
-	GetID() uuid.UUID
-	// allows agent to update their internal state
-	UpdateAgentInternalState()
+type IExposedServerFunctions[T any] interface {
+	// return hashset of all agent IDs
+	ViewAgentIdSet() map[uuid.UUID]struct{}
+	// return exposed functions for agent
+	AccessAgentByID(uuid.UUID) T
+	// allows base agent to deliver message
+	DeliverMessage(message.IMessage[T], uuid.UUID)
+	// notify that agent has completed talking phase
+	AgentStoppedTalking(uuid.UUID)
+	// return max number of threads spawnable by an agent
+	GetAgentMessagingBandwidth() int
+	// return diagnostic engine used for tracking message data
+	GetDiagnosticEngine() diagnosticsEngine.IDiagnosticsEngine
+}
+
+type IMessagingFunctions[T any] interface {
 	// signals end of agent's listening session
 	NotifyAgentFinishedMessaging()
-	// allows for synchronous messaging to be run
-	RunSynchronousMessaging()
 	// allows for creation of a base message
 	CreateBaseMessage() message.BaseMessage
 	// allows for sending a message across the entire system
@@ -26,17 +34,13 @@ type IAgent[T any] interface {
 	SendSynchronousMessage(message.IMessage[T], uuid.UUID)
 }
 
-type IMessagingProtocol[T any] interface {
-	DeliverMessage(message.IMessage[T], uuid.UUID)
-	AgentStoppedTalking(uuid.UUID)
-}
-
-type IExposedServerFunctions[T any] interface {
-	IMessagingProtocol[T]
-	// return hashset of all agent IDs
-	ViewAgentIdSet() map[uuid.UUID]struct{}
-	// return exposed functions for agent
-	AccessAgentByID(uuid.UUID) T
-	// return max number of threads spawnable by an agent
-	GetAgentMessagingBandwidth() int
+type IAgent[T any] interface {
+	// composes necessary server functions for agent access
+	IExposedServerFunctions[T]
+	// exposes messaging functions for base agent
+	IMessagingFunctions[T]
+	// returns the unique ID of an agent
+	GetID() uuid.UUID
+	// allows agent to update their internal state
+	UpdateAgentInternalState()
 }

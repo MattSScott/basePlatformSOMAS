@@ -7,7 +7,6 @@ import (
 
 	"github.com/MattSScott/basePlatformSOMAS/v2/internal/testUtils"
 	"github.com/MattSScott/basePlatformSOMAS/v2/pkg/server"
-	"github.com/google/uuid"
 )
 
 func TestGenerateServer(t *testing.T) {
@@ -59,7 +58,7 @@ func TestDeliverMessage(t *testing.T) {
 		ag.SetGoal(1)
 		server.DeliverMessage(testMessage, id)
 	}
-	server.EndAgentListeningSession()
+	server.ExposeEndListening()
 	for _, ag := range server.GetAgentMap() {
 		if !ag.ReceivedMessage() {
 			t.Error(ag, "Didn't Receive Message")
@@ -111,7 +110,7 @@ func TestEndAgentListeningSession(t *testing.T) {
 	}
 
 	start := time.Now()
-	stat := server.EndAgentListeningSession()
+	stat := server.ExposeEndListening()
 	end := time.Since(start)
 	if !stat {
 		t.Error("Messaging ended on timeout, execution took:", end)
@@ -152,21 +151,10 @@ func TestBroadcastMessage(t *testing.T) {
 		testMessage := ag.CreateTestMessage()
 		ag.BroadcastMessage(testMessage)
 	}
-	server.EndAgentListeningSession()
+	server.ExposeEndListening()
 	for _, ag := range server.GetAgentMap() {
 		if !ag.ReceivedMessage() {
 			t.Error(ag, "Didn't Receive Message")
-		}
-	}
-}
-
-func TestSynchronousMessagingSession(t *testing.T) {
-	numAgents := 2
-	server := testUtils.GenerateTestServer(numAgents, 1, 1, time.Second, 100)
-	server.RunSynchronousMessagingSession()
-	for _, ag := range server.GetAgentMap() {
-		if ag.GetCounter() != int32(numAgents) {
-			t.Error("All messages did not pass, got:", ag.GetCounter(), "expected:", numAgents)
 		}
 	}
 }
@@ -184,13 +172,6 @@ func TestAccessAgentByID(t *testing.T) {
 			t.Error("Access Agent By ID is not working (incorrect struct value in test agent),expected:", randNum, "got:", accessedAgentID)
 		}
 	}
-}
-
-func TestMessagePrint(t *testing.T) {
-	server := testUtils.GenerateTestServer(1, 1, 1, time.Second, 100)
-	ag := testUtils.NewTestAgent(server)
-	msg := ag.CreateBaseMessage()
-	msg.Print()
 }
 
 func TestGameRunner(t *testing.T) {
@@ -227,7 +208,7 @@ func TestGoroutineWontHangAsyncMessaging(t *testing.T) {
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit, 100)
 	wg := &sync.WaitGroup{}
 	testUtils.SendNotifyMessages(server.GetAgentMap(), &counter, wg)
-	server.HandleEndOfTurn()
+	server.ExposeEndOfTurn()
 	testUtils.SendNotifyMessages(server.GetAgentMap(), &counter, wg)
 	wg.Wait()
 	goal := uint32(2 * numAgents)
@@ -244,9 +225,9 @@ func TestRepeatedAsyncMessaging(t *testing.T) {
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit, 100)
 	for i := 0; i < numIters; i++ {
 		wg := &sync.WaitGroup{}
-		server.HandleStartOfTurn()
+		server.ExposeStartOfTurn()
 		testUtils.SendNotifyMessages(server.GetAgentMap(), &counter, wg)
-		stat := server.EndAgentListeningSession()
+		stat := server.ExposeEndListening()
 		if !stat {
 			t.Error("Session not correctly handled")
 		}
@@ -263,13 +244,12 @@ func TestTimeoutExit(t *testing.T) {
 	timeLimit := 100 * time.Millisecond
 	agentWorkload := 150 * time.Millisecond
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit, 100)
-	server.HandleStartOfTurn()
+	server.ExposeStartOfTurn()
 	timeoutMsg := testUtils.CreateTestTimeoutMessage(agentWorkload)
-	timeoutMsg.SetSender(uuid.New())
 	for _, ag := range server.GetAgentMap() {
 		ag.BroadcastMessage(timeoutMsg)
 	}
-	status := server.EndAgentListeningSession()
+	status := server.ExposeEndListening()
 	if status && (agentWorkload > timeLimit) {
 		t.Error("Should have exited on timeout but did not")
 	}
@@ -282,13 +262,12 @@ func TestRepeatedTimeouts(t *testing.T) {
 	agentWorkload := 20 * time.Millisecond
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit, 100)
 	timeoutMsg := testUtils.CreateTestTimeoutMessage(agentWorkload)
-	timeoutMsg.SetSender(uuid.New())
 	for i := 0; i < numIters; i++ {
-		server.HandleStartOfTurn()
+		server.ExposeStartOfTurn()
 		for _, ag := range server.GetAgentMap() {
 			ag.BroadcastMessage(timeoutMsg)
 		}
-		status := server.EndAgentListeningSession()
+		status := server.ExposeEndListening()
 		if status && (agentWorkload > timeLimit) {
 
 			t.Error("Should have exited on timeout but did not", i)
@@ -382,8 +361,7 @@ func TestMessagesSendInSaturatedServer(t *testing.T) {
 	server.AddAgent(evilAgent1)
 	server.AddAgent(evilAgent2)
 
-	infLoopMessage := testUtils.CreateInfLoopMessage()
-	infLoopMessage.SetSender(evilAgent1.GetID())
+	infLoopMessage := testUtils.CreateInfLoopMessage(evilAgent1.GetID())
 	evilAgent1.SendMessage(infLoopMessage, evilAgent2.GetID())
 	time.Sleep(10 * time.Millisecond)
 	//if message bandwidth is faulty this will fill it with messages from the two agents
@@ -391,12 +369,69 @@ func TestMessagesSendInSaturatedServer(t *testing.T) {
 	testAgent1.SendMessage(testMsg, testAgent2.GetID())
 	testMsg = testAgent2.CreateTestMessage()
 	testAgent2.SendMessage(testMsg, testAgent1.GetID())
-	server.EndAgentListeningSession()
+	server.ExposeEndListening()
 	for _, ag := range server.GetAgentMap() {
 		if !ag.ReceivedMessage() {
 			t.Error(ag.GetID(), "Got ", ag.GetCounter(), "messages", "expected:", ag.GetGoal())
 		}
 
 	}
+}
 
+func TestRecursiveInvokeMessageHandlerCalls(t *testing.T) {
+	numAgents := 3
+	timeLimit := time.Millisecond
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit, 100)
+	for _, ag := range server.GetAgentMap() {
+		msg := testUtils.CreateInfLoopMessage(ag.GetID())
+		ag.BroadcastMessage(msg)
+	}
+	server.ExposeEndListening()
+}
+
+func TestSendMessage(t *testing.T) {
+	numAgents := 3
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, 10*time.Millisecond, 100000)
+	agent1 := testUtils.NewTestAgent(server)
+	testMessage := agent1.CreateTestMessage()
+	server.AddAgent(agent1)
+	for id, ag := range server.GetAgentMap() {
+		ag.SetGoal(1)
+		agent1.SendMessage(testMessage, id)
+	}
+	server.ExposeEndListening()
+	for _, ag := range server.GetAgentMap() {
+		if !ag.ReceivedMessage() {
+			t.Error(ag, "Didn't Receive Message")
+		}
+	}
+}
+
+func TestBroadcastMessageFromAgent(t *testing.T) {
+	numAgents := 3
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, 10*time.Millisecond, 100000)
+	agent1 := testUtils.NewTestAgent(server)
+	testMessage := agent1.CreateTestMessage()
+	server.AddAgent(agent1)
+	for _, ag := range server.GetAgentMap() {
+		ag.SetGoal(1)
+	}
+	agent1.BroadcastMessage(testMessage)
+	senderID := agent1.GetID()
+	server.ExposeEndListening()
+	for _, ag := range server.GetAgentMap() {
+		if !ag.ReceivedMessage() && ag.GetID() != senderID {
+			t.Error(ag, "Didn't Receive Message")
+		} else if ag.ReceivedMessage() && ag.GetID() == senderID {
+			t.Error(ag, "is sender and received its own message")
+		}
+	}
+}
+
+func TestReportDiagnostics(t *testing.T) {
+	numAgents := 3
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, 10*time.Millisecond, 100000)
+	server.SetGameRunner(server)
+	server.ReportMessagingDiagnostics()
+	server.Start()
 }
