@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/MattSScott/basePlatformSOMAS/v2/internal/diagnosticsEngine"
@@ -35,7 +36,6 @@ type BaseServer[T agent.IAgent[T]] struct {
 	reportMessagingDiagnostics bool
 }
 
-
 func (server *BaseServer[T]) ReportMessagingDiagnostics() {
 	server.reportMessagingDiagnostics = true
 }
@@ -65,9 +65,23 @@ awaitSessionEnd:
 	return status
 }
 
+func (server *BaseServer[T]) reportDiagnostics() {
+	msgSuccessRate := server.diagnosticsEngine.GetMessagingSuccessRate()
+	numMsgSuccess := server.diagnosticsEngine.GetNumberMessageSuccesses()
+	numMsgDrops := server.diagnosticsEngine.GetNumberMessageDrops()
+	fmt.Printf("%f%% of messages successfully sent (%d delivered, %d dropped)\n", msgSuccessRate, numMsgSuccess, numMsgDrops)
+	numAgents := len(server.GetAgentMap())
+	numEndMsg := server.diagnosticsEngine.GetNumberEndMessagings()
+	endMsgSuccess := server.diagnosticsEngine.GetEndMessagingSuccessRate(numAgents)
+	fmt.Printf("%f%% of agents successfully ended messaging (%d ended, %d total)\n", endMsgSuccess, numEndMsg, numAgents)
+
+}
+
 func (server *BaseServer[T]) handleEndOfTurn() {
 	server.endAgentListeningSession()
-	server.diagnosticsEngine.CompileRoundDiagnostics(len(server.agentMap))
+	if server.reportMessagingDiagnostics {
+		server.reportDiagnostics()
+	}
 	server.diagnosticsEngine.ResetRoundDiagnostics()
 }
 
@@ -96,9 +110,6 @@ func (serv *BaseServer[T]) Start() {
 			serv.handleStartOfTurn()
 			serv.gameRunner.RunTurn(i, j)
 			serv.handleEndOfTurn()
-			if serv.reportMessagingDiagnostics {
-				serv.diagnosticsEngine.CompileRoundDiagnostics(len(serv.agentIdSet))
-			}
 		}
 		serv.gameRunner.RunEndOfIteration(i)
 	}

@@ -451,7 +451,9 @@ func TestMessagesDiagnostics(t *testing.T) {
 	for i := 0; i < (totalMessages - succesfulMessages); i++ {
 		testDiagnosticsEngine.ReportSendMessageStatus(false)
 	}
-	totalMessagesDiagnostic, sentMessagesDiagnostic, _ := testDiagnosticsEngine.GetRoundDiagnostics()
+	// totalMessagesDiagnostic, sentMessagesDiagnostic, _ := testDiagnosticsEngine.GetRoundDiagnostics()
+	totalMessagesDiagnostic := testDiagnosticsEngine.GetNumberSentMessages()
+	sentMessagesDiagnostic := testDiagnosticsEngine.GetNumberMessageSuccesses()
 
 	if sentMessagesDiagnostic != succesfulMessages {
 		t.Errorf("Diagnostic engine incorrectly calculated number of messages sent succesfully. Expected %v, got %v", succesfulMessages, sentMessagesDiagnostic)
@@ -470,7 +472,9 @@ func TestFinishedMessagingDiagnotic(t *testing.T) {
 		testDiagnosticsEngine.ReportEndMessagingStatus()
 	}
 
-	_, _, finishedMessagingDiagnostics := testDiagnosticsEngine.GetRoundDiagnostics()
+	// _, _, finishedMessagingDiagnostics := testDiagnosticsEngine.GetRoundDiagnostics()
+	finishedMessagingDiagnostics := testDiagnosticsEngine.GetNumberEndMessagings()
+
 	if finishedMessagingDiagnostics != finishedMessaging {
 		t.Errorf("Diagnostic engine incorrectly calculated number of agents finished messaging. Expected %v, got %v", finishedMessaging, finishedMessagingDiagnostics)
 	}
