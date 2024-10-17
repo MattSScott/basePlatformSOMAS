@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"github.com/MattSScott/basePlatformSOMAS/v2/internal/diagnosticsEngine"
 	"github.com/MattSScott/basePlatformSOMAS/v2/pkg/message"
 	"github.com/google/uuid"
 )
@@ -16,6 +17,8 @@ type IExposedServerFunctions[T any] interface {
 	AgentStoppedTalking(uuid.UUID)
 	// return max number of threads spawnable by an agent
 	GetAgentMessagingBandwidth() int
+	// return diagnostic engine used for tracking message data
+	GetDiagnosticEngine() diagnosticsEngine.IDiagnosticsEngine
 }
 
 type IMessagingFunctions[T any] interface {

@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"github.com/MattSScott/basePlatformSOMAS/v2/internal/diagnosticsEngine"
 	"github.com/MattSScott/basePlatformSOMAS/v2/pkg/message"
 	"github.com/google/uuid"
 )
@@ -9,6 +10,7 @@ type BaseAgent[T IAgent[T]] struct {
 	IExposedServerFunctions[T]
 	id                      uuid.UUID
 	messageLimiterSemaphore chan struct{}
+	diagnosticsEngine       diagnosticsEngine.IDiagnosticsEngine
 }
 
 func (a *BaseAgent[T]) GetID() uuid.UUID {
@@ -23,6 +25,7 @@ func CreateBaseAgent[T IAgent[T]](serv IExposedServerFunctions[T]) *BaseAgent[T]
 		IExposedServerFunctions: serv,
 		id:                      uuid.New(),
 		messageLimiterSemaphore: make(chan struct{}, serv.GetAgentMessagingBandwidth()),
+		diagnosticsEngine:       serv.GetDiagnosticEngine(),
 	}
 }
 
@@ -42,14 +45,17 @@ func (a *BaseAgent[T]) SendMessage(msg message.IMessage[T], recipient uuid.UUID)
 	if msg.GetSender() == uuid.Nil {
 		panic("No sender found - did you compose the BaseMessage?")
 	}
+	status := false
 	select {
 	case a.messageLimiterSemaphore <- struct{}{}:
 		go func() {
 			a.DeliverMessage(msg, recipient)
 			<-a.messageLimiterSemaphore
 		}()
+		status = true
 	default:
 	}
+	a.diagnosticsEngine.ReportSendMessageStatus(status)
 }
 
 func (a *BaseAgent[T]) SendSynchronousMessage(msg message.IMessage[T], recipient uuid.UUID) {

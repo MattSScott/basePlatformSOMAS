@@ -257,7 +257,6 @@ func TestTimeoutExit(t *testing.T) {
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit, 100)
 	server.ExposeStartOfTurn()
 	timeoutMsg := testUtils.CreateTestTimeoutMessage(agentWorkload)
-	// timeoutMsg.SetSender(uuid.New())
 	for _, ag := range server.GetAgentMap() {
 		ag.BroadcastMessage(timeoutMsg)
 	}
@@ -274,7 +273,6 @@ func TestRepeatedTimeouts(t *testing.T) {
 	agentWorkload := 20 * time.Millisecond
 	server := testUtils.GenerateTestServer(numAgents, 1, 1, timeLimit, 100)
 	timeoutMsg := testUtils.CreateTestTimeoutMessage(agentWorkload)
-	// timeoutMsg.SetSender(uuid.New())
 	for i := 0; i < numIters; i++ {
 		server.ExposeStartOfTurn()
 		for _, ag := range server.GetAgentMap() {
@@ -439,4 +437,12 @@ func TestBroadcastMessageFromAgent(t *testing.T) {
 			t.Error(ag, "is sender and received its own message")
 		}
 	}
+}
+
+func TestReportDiagnostics(t *testing.T) {
+	numAgents := 3
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, 10*time.Millisecond, 100000)
+	server.SetGameRunner(server)
+	server.ReportMessagingDiagnostics()
+	server.Start()
 }

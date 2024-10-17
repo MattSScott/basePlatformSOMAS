@@ -58,8 +58,16 @@ func NewTestMessage() *TestMessage {
 }
 
 func (ts *TestServer) RunTurn(turn, iteration int) {
+	for _,ag:= range ts.GetAgentMap() {
+		newMsg := ag.CreateTestMessage()
+		ag.BroadcastMessage(newMsg)
+	}
+	
 	ts.TurnCounter += 1
 }
+
+
+
 
 func (ts *TestServer) RunStartOfIteration(iteration int) {
 	ts.IterationStartCounter += 1

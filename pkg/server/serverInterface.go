@@ -38,4 +38,6 @@ type IServer[T agent.IAgent[T]] interface {
 	agent.IExposedServerFunctions[T]
 	// exposes server methods for controlling game state
 	IGameStateController
+	// toggle logging of messaging diagnostics to console (default false)
+	ReportMessagingDiagnostics()
 }

@@ -2,8 +2,10 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	"github.com/MattSScott/basePlatformSOMAS/v2/internal/diagnosticsEngine"
 	"github.com/MattSScott/basePlatformSOMAS/v2/pkg/agent"
 	"github.com/MattSScott/basePlatformSOMAS/v2/pkg/message"
 	"github.com/google/uuid"
@@ -28,6 +30,14 @@ type BaseServer[T agent.IAgent[T]] struct {
 	endNotifyAgentDone chan struct{}
 	//the max number of sent messages the server will process concurrently from each agent at one time. Anymore sent will be dropped
 	agentMessagingBandwidth int
+	// diagnostic engine
+	diagnosticsEngine diagnosticsEngine.IDiagnosticsEngine
+	//flag which controls whether diagnostics are reported
+	reportMessagingDiagnostics bool
+}
+
+func (server *BaseServer[T]) ReportMessagingDiagnostics() {
+	server.reportMessagingDiagnostics = true
 }
 
 func (server *BaseServer[T]) handleStartOfTurn() {
@@ -45,6 +55,7 @@ awaitSessionEnd:
 		select {
 		case id := <-serv.agentFinishedMessaging:
 			agentStoppedTalkingMap[id] = struct{}{}
+			serv.diagnosticsEngine.ReportEndMessagingStatus()
 		case <-ctx.Done():
 			status = false
 			break awaitSessionEnd
@@ -54,8 +65,24 @@ awaitSessionEnd:
 	return status
 }
 
+func (server *BaseServer[T]) reportDiagnostics() {
+	msgSuccessRate := server.diagnosticsEngine.GetMessagingSuccessRate()
+	numMsgSuccess := server.diagnosticsEngine.GetNumberMessageSuccesses()
+	numMsgDrops := server.diagnosticsEngine.GetNumberMessageDrops()
+	fmt.Printf("%f%% of messages successfully sent (%d delivered, %d dropped)\n", msgSuccessRate, numMsgSuccess, numMsgDrops)
+	numAgents := len(server.GetAgentMap())
+	numEndMsg := server.diagnosticsEngine.GetNumberEndMessagings()
+	endMsgSuccess := server.diagnosticsEngine.GetEndMessagingSuccessRate(numAgents)
+	fmt.Printf("%f%% of agents successfully ended messaging (%d ended, %d total)\n", endMsgSuccess, numEndMsg, numAgents)
+
+}
+
 func (server *BaseServer[T]) handleEndOfTurn() {
 	server.endAgentListeningSession()
+	if server.reportMessagingDiagnostics {
+		server.reportDiagnostics()
+	}
+	server.diagnosticsEngine.ResetRoundDiagnostics()
 }
 
 func (server *BaseServer[T]) DeliverMessage(msg message.IMessage[T], recipient uuid.UUID) {
@@ -146,17 +173,23 @@ func (serv *BaseServer[T]) GetAgentMessagingBandwidth() int {
 	return serv.agentMessagingBandwidth
 }
 
+func (serv *BaseServer[T]) GetDiagnosticEngine() diagnosticsEngine.IDiagnosticsEngine {
+	return serv.diagnosticsEngine
+}
+
 // generate a server instance based on a mapping function and number of iterations
 func CreateServer[T agent.IAgent[T]](iterations, turns int, turnMaxDuration time.Duration, messageBandwidth int) *BaseServer[T] {
 	return &BaseServer[T]{
-		agentMap:                make(map[uuid.UUID]T),
-		agentIdSet:              make(map[uuid.UUID]struct{}),
-		turnTimeout:             turnMaxDuration,
-		gameRunner:              nil,
-		iterations:              iterations,
-		turns:                   turns,
-		agentFinishedMessaging:  make(chan uuid.UUID),
-		endNotifyAgentDone:      make(chan struct{}),
-		agentMessagingBandwidth: messageBandwidth,
+		agentMap:                   make(map[uuid.UUID]T),
+		agentIdSet:                 make(map[uuid.UUID]struct{}),
+		turnTimeout:                turnMaxDuration,
+		gameRunner:                 nil,
+		iterations:                 iterations,
+		turns:                      turns,
+		agentFinishedMessaging:     make(chan uuid.UUID),
+		endNotifyAgentDone:         make(chan struct{}),
+		agentMessagingBandwidth:    messageBandwidth,
+		diagnosticsEngine:          diagnosticsEngine.CreateDiagnosticsEngine(),
+		reportMessagingDiagnostics: false,
 	}
 }
