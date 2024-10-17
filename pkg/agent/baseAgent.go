@@ -39,8 +39,6 @@ func (a *BaseAgent[T]) NotifyAgentFinishedMessaging() {
 	go a.AgentStoppedTalking(a.id)
 }
 
-func (a *BaseAgent[T]) RunSynchronousMessaging() {}
-
 func (a *BaseAgent[T]) SendMessage(msg message.IMessage[T], recipient uuid.UUID) {
 	if msg.GetSender() == uuid.Nil {
 		panic("No sender found - did you compose the BaseMessage?")

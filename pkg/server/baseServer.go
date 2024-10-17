@@ -163,12 +163,6 @@ func (serv *BaseServer[T]) RemoveAgent(agentToRemove T) {
 	delete(serv.agentIdSet, agentToRemove.GetID())
 }
 
-func (serv *BaseServer[T]) RunSynchronousMessagingSession() {
-	for _, agent := range serv.agentMap {
-		agent.RunSynchronousMessaging()
-	}
-}
-
 func (serv *BaseServer[T]) GetAgentMessagingBandwidth() int {
 	return serv.agentMessagingBandwidth
 }
