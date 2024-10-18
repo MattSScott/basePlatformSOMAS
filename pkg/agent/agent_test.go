@@ -12,7 +12,7 @@ import (
 
 func TestAgentIdOperations(t *testing.T) {
 	var testServ agent.IExposedServerFunctions[testUtils.ITestBaseAgent] = &testUtils.TestServer{
-		BaseServer:            server.CreateServer[testUtils.ITestBaseAgent](1, 1, time.Second, 100),
+		BaseServer:            server.CreateBaseServer[testUtils.ITestBaseAgent](1, 1, time.Second, 100),
 		TurnCounter:           0,
 		IterationStartCounter: 0,
 		IterationEndCounter:   0,

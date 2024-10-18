@@ -172,7 +172,7 @@ func (serv *BaseServer[T]) GetDiagnosticEngine() diagnosticsEngine.IDiagnosticsE
 }
 
 // generate a server instance based on a mapping function and number of iterations
-func CreateServer[T agent.IAgent[T]](iterations, turns int, turnMaxDuration time.Duration, messageBandwidth int) *BaseServer[T] {
+func CreateBaseServer[T agent.IAgent[T]](iterations, turns int, turnMaxDuration time.Duration, messageBandwidth int) *BaseServer[T] {
 	return &BaseServer[T]{
 		agentMap:                   make(map[uuid.UUID]T),
 		agentIdSet:                 make(map[uuid.UUID]struct{}),
