@@ -28,13 +28,13 @@ type HelloWorldAgent struct {
 }
 
 func (hwa *HelloWorldAgent) HandleHelloMessage(msg HelloMessage) {
-	fmt.Println("Hello")
+	fmt.Printf("%s said: 'Hello'\n", hwa.GetID())
 	response := WorldMessage{hwa.CreateBaseMessage()}
 	hwa.SendMessage(&response, msg.Sender)
 }
 
 func (hwa *HelloWorldAgent) HandleWorldMessage(msg WorldMessage) {
-	fmt.Println("World")
+	fmt.Printf("%s responded: 'World'\n", hwa.GetID())
 	hwa.NotifyAgentFinishedMessaging()
 }
 
@@ -87,7 +87,7 @@ func (serv *HelloWorldServer) RunEndOfIteration(iteration int) {
 }
 
 func main() {
-	serv := CreateHelloWorldServer(10, 1, 10, time.Second, 100)
+	serv := CreateHelloWorldServer(10, 1, 10, time.Millisecond, 100)
 	serv.SetGameRunner(serv)
 	serv.ReportMessagingDiagnostics()
 	serv.Start()
