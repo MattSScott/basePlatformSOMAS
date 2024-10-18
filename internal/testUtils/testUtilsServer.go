@@ -26,7 +26,7 @@ type TestServer struct {
 
 func GenerateTestServer(numAgents, iterations, turns int, maxDuration time.Duration, maxThreads int) *TestServer {
 	serv := &TestServer{
-		BaseServer:            server.CreateServer[ITestBaseAgent](iterations, turns, maxDuration, maxThreads),
+		BaseServer:            server.CreateBaseServer[ITestBaseAgent](iterations, turns, maxDuration, maxThreads),
 		TurnCounter:           0,
 		IterationStartCounter: 0,
 		IterationEndCounter:   0,
@@ -58,11 +58,10 @@ func NewTestMessage() *TestMessage {
 }
 
 func (ts *TestServer) RunTurn(turn, iteration int) {
-	for _,ag:= range ts.GetAgentMap() {
+	for _, ag := range ts.GetAgentMap() {
 		newMsg := ag.CreateTestMessage()
 		ag.BroadcastMessage(newMsg)
 	}
-	
 	ts.TurnCounter += 1
 }
 

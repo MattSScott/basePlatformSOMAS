@@ -10,7 +10,7 @@ import (
 )
 
 func TestMessageCanBeExtended(t *testing.T) {
-	server := server.CreateServer[testUtils.IExtendedAgent](1, 1, time.Second, 100000)
+	server := server.CreateBaseServer[testUtils.IExtendedAgent](1, 1, time.Second, 100000)
 	agent1 := testUtils.NewExtendedAgent(server)
 	agent2 := testUtils.NewExtendedAgent(server)
 	msgFromA1 := agent1.GetMessage1()
@@ -26,7 +26,7 @@ func TestMessageCanBeExtended(t *testing.T) {
 }
 
 func TestSingleMessageGetsHandled(t *testing.T) {
-	server := server.CreateServer[testUtils.IExtendedAgent](1, 1, time.Second, 100000)
+	server := server.CreateBaseServer[testUtils.IExtendedAgent](1, 1, time.Second, 100000)
 	a1 := testUtils.NewExtendedAgent(server)
 	a2 := testUtils.NewExtendedAgent(server)
 	a3 := testUtils.NewExtendedAgent(server)
@@ -40,7 +40,7 @@ func TestSingleMessageGetsHandled(t *testing.T) {
 }
 
 func TestMultipleMessagesGetHandled(t *testing.T) {
-	server := server.CreateServer[testUtils.IExtendedAgent](1, 1, time.Second, 100000)
+	server := server.CreateBaseServer[testUtils.IExtendedAgent](1, 1, time.Second, 100000)
 	a1 := testUtils.NewExtendedAgent(server)
 	a2 := testUtils.NewExtendedAgent(server)
 	allMessages := []message.IMessage[testUtils.IExtendedAgent]{a1.GetMessage1(), a1.GetMessage1(), a1.GetMessage2()}
@@ -53,7 +53,7 @@ func TestMultipleMessagesGetHandled(t *testing.T) {
 }
 
 func TestGetSender(t *testing.T) {
-	server := server.CreateServer[testUtils.IExtendedAgent](1, 1, time.Second, 100000)
+	server := server.CreateBaseServer[testUtils.IExtendedAgent](1, 1, time.Second, 100000)
 	a1 := testUtils.NewExtendedAgent(server)
 	msg := a1.GetMessage1()
 	agID := a1.GetID()

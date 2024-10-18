@@ -48,7 +48,7 @@ func TestGetNumberEndMessagings(t *testing.T) {
 	if initEnds != 0 {
 		t.Error("Diagnostics engine intialised with non-zero number")
 	}
-	engine.ReportEndMessagingStatus()
+	engine.ReportEndMessagingStatus(1)
 	newEnds := engine.GetNumberEndMessagings()
 	if newEnds != initEnds+1 {
 		t.Error("Diagnostics engine successes not correctly incremented")
@@ -94,11 +94,8 @@ func TestEndMessagingSuccessRate(t *testing.T) {
 	engine := diagnosticsEngine.CreateDiagnosticsEngine()
 	numAgents := 100
 	numReports := 20
-	for i := 0; i < numAgents; i++ {
-		if i < numReports {
-			engine.ReportEndMessagingStatus()
-		}
-	}
+
+	engine.ReportEndMessagingStatus(numReports)
 	trueSuccessRate := engine.GetEndMessagingSuccessRate(numAgents)
 	expectedSuccessRate := float32(numReports) / float32(numAgents) * 100
 	if trueSuccessRate != expectedSuccessRate {
@@ -109,11 +106,12 @@ func TestEndMessagingSuccessRate(t *testing.T) {
 func TestResetDiagnostics(t *testing.T) {
 	engine := diagnosticsEngine.CreateDiagnosticsEngine()
 	rounds := 3
+	nMessages := 10
 	for r := 0; r < rounds; r++ {
-		for delta := 0; delta < 10; delta++ {
-			engine.ReportEndMessagingStatus()
+		for delta := 0; delta < nMessages; delta++ {
 			engine.ReportSendMessageStatus(true)
 		}
+		engine.ReportEndMessagingStatus(nMessages)
 		engine.ResetRoundDiagnostics()
 		nSent := engine.GetNumberSentMessages()
 		nSucc := engine.GetNumberMessageSuccesses()

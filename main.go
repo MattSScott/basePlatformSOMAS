@@ -25,17 +25,17 @@ type HelloWorldAgent struct {
 	*agent.BaseAgent[IHelloWorldAgent]
 }
 
-func GenerateTestServer(numAgents, iterations, turns int, maxDuration time.Duration, maxThreads int) *HelloWorldServer {
+func CreateHelloWorldServer(numAgents, iterations, turns int, maxDuration time.Duration, maxThreads int) *HelloWorldServer {
 	serv := &HelloWorldServer{
-		BaseServer: server.CreateServer[IHelloWorldAgent](iterations, turns, maxDuration, maxThreads),
+		BaseServer: server.CreateBaseServer[IHelloWorldAgent](iterations, turns, maxDuration, maxThreads),
 	}
 	for i := 0; i < numAgents; i++ {
-		serv.AddAgent(NewHelloWorldAgent(serv))
+		serv.AddAgent(CreateHelloWorldAgent(serv))
 	}
 	return serv
 }
 
-func NewHelloWorldAgent(serv agent.IExposedServerFunctions[IHelloWorldAgent]) IHelloWorldAgent {
+func CreateHelloWorldAgent(serv agent.IExposedServerFunctions[IHelloWorldAgent]) IHelloWorldAgent {
 	return &HelloWorldAgent{
 		BaseAgent: agent.CreateBaseAgent(serv),
 	}
@@ -57,8 +57,9 @@ func (d *HelloMessage) InvokeMessageHandler(ag IHelloWorldAgent) {
 
 func (d *WorldMessage) InvokeMessageHandler(ag IHelloWorldAgent) {
 	fmt.Print("World\n")
-	msg := HelloMessage{ag.CreateBaseMessage()}
-	ag.BroadcastMessage(&msg)
+	// msg := HelloMessage{ag.CreateBaseMessage()}
+	// ag.BroadcastMessage(&msg)
+	ag.NotifyAgentFinishedMessaging()
 }
 
 func (serv *HelloWorldServer) RunTurn(i, j int) {
@@ -84,7 +85,7 @@ func (serv *HelloWorldServer) RunEndOfIteration(iteration int) {
 }
 
 func main() {
-	serv := GenerateTestServer(2, 1, 1, time.Second, 10)
+	serv := CreateHelloWorldServer(10, 1, 1, time.Second, 10)
 	serv.SetGameRunner(serv)
 	serv.ReportMessagingDiagnostics()
 	serv.Start()
