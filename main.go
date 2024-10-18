@@ -11,6 +11,8 @@ import (
 
 type IHelloWorldAgent interface {
 	agent.IAgent[IHelloWorldAgent]
+	HandleHelloMessage(HelloMessage)
+	HandleWorldMessage(WorldMessage)
 }
 
 type IHelloWorldServer interface {
@@ -23,6 +25,17 @@ type HelloWorldServer struct {
 
 type HelloWorldAgent struct {
 	*agent.BaseAgent[IHelloWorldAgent]
+}
+
+func (hwa *HelloWorldAgent) HandleHelloMessage(msg HelloMessage) {
+	fmt.Println("Hello")
+	response := WorldMessage{hwa.CreateBaseMessage()}
+	hwa.SendMessage(&response, msg.Sender)
+}
+
+func (hwa *HelloWorldAgent) HandleWorldMessage(msg WorldMessage) {
+	fmt.Println("World")
+	hwa.NotifyAgentFinishedMessaging()
 }
 
 func CreateHelloWorldServer(numAgents, iterations, turns int, maxDuration time.Duration, maxThreads int) *HelloWorldServer {
@@ -49,30 +62,19 @@ type WorldMessage struct {
 	message.BaseMessage
 }
 
-func (d *HelloMessage) InvokeMessageHandler(ag IHelloWorldAgent) {
-	fmt.Print("Hello\n")
-	msg := WorldMessage{ag.CreateBaseMessage()}
-	ag.BroadcastMessage(&msg)
+func (d HelloMessage) InvokeMessageHandler(ag IHelloWorldAgent) {
+	ag.HandleHelloMessage(d)
 }
 
-func (d *WorldMessage) InvokeMessageHandler(ag IHelloWorldAgent) {
-	fmt.Print("World\n")
-	// msg := HelloMessage{ag.CreateBaseMessage()}
-	// ag.BroadcastMessage(&msg)
-	ag.NotifyAgentFinishedMessaging()
+func (d WorldMessage) InvokeMessageHandler(ag IHelloWorldAgent) {
+	ag.HandleWorldMessage(d)
 }
 
 func (serv *HelloWorldServer) RunTurn(i, j int) {
-	fmt.Printf("Running turn %v,%v\n", i, j)
-	k := 0
+	fmt.Printf("Running iteration %v, turn %v\n", i, j)
 	for _, ag := range serv.GetAgentMap() {
-		if k%2 == 0 {
-			msg := HelloMessage{ag.CreateBaseMessage()}
-			ag.BroadcastMessage(&msg)
-		} else {
-			msg := WorldMessage{ag.CreateBaseMessage()}
-			ag.BroadcastMessage(&msg)
-		}
+		msg := HelloMessage{ag.CreateBaseMessage()}
+		ag.BroadcastMessage(&msg)
 	}
 }
 
@@ -85,7 +87,7 @@ func (serv *HelloWorldServer) RunEndOfIteration(iteration int) {
 }
 
 func main() {
-	serv := CreateHelloWorldServer(10, 1, 1, time.Second, 10)
+	serv := CreateHelloWorldServer(10, 1, 10, time.Second, 100)
 	serv.SetGameRunner(serv)
 	serv.ReportMessagingDiagnostics()
 	serv.Start()
