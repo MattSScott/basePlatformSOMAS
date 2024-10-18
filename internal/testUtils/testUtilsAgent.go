@@ -32,10 +32,6 @@ type TestServerFunctionsAgent struct {
 	*agent.BaseAgent[ITestBaseAgent]
 }
 
-func (ta *TestServerFunctionsAgent) UpdateAgentInternalState() {
-	ta.Counter += 1
-}
-
 func (ta *TestServerFunctionsAgent) FinishedMessaging() {
 	ta.StoppedTalking++
 	ta.NotifyAgentFinishedMessaging()
