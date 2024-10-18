@@ -103,7 +103,7 @@ func (serv *BaseServer[T]) AccessAgentByID(id uuid.UUID) T {
 }
 
 func (serv *BaseServer[T]) Start() {
-	serv.checkHandler()
+	serv.checkGameRunner()
 	for i := 0; i < serv.iterations; i++ {
 		serv.gameRunner.RunStartOfIteration(i)
 		for j := 0; j < serv.turns; j++ {
@@ -132,7 +132,7 @@ func (serv *BaseServer[T]) SetGameRunner(handler GameRunner) {
 	serv.gameRunner = handler
 }
 
-func (serv *BaseServer[T]) checkHandler() {
+func (serv *BaseServer[T]) checkGameRunner() {
 	if serv.gameRunner == nil {
 		panic("Handler for running turn has not been set. Have you called SetGameRunner?")
 	}
