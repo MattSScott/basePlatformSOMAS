@@ -13,7 +13,7 @@ type IDiagnosticsEngine interface {
 	// allow agents to report status of sent message
 	ReportSendMessageStatus(bool)
 	// allow server to report number of end message closures
-	ReportEndMessagingStatus()
+	ReportEndMessagingStatus(int)
 	// allow for resetting of diagnostics for round-to-round data
 	ResetRoundDiagnostics()
 	// compile results for end of round messaging status
@@ -33,8 +33,8 @@ func (de *DiagnosticsEngine) ReportSendMessageStatus(status bool) {
 	}
 }
 
-func (de *DiagnosticsEngine) ReportEndMessagingStatus() {
-	de.numEndMessagings++
+func (de *DiagnosticsEngine) ReportEndMessagingStatus(n int) {
+	de.numEndMessagings = n
 }
 
 func (de *DiagnosticsEngine) ResetRoundDiagnostics() {

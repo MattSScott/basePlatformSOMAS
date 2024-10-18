@@ -55,12 +55,12 @@ awaitSessionEnd:
 		select {
 		case id := <-serv.agentFinishedMessaging:
 			agentStoppedTalkingMap[id] = struct{}{}
-			serv.diagnosticsEngine.ReportEndMessagingStatus()
 		case <-ctx.Done():
 			status = false
 			break awaitSessionEnd
 		}
 	}
+	serv.diagnosticsEngine.ReportEndMessagingStatus(len(agentStoppedTalkingMap))
 	close(serv.endNotifyAgentDone)
 	return status
 }
