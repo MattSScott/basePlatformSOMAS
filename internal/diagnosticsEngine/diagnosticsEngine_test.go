@@ -121,3 +121,15 @@ func TestResetDiagnostics(t *testing.T) {
 		}
 	}
 }
+
+func TestDivideByZeroProtection(t *testing.T) {
+	engine := diagnosticsEngine.CreateDiagnosticsEngine()
+	msgSuccessRate := engine.GetMessagingSuccessRate()
+	endMsgingSuccessRate := engine.GetEndMessagingSuccessRate(0)
+	if msgSuccessRate != 100.0 {
+		t.Errorf("Diagnostic Engine incorrectly reported Message Success rate when 0 messages sent. Expected 100%%, got %v%%", msgSuccessRate)
+	}
+	if endMsgingSuccessRate != 100.0 {
+		t.Errorf("Diagnostic Engine incorrectly reported Finished Messaging Success rate when 0 agents are present. Expected 100%%, got %v%%", endMsgingSuccessRate)
+	}
+}

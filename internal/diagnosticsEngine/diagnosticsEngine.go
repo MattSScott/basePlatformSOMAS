@@ -68,9 +68,15 @@ func (de *DiagnosticsEngine) GetNumberMessageDrops() int {
 }
 
 func (de *DiagnosticsEngine) GetMessagingSuccessRate() float32 {
+	if de.numMessages == 0 {
+		return 100
+	}
 	return 100 * float32(de.numMessageSuccesses) / float32(de.numMessages)
 }
 
 func (de *DiagnosticsEngine) GetEndMessagingSuccessRate(numAgents int) float32 {
+	if numAgents == 0 {
+		return 100
+	}
 	return 100 * float32(de.numEndMessagings) / float32(numAgents)
 }
