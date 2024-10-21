@@ -11,7 +11,9 @@ import (
 
 type IHelloWorldAgent interface {
 	agent.IAgent[IHelloWorldAgent]
+	CreateHelloMessage() *HelloMessage
 	HandleHelloMessage(HelloMessage)
+	CreateWorldMessage() *WorldMessage
 	HandleWorldMessage(WorldMessage)
 }
 
@@ -27,10 +29,22 @@ type HelloWorldAgent struct {
 	*agent.BaseAgent[IHelloWorldAgent]
 }
 
+func (hwa *HelloWorldAgent) CreateHelloMessage() *HelloMessage {
+	return &HelloMessage{
+		BaseMessage: hwa.CreateBaseMessage(),
+	}
+}
+
 func (hwa *HelloWorldAgent) HandleHelloMessage(msg HelloMessage) {
 	fmt.Printf("%s said: 'Hello'\n", hwa.GetID())
-	response := WorldMessage{hwa.CreateBaseMessage()}
-	hwa.SendMessage(&response, msg.Sender)
+	response := hwa.CreateWorldMessage()
+	hwa.SendMessage(response, msg.Sender)
+}
+
+func (hwa *HelloWorldAgent) CreateWorldMessage() *WorldMessage {
+	return &WorldMessage{
+		BaseMessage: hwa.CreateBaseMessage(),
+	}
 }
 
 func (hwa *HelloWorldAgent) HandleWorldMessage(msg WorldMessage) {
@@ -74,8 +88,8 @@ func (d WorldMessage) InvokeMessageHandler(ag IHelloWorldAgent) {
 func (serv *HelloWorldServer) RunTurn(i, j int) {
 	fmt.Printf("Running iteration %v, turn %v\n", i+1, j+1)
 	for _, ag := range serv.GetAgentMap() {
-		msg := HelloMessage{ag.CreateBaseMessage()}
-		ag.BroadcastMessage(&msg)
+		msg := ag.CreateHelloMessage()
+		ag.BroadcastMessage(msg)
 	}
 }
 
