@@ -72,7 +72,7 @@ func (d WorldMessage) InvokeMessageHandler(ag IHelloWorldAgent) {
 }
 
 func (serv *HelloWorldServer) RunTurn(i, j int) {
-	fmt.Printf("Running iteration %v, turn %v\n", i, j)
+	fmt.Printf("Running iteration %v, turn %v\n", i+1, j+1)
 	for _, ag := range serv.GetAgentMap() {
 		msg := HelloMessage{ag.CreateBaseMessage()}
 		ag.BroadcastMessage(&msg)
@@ -85,9 +85,8 @@ func (serv *HelloWorldServer) RunStartOfIteration(iteration int) {
 }
 
 func (serv *HelloWorldServer) RunEndOfIteration(iteration int) {
-	fmt.Printf("Ending iteration %v\n", iteration+1)
 	fmt.Println()
-
+	fmt.Printf("Ending iteration %v\n", iteration+1)
 }
 
 func main() {
