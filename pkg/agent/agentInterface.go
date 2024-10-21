@@ -33,7 +33,7 @@ type IMessagingFunctions[T any] interface {
 	// allows for sending a sync message across the entire system
 	BroadcastSynchronousMessage(message.IMessage[T])
 	// signals end of agent's listening session
-	NotifyAgentFinishedMessaging()
+	SignalMessagingComplete()
 }
 
 type IAgent[T any] interface {

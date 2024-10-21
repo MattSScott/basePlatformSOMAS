@@ -77,6 +77,6 @@ func (ts *TestServer) RunEndOfIteration(iteration int) {
 func SendNotifyMessages(agMap map[uuid.UUID]ITestBaseAgent, count *uint32, wg *sync.WaitGroup) {
 	for _, ag := range agMap {
 		wg.Add(1)
-		go ag.NotifyAgentFinishedMessagingUnthreaded(wg, count)
+		go ag.SignalMessagingCompleteUnthreaded(wg, count)
 	}
 }

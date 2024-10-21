@@ -19,7 +19,7 @@ type ITestBaseAgent interface {
 	GetGoal() int32
 	SetGoal(int32)
 	FinishedMessaging()
-	NotifyAgentFinishedMessagingUnthreaded(*sync.WaitGroup, *uint32)
+	SignalMessagingCompleteUnthreaded(*sync.WaitGroup, *uint32)
 	GetAgentStoppedTalking() int
 	HandleTimeoutTestMessage(msg TestTimeoutMessage)
 	HandleInfiniteLoopMessage(msg TestMessagingBandwidthLimiter)
@@ -34,7 +34,7 @@ type TestServerFunctionsAgent struct {
 
 func (ta *TestServerFunctionsAgent) FinishedMessaging() {
 	ta.StoppedTalking++
-	ta.NotifyAgentFinishedMessaging()
+	ta.SignalMessagingComplete()
 }
 
 func (ta *TestServerFunctionsAgent) CreateTestMessage() *TestMessage {
@@ -44,7 +44,7 @@ func (ta *TestServerFunctionsAgent) CreateTestMessage() *TestMessage {
 	}
 }
 
-func (ta *TestServerFunctionsAgent) NotifyAgentFinishedMessagingUnthreaded(wg *sync.WaitGroup, counter *uint32) {
+func (ta *TestServerFunctionsAgent) SignalMessagingCompleteUnthreaded(wg *sync.WaitGroup, counter *uint32) {
 	defer wg.Done()
 	ta.AgentStoppedTalking(ta.GetID())
 	atomic.AddUint32(counter, 1)
@@ -57,7 +57,7 @@ func (ta TestServerFunctionsAgent) GetAgentStoppedTalking() int {
 func (ta *TestServerFunctionsAgent) HandleTestMessage() {
 	newCounterValue := atomic.AddInt32(&ta.Counter, 1)
 	if newCounterValue == atomic.LoadInt32(&ta.Goal) {
-		ta.NotifyAgentFinishedMessaging()
+		ta.SignalMessagingComplete()
 	}
 }
 
@@ -100,7 +100,7 @@ func (ta *TestServerFunctionsAgent) HandleTimeoutTestMessage(msg TestTimeoutMess
 	start := time.Now()
 	time.Sleep(msg.Workload) // simulate long work
 	fmt.Println("work has been completed, took ", time.Since(start), "notifying finished messaging")
-	ta.NotifyAgentFinishedMessaging()
+	ta.SignalMessagingComplete()
 }
 
 func (ta *TestServerFunctionsAgent) HandleInfiniteLoopMessage(msg TestMessagingBandwidthLimiter) {

@@ -33,7 +33,7 @@ func (a *BaseAgent[T]) CreateBaseMessage() message.BaseMessage {
 	return message.BaseMessage{Sender: a.GetID()}
 }
 
-func (a *BaseAgent[T]) NotifyAgentFinishedMessaging() {
+func (a *BaseAgent[T]) SignalMessagingComplete() {
 	go a.AgentStoppedTalking(a.id)
 }
 
