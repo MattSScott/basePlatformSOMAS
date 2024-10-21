@@ -22,16 +22,18 @@ type IExposedServerFunctions[T any] interface {
 }
 
 type IMessagingFunctions[T any] interface {
-	// signals end of agent's listening session
-	NotifyAgentFinishedMessaging()
 	// allows for creation of a base message
 	CreateBaseMessage() message.BaseMessage
-	// allows for sending a message across the entire system
-	BroadcastMessage(message.IMessage[T])
 	// allows for sending a message to a single recipient
 	SendMessage(message.IMessage[T], uuid.UUID)
 	// allows for sending a message to a single recipient synchronously
 	SendSynchronousMessage(message.IMessage[T], uuid.UUID)
+	// allows for sending an async message across the entire system
+	BroadcastMessage(message.IMessage[T])
+	// allows for sending a sync message across the entire system
+	BroadcastSynchronousMessage(message.IMessage[T])
+	// signals end of agent's listening session
+	NotifyAgentFinishedMessaging()
 }
 
 type IAgent[T any] interface {

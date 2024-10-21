@@ -167,3 +167,58 @@ func TestBroadcastMessage(t *testing.T) {
 		}
 	}
 }
+
+func TestBroadcastMessageDoesPanic(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("BroadcastMessage did not panic as expected")
+		}
+	}()
+	numAgents := 3
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, 10*time.Millisecond, 100)
+	agent1 := testUtils.NewTestAgent(server)
+	testMessage := &testUtils.TestMessage{}
+	server.AddAgent(agent1)
+	for _, ag := range server.GetAgentMap() {
+		ag.SetGoal(1)
+	}
+	agent1.BroadcastMessage(testMessage)
+	time.Sleep(10 * time.Millisecond)
+}
+
+func TestBroadcastSynchronousMessage(t *testing.T) {
+	numAgents := 3
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, 10*time.Millisecond, 100)
+	agent1 := testUtils.NewTestAgent(server)
+	testMessage := agent1.CreateTestMessage()
+	server.AddAgent(agent1)
+	for _, ag := range server.GetAgentMap() {
+		ag.SetGoal(1)
+	}
+	agent1.BroadcastSynchronousMessage(testMessage)
+	senderID := agent1.GetID()
+	for _, ag := range server.GetAgentMap() {
+		if !ag.ReceivedMessage() && ag.GetID() != senderID {
+			t.Error(ag, "Didn't Receive Message")
+		} else if ag.ReceivedMessage() && ag.GetID() == senderID {
+			t.Error(ag, "is sender and received its own message")
+		}
+	}
+}
+
+func TestBroadcastSynchronousMessageDoesPanic(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("BroadcastSynchronousMessage did not panic as expected")
+		}
+	}()
+	numAgents := 3
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, 10*time.Millisecond, 100)
+	agent1 := testUtils.NewTestAgent(server)
+	testMessage := &testUtils.TestMessage{}
+	server.AddAgent(agent1)
+	for _, ag := range server.GetAgentMap() {
+		ag.SetGoal(1)
+	}
+	agent1.BroadcastSynchronousMessage(testMessage)
+}

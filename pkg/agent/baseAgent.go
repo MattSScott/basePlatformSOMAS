@@ -72,3 +72,15 @@ func (agent *BaseAgent[T]) BroadcastMessage(msg message.IMessage[T]) {
 		agent.SendMessage(msg, id)
 	}
 }
+
+func (agent *BaseAgent[T]) BroadcastSynchronousMessage(msg message.IMessage[T]) {
+	if msg.GetSender() == uuid.Nil {
+		panic("No sender found - did you compose the BaseMessage?")
+	}
+	for id := range agent.ViewAgentIdSet() {
+		if id == msg.GetSender() {
+			continue
+		}
+		agent.SendSynchronousMessage(msg, id)
+	}
+}
