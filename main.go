@@ -45,6 +45,7 @@ func CreateHelloWorldServer(numAgents, iterations, turns int, maxDuration time.D
 	for i := 0; i < numAgents; i++ {
 		serv.AddAgent(CreateHelloWorldAgent(serv))
 	}
+	serv.SetGameRunner(serv)
 	return serv
 }
 
@@ -79,16 +80,18 @@ func (serv *HelloWorldServer) RunTurn(i, j int) {
 }
 
 func (serv *HelloWorldServer) RunStartOfIteration(iteration int) {
-	fmt.Printf("Starting iteration %v\n", iteration)
+	fmt.Printf("Starting iteration %v\n", iteration+1)
+	fmt.Println()
 }
 
 func (serv *HelloWorldServer) RunEndOfIteration(iteration int) {
-	fmt.Printf("Ending iteration %v\n", iteration)
+	fmt.Printf("Ending iteration %v\n", iteration+1)
+	fmt.Println()
+
 }
 
 func main() {
-	serv := CreateHelloWorldServer(10, 1, 10, time.Millisecond, 100)
-	serv.SetGameRunner(serv)
+	serv := CreateHelloWorldServer(4, 1, 1, time.Millisecond, 100)
 	serv.ReportMessagingDiagnostics()
 	serv.Start()
 }
