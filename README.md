@@ -92,8 +92,7 @@ You will now have access to the modules provided by this package:
 - The _agent_ module can be imported into a file with: `github.com/MattSScott/basePlatformSOMAS/v2/pkg/agent`
 - The _message_ module can be imported into a file with: `github.com/MattSScott/basePlatformSOMAS/v2/pkg/message`
 
-
-For more examples, and a **much, much more detailed write-up** of the package, please refer to the [User Manual](https://github.com/MattSScott/basePlatformSOMAS/blob/main/basePlatformSOMAS_User_Manual.pdf)
+For more examples, and a **much, much more detailed write-up** of the package, please refer to the [User Manual](https://github.com/MattSScott/basePlatformSOMAS/blob/main/basePlatformSOMASv2.0.pdf) or, if you're using an outdated version of the package, refer to the [Past Manuals](https://github.com/MattSScott/basePlatformSOMAS/tree/main/Past%20Manuals).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -148,12 +147,9 @@ This work was produced by the following developers:
 
 [contributors-shield]: https://img.shields.io/github/contributors/MattSScott/basePlatformSOMAS.svg
 [contributors-url]: https://github.com/MattSScott/basePlatformSOMAS/graphs/contributors
-
 [issues-shield]: https://img.shields.io/github/issues/MattSScott/basePlatformSOMAS.svg?color=orange
 [issues-url]: https://github.com/MattSScott/basePlatformSOMAS/graphs/issues
-
 [license-shield]: https://img.shields.io/github/license/MattSScott/basePlatformSOMAS.svg
 [license-url]: https://github.com/MattSScott/basePlatformSOMAS/blob/main/LICENSE.txt
-
 [go-shield]: https://img.shields.io/badge/GoLang-blue?logo=go
 [go-url]: https://go.dev
