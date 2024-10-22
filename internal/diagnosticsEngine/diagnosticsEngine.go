@@ -13,7 +13,7 @@ type IDiagnosticsEngine interface {
 	// allow agents to report status of sent message
 	ReportSendMessageStatus(bool)
 	// allow server to report number of end message closures
-	ReportEndMessagingStatus()
+	ReportEndMessagingStatus(int)
 	// allow for resetting of diagnostics for round-to-round data
 	ResetRoundDiagnostics()
 	// compile results for end of round messaging status
@@ -33,8 +33,8 @@ func (de *DiagnosticsEngine) ReportSendMessageStatus(status bool) {
 	}
 }
 
-func (de *DiagnosticsEngine) ReportEndMessagingStatus() {
-	de.numEndMessagings++
+func (de *DiagnosticsEngine) ReportEndMessagingStatus(n int) {
+	de.numEndMessagings = n
 }
 
 func (de *DiagnosticsEngine) ResetRoundDiagnostics() {
@@ -68,9 +68,15 @@ func (de *DiagnosticsEngine) GetNumberMessageDrops() int {
 }
 
 func (de *DiagnosticsEngine) GetMessagingSuccessRate() float32 {
+	if de.numMessages == 0 {
+		return 100
+	}
 	return 100 * float32(de.numMessageSuccesses) / float32(de.numMessages)
 }
 
 func (de *DiagnosticsEngine) GetEndMessagingSuccessRate(numAgents int) float32 {
+	if numAgents == 0 {
+		return 100
+	}
 	return 100 * float32(de.numEndMessagings) / float32(numAgents)
 }

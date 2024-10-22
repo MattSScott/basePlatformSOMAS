@@ -33,9 +33,7 @@ func (a *BaseAgent[T]) CreateBaseMessage() message.BaseMessage {
 	return message.BaseMessage{Sender: a.GetID()}
 }
 
-func (a *BaseAgent[T]) UpdateAgentInternalState() {}
-
-func (a *BaseAgent[T]) NotifyAgentFinishedMessaging() {
+func (a *BaseAgent[T]) SignalMessagingComplete() {
 	go a.AgentStoppedTalking(a.id)
 }
 
@@ -72,5 +70,17 @@ func (agent *BaseAgent[T]) BroadcastMessage(msg message.IMessage[T]) {
 			continue
 		}
 		agent.SendMessage(msg, id)
+	}
+}
+
+func (agent *BaseAgent[T]) BroadcastSynchronousMessage(msg message.IMessage[T]) {
+	if msg.GetSender() == uuid.Nil {
+		panic("No sender found - did you compose the BaseMessage?")
+	}
+	for id := range agent.ViewAgentIdSet() {
+		if id == msg.GetSender() {
+			continue
+		}
+		agent.SendSynchronousMessage(msg, id)
 	}
 }

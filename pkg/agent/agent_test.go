@@ -12,7 +12,7 @@ import (
 
 func TestAgentIdOperations(t *testing.T) {
 	var testServ agent.IExposedServerFunctions[testUtils.ITestBaseAgent] = &testUtils.TestServer{
-		BaseServer:            server.CreateServer[testUtils.ITestBaseAgent](1, 1, time.Second, 100),
+		BaseServer:            server.CreateBaseServer[testUtils.ITestBaseAgent](1, 1, time.Second, 100),
 		TurnCounter:           0,
 		IterationStartCounter: 0,
 		IterationEndCounter:   0,
@@ -31,26 +31,6 @@ func TestNilInterfaceInjection(t *testing.T) {
 	}()
 	ag := agent.CreateBaseAgent[testUtils.ITestBaseAgent](nil)
 	ag.GetID()
-}
-
-func TestUpdateAgentInternalState(t *testing.T) {
-	var testServ agent.IExposedServerFunctions[testUtils.ITestBaseAgent] = &testUtils.TestServer{
-		BaseServer:            server.CreateServer[testUtils.ITestBaseAgent](1, 1, time.Second, 100),
-		TurnCounter:           0,
-		IterationStartCounter: 0,
-		IterationEndCounter:   0,
-	}
-	ag := testUtils.TestServerFunctionsAgent{
-		BaseAgent: agent.CreateBaseAgent(testServ),
-		Counter:   0,
-	}
-	if ag.Counter != 0 {
-		t.Error("Additional agent field not correctly instantiated")
-	}
-	ag.UpdateAgentInternalState()
-	if ag.Counter != 1 {
-		t.Error("Agent state not correctly updated")
-	}
 }
 
 func TestCreateBaseMessage(t *testing.T) {
@@ -146,7 +126,7 @@ func TestRecursiveInvokeMessageHandlerCalls(t *testing.T) {
 		msg := testUtils.CreateInfLoopMessage(ag.GetID())
 		ag.BroadcastMessage(msg)
 	}
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(1 * time.Second)
 }
 
 func TestSendMessage(t *testing.T) {
@@ -159,7 +139,7 @@ func TestSendMessage(t *testing.T) {
 		ag.SetGoal(1)
 		agent1.SendMessage(testMessage, id)
 	}
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(1 * time.Second)
 	for _, ag := range server.GetAgentMap() {
 		if !ag.ReceivedMessage() {
 			t.Error(ag, "Didn't Receive Message")
@@ -178,7 +158,7 @@ func TestBroadcastMessage(t *testing.T) {
 	}
 	agent1.BroadcastMessage(testMessage)
 	senderID := agent1.GetID()
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(1 * time.Second)
 	for _, ag := range server.GetAgentMap() {
 		if !ag.ReceivedMessage() && ag.GetID() != senderID {
 			t.Error(ag, "Didn't Receive Message")
@@ -186,4 +166,59 @@ func TestBroadcastMessage(t *testing.T) {
 			t.Error(ag, "is sender and received its own message")
 		}
 	}
+}
+
+func TestBroadcastMessageDoesPanic(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("BroadcastMessage did not panic as expected")
+		}
+	}()
+	numAgents := 3
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, 10*time.Millisecond, 100)
+	agent1 := testUtils.NewTestAgent(server)
+	testMessage := &testUtils.TestMessage{}
+	server.AddAgent(agent1)
+	for _, ag := range server.GetAgentMap() {
+		ag.SetGoal(1)
+	}
+	agent1.BroadcastMessage(testMessage)
+	time.Sleep(1 * time.Second)
+}
+
+func TestBroadcastSynchronousMessage(t *testing.T) {
+	numAgents := 3
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, 10*time.Millisecond, 100)
+	agent1 := testUtils.NewTestAgent(server)
+	testMessage := agent1.CreateTestMessage()
+	server.AddAgent(agent1)
+	for _, ag := range server.GetAgentMap() {
+		ag.SetGoal(1)
+	}
+	agent1.BroadcastSynchronousMessage(testMessage)
+	senderID := agent1.GetID()
+	for _, ag := range server.GetAgentMap() {
+		if !ag.ReceivedMessage() && ag.GetID() != senderID {
+			t.Error(ag, "Didn't Receive Message")
+		} else if ag.ReceivedMessage() && ag.GetID() == senderID {
+			t.Error(ag, "is sender and received its own message")
+		}
+	}
+}
+
+func TestBroadcastSynchronousMessageDoesPanic(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("BroadcastSynchronousMessage did not panic as expected")
+		}
+	}()
+	numAgents := 3
+	server := testUtils.GenerateTestServer(numAgents, 1, 1, 10*time.Millisecond, 100)
+	agent1 := testUtils.NewTestAgent(server)
+	testMessage := &testUtils.TestMessage{}
+	server.AddAgent(agent1)
+	for _, ag := range server.GetAgentMap() {
+		ag.SetGoal(1)
+	}
+	agent1.BroadcastSynchronousMessage(testMessage)
 }

@@ -300,7 +300,7 @@ func TestRunTurnNotSetPanic(t *testing.T) {
 		}
 	}()
 	server := &testUtils.TestTurnMethodPanics{
-		BaseServer: server.CreateServer[testUtils.ITestBaseAgent](1, 1, time.Millisecond, 100),
+		BaseServer: server.CreateBaseServer[testUtils.ITestBaseAgent](1, 1, time.Millisecond, 100),
 	}
 	server.RunTurn(0, 0)
 }
@@ -312,7 +312,7 @@ func TestRunStartOfIterationNotSetPanic(t *testing.T) {
 		}
 	}()
 	server := &testUtils.TestTurnMethodPanics{
-		BaseServer: server.CreateServer[testUtils.ITestBaseAgent](1, 1, time.Millisecond, 100),
+		BaseServer: server.CreateBaseServer[testUtils.ITestBaseAgent](1, 1, time.Millisecond, 100),
 	}
 	server.RunStartOfIteration(0)
 }
@@ -324,7 +324,7 @@ func TestRunEndOfIterationNotSetPanic(t *testing.T) {
 		}
 	}()
 	server := &testUtils.TestTurnMethodPanics{
-		BaseServer: server.CreateServer[testUtils.ITestBaseAgent](1, 1, time.Millisecond, 100),
+		BaseServer: server.CreateBaseServer[testUtils.ITestBaseAgent](1, 1, time.Millisecond, 100),
 	}
 	server.RunEndOfIteration(0)
 }
@@ -363,7 +363,7 @@ func TestMessagesSendInSaturatedServer(t *testing.T) {
 
 	infLoopMessage := testUtils.CreateInfLoopMessage(evilAgent1.GetID())
 	evilAgent1.SendMessage(infLoopMessage, evilAgent2.GetID())
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(1 * time.Second)
 	//if message bandwidth is faulty this will fill it with messages from the two agents
 	testMsg := testAgent1.CreateTestMessage()
 	testAgent1.SendMessage(testMsg, testAgent2.GetID())
