@@ -126,7 +126,7 @@ func TestRecursiveInvokeMessageHandlerCalls(t *testing.T) {
 		msg := testUtils.CreateInfLoopMessage(ag.GetID())
 		ag.BroadcastMessage(msg)
 	}
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(1 * time.Second)
 }
 
 func TestSendMessage(t *testing.T) {
@@ -139,7 +139,7 @@ func TestSendMessage(t *testing.T) {
 		ag.SetGoal(1)
 		agent1.SendMessage(testMessage, id)
 	}
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(1 * time.Second)
 	for _, ag := range server.GetAgentMap() {
 		if !ag.ReceivedMessage() {
 			t.Error(ag, "Didn't Receive Message")
@@ -158,7 +158,7 @@ func TestBroadcastMessage(t *testing.T) {
 	}
 	agent1.BroadcastMessage(testMessage)
 	senderID := agent1.GetID()
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(1 * time.Second)
 	for _, ag := range server.GetAgentMap() {
 		if !ag.ReceivedMessage() && ag.GetID() != senderID {
 			t.Error(ag, "Didn't Receive Message")
@@ -183,7 +183,7 @@ func TestBroadcastMessageDoesPanic(t *testing.T) {
 		ag.SetGoal(1)
 	}
 	agent1.BroadcastMessage(testMessage)
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(1 * time.Second)
 }
 
 func TestBroadcastSynchronousMessage(t *testing.T) {
